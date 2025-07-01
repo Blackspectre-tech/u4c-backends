@@ -1,0 +1,76 @@
+{% extends "admin/change_form.html" %}
+{% block submit_buttons_bottom %}
+  {{ block.super }}
+
+  <hr style="margin: 30px 0;">
+
+  <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 20px;">
+
+    <!-- APPROVE -->
+    <a href="{% url 'admin:projects_project_approve' original.id %}"
+       class="button"
+       style="
+         background:#28a745;
+         color:white;
+         border-radius:4px;
+         display: inline-flex;
+         align-items: center;
+         justify-content: center;
+         min-width: 140px;
+         height: 36px;
+         font-size: 14px;
+         text-decoration: none;
+       "
+      onmouseover="this.style.backgroundColor='#22993e'"
+      onmouseout="this.style.backgroundColor='#28a745'"
+       >
+      Approve
+    </a>
+
+    <!-- DENY -->
+    <a href="{% url 'admin:projects_project_deny' original.id %}"
+       class="button"
+       style="
+         background:#dc3545;
+         color:white;
+         border-radius:4px;
+         display: inline-flex;
+         align-items: center;
+         justify-content: center;
+         min-width: 140px;
+         height: 36px;
+         font-size: 14px;
+         text-decoration: none;
+       "
+      onmouseover="this.style.backgroundColor='#cf2a3b'"
+      onmouseout="this.style.backgroundColor='#dc3545'"
+   >
+      Disapprove
+    </a>
+
+  </div>
+    <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 20px;">
+
+    <!-- Flag -->
+    <a href="{% url 'admin:flag_project_url' original.id %}"
+   class="button"
+   style="
+     background: #dc3545;  /* darker than #dc3545 */
+     color: white;
+     border-radius: 4px;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     width: 100%;
+     height: 36px;
+     font-size: 14px;
+     text-decoration: none;
+   "
+   onmouseover="this.style.backgroundColor='#cf2a3b'"
+    onmouseout="this.style.backgroundColor='#dc3545'"
+>
+  Flag Project
+</a>
+
+  </div>
+{% endblock %}

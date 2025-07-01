@@ -1,0 +1,8 @@
+# # Ignore build artifacts
+# build/
+# Ignore log files
+*.env
+# # Ignore a specific file
+# config/database.yml
+# # Ignore temporary files
+# .tmp/

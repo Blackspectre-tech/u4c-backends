@@ -17,182 +17,224 @@ from .utils import (
     resize_and_upload_avatar,
     upload_pdf
 )
-from .models import Organization, UserProfile, Social
+from .models import Organization, UserProfile, Social, User
 
 class UserRegistionUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
 
 
-class ProfileSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(serializers.ModelSerializer):
+    phone_number = PhoneNumberField(
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    email = serializers.EmailField(
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    password = serializers.CharField(write_only=True)
 
     class Meta:
-        model = UserProfile
-        fields = '__all__'
+        model = User
+        fields = ['email', 'phone_number', 'password', 'is_organization']
+
+    def create(self, validated_data):
+        user = User.objects.create(
+            email=validated_data['email'],
+            phone_number=validated_data['phone_number'],
+        )
+        if validated_data.get('is_organization'):
+            user.is_organization = True
+        user.set_password(validated_data['password'])
+        otp = generate_otp()
+        user.otp = otp
+        user.otp_expiry = timezone.now()
+        user.save()
+        send_account_activation_otp(user.email, otp)
+        return user
+
 
 
 class SocialsSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Social
-        fields = '__all__'
+        fields = ['instagram', 'facebook', 'youtube', 'twitter']
 
 
-class OrganizationSerializer(serializers.ModelSerializer):
-    socials = SocialsSerializer()
-
+class OrganizationRegistrationSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer()  #nested user creation
+    socials = SocialsSerializer(required=False)
+    cac_document = serializers.FileField(write_only=True, required=True)
+    reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
+    website = serializers.CharField(required = False)
     class Meta:
         model = Organization
-        fields = '__all__'
+        fields = [
+            'user',
+            'name',
+            'country',
+            'location',
+            'description',
+            'socials',
+            'reg_no',
+            'cac_document',
+            'website',
+        ]
+
+    def validate_cac_document(self, value):
+        if not value.name.endswith('.pdf'):
+            raise serializers.ValidationError("Only PDF files are allowed.")
+        if value.size > 1024 * 1024:
+            raise serializers.ValidationError("File size cannot exceed 1MB.")
+        return value
+
+    def validate(self, attrs):
+        name = attrs['name'].title()
+        if Organization.objects.filter(name=name).exists():
+            raise serializers.ValidationError("Organization name already exists")
+        return attrs
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        socials_data = validated_data.pop('socials', {})
+        cac_doc = validated_data.pop('cac_document')
+
+        # Create user
+        user_data['is_organization'] = True
+        user_serializer = UserCreateSerializer(
+            data=user_data)
+        user_serializer.is_valid(raise_exception=True)
+        user = user_serializer.save()
+
+        # Upload CAC document
+        doc_url = upload_pdf(cac_doc)
+
+        # Create organization
+        org = Organization.objects.create(
+            user=user,
+            cac_document_url=doc_url,
+            **validated_data
+        )
+
+        # Create socials
+        socials = Social.objects.create(organization=org)
+        for key, value in socials_data.items():
+            setattr(socials, key, value)
+        socials.save()
+
+        return org
 
 
 class UserRegisterationSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required=True)
-    email = serializers.EmailField(
-        required=True,
-        validators=[UserRegistionUniqueValidator(queryset=get_user_model().objects.all())],
-        )
-    phone_number = PhoneNumberField()
-    password = serializers.CharField(write_only=True,required=True,)
-    first_name = serializers.CharField(required=True)
-    last_name = serializers.CharField(required=True)
+    user = UserCreateSerializer()
+    username = serializers.CharField(
+        validators=[UniqueValidator(queryset=UserProfile.objects.all())],
+        required=True)
 
     class Meta:
-        model = get_user_model()
+        model = UserProfile
         fields = [
-            "password",
-            "email",
-            "phone_number",
+            "user",
+            "username",
+            "first_name",
+            "last_name",
         ]
-        extra_kwargs = {
-            "email": {"required": True},
-            "password": {"required": True},
-            "phone_number": {"reqired": True},
-        }
 
-    def validate(self, attrs):
-        try:
-            validate_password(password=attrs["password"], user = None)
-        except ValidationError as err:
-            raise serializers.ValidationError(err.messages)
-        
-        username = attrs['username'].lower()
-        if UserProfile.profile.objects.filter(username=username).exists() :
-            raise serializers.ValidationError("Username already exist")
-
-        return attrs
     
     def create(self, validated_data):
+        user_data = validated_data.pop('user')
 
-        user = get_user_model().objects.create(
-            email=validated_data["email"],
-            phone_number = validated_data['phone_number']
-            )
+        # Create user
+        user_serializer = UserCreateSerializer(data=user_data)
+        user_serializer.is_valid(raise_exception=True)
+        user = user_serializer.save()
 
-        user.set_password(validated_data["password"])
-        otp = generate_otp()
-        user.otp = otp
-        user.otp_expiry = timezone.now()
-        user.save()
-        send_account_activation_otp(validated_data.get("email"), otp)
-        user.profile.objects.create(
-            user = user,
-            username = validated_data['username'],
-            first_name = validated_data['first_name'],
-            last_name = validated_data['last_name'],
+        # Create UserProfile
+        profile = UserProfile.objects.create(
+            user=user,
+            **validated_data
         )
 
-        return user
+        return profile
 
 
-class OrganizationRegisterationSerializer(serializers.ModelSerializer):
-    socials = SocialsSerializer(required=False)
-    email = serializers.EmailField(
-        required=True,
-        validators=[UserRegistionUniqueValidator(queryset=get_user_model().objects.all())],
+
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        validators=[UniqueValidator(queryset=UserProfile.objects.all())],
         )
-    password = serializers.CharField(write_only=True,required=True,)
-    cac_document = serializers.FileField(write_only=True, required =True)
     
     class Meta:
-        model = get_user_model()
-        fields = [
-            "password",
-            "email",
-            "name",
-            "country",
-            "location",
-            "description",
-            "socials",
-            "reg_no"
-            "cac_document",
-        ]
-        extra_kwargs = {
-            "email": {"required": True},
-            "password": {"required": True},
-            "name": {"reqired": True},
-            "country": {"reqired": True},
-            "location": {"reqired": True},
-            "description": {"reqired": True},
-            "reg_no": {"reqired": True},
-            "cac_document": {"reqired": True},
-        }
+        model = UserProfile
+        fields = ['username', 'first_name', 'last_name']
 
 
-    # def validate_cac_document(self, value):
-    #     max_size_mb = 1
-    #     if value.size > max_size_mb * 1024 * 1024:
-    #         raise serializers.ValidationError("File size must not exceed 1MB.")
-    #     return value
 
-    def validate(self, attrs):
-        try:
-            validate_password(password=attrs["password"], user = None)
-        except ValidationError as err:
-            raise serializers.ValidationError(err.messages)
+class UserUpdateSerializer(serializers.ModelSerializer):
+    phone_number = PhoneNumberField(
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
 
-        name = attrs['name'].title()
-        if Organization.objects.filter(name=name).exists() :
-            raise serializers.ValidationError("Organization name already exist")
+    class Meta:
+        model = User
+        fields = ['phone_number','avatar']
+    
+    def update(self, instance, validated_data):
+
+        return super().update(instance, validated_data)
+    
 
 
-    def create(self, validated_data):
+class UpdateOrganizationSerializer(serializers.ModelSerializer):
+    socials = SocialsSerializer()
+    cac_document = serializers.FileField(write_only=True)
+
+    class Meta:
+        model = Organization
+        fields = ['socials', 'cac_document','website','location','description',]
+
+    def validate_cac_document(self, value):
+        if not value.name.endswith('.pdf'):
+            raise serializers.ValidationError("Only PDF files are allowed.")
+        if value.size > 1024 * 1024:
+            raise serializers.ValidationError("File size cannot exceed 1MB.")
+        return value    
+
+
+    def update(self, instance, validated_data):
+        # Update socials
         socials_data = validated_data.pop('socials', {})
-        doc = validated_data.pop('cac_document', {})
-
-        user = get_user_model().objects.create(
-            email=validated_data["email"],
-            phone_number = validated_data['phone_number'],
-            is_organization = True
-            )
-
-        user.set_password(validated_data["password"])
-        otp = generate_otp()
-        user.otp = otp
-        user.otp_expiry = timezone.now()
-        user.save()
-        send_account_activation_otp(validated_data.get("email"), otp)
-        #for pdf upload
-        doc_url = upload_pdf(doc)
-
-        org = Organization.objects.create(
-            user = user,
-            name = validated_data['name'],
-            country = validated_data['country'],
-            location = validated_data['location'],
-            description = validated_data['description'],
-            reg_no = validated_data['reg_no'],
-            cac_document_url = doc_url
-
-        )
-        socials = Social.objects.create(organization=org)
-        #update socials
         if socials_data:
+            socials = instance.socials  # OneToOne
             for key, value in socials_data.items():
                 setattr(socials, key, value)
             socials.save()
 
-        return user
+        #handle CAC document
+        doc = validated_data.pop('cac_document', None)
+        if doc:
+            doc_url = upload_pdf(doc)
+            instance.cac_document = doc_url
 
+        return super().update(instance, validated_data)
+
+
+
+
+class UploadAvatarSerializer(serializers.Serializer):
+    image = serializers.ImageField(required=True)
+    
+    def update(self, instance, validated_data):
+        image_file = validated_data.pop('image', None)
+
+        if image_file:
+            try:
+                image_url = resize_and_upload_avatar(image_file)
+            except ValidationError as e:
+                raise serializers.ValidationError({'image': e.message})  # Pass to serializer error
+
+        instance.avatar = image_url
+        instance.save()
+        return instance
 
 
 
@@ -255,89 +297,3 @@ class UserConfirmPasswordResetSerializer(serializers.Serializer):
 
         return attrs
     
-
-
-
-class UpdateProfileSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer()
-    image = serializers.ImageField(write_only=True)
-
-    class Meta:
-        model = get_user_model()
-        fields = ['phone_number', 'image', 'profile']
-        
-
-    def update(self, instance, validated_data):
-        # Handle avatar
-        avatar = validated_data.pop('image', None)
-        if avatar:
-            avatar_url = resize_and_upload_avatar(avatar)
-            instance.avatar = avatar_url
-
-        # Handle profile data
-        profile_data = validated_data.pop('profile', {})
-        profile = instance.profile  # OneToOne related model
-
-        username = profile.get('username').lower()
-        if username:
-            #checks if the username exists excluding the curent user's username
-            if UserProfile.objects.filter(Q(username=username) & ~Q(id=profile.id)).exists():
-                raise serializers.ValidationError({'username':'username already exists'})
-
-        for key, value in profile_data.items():
-            setattr(profile, key, value)
-        profile.save()
-
-        return super().update(instance, validated_data)
-
-
-
-
-
-class UpdateOrganizationSerializer(serializers.ModelSerializer):
-    organization = OrganizationSerializer()
-    socials = SocialsSerializer()
-    cac_document = serializers.FileField(write_only=True)
-    image = serializers.ImageField(write_only=True)
-
-    class Meta:
-        model = get_user_model()
-        fields = ['phone_number', 'image', 'organization', 'socials', 'cac_document']
-        
-
-    def update(self, instance, validated_data):
-        # Handle avatar
-        avatar = validated_data.pop('image', None)
-        doc = validated_data.pop('cac_document', None)
-        if avatar:
-            avatar_url = resize_and_upload_avatar(avatar)
-            instance.avatar = avatar_url
-
-        # Handle profile data
-        organization_data = validated_data.pop('organization', {})
-        organization = instance.organization  # OneToOne related model
-
-        name = organization.get('name').title()
-        if name:
-            #checks if the username exists excluding the curent user's username
-            if UserProfile.objects.filter(Q(name=name) & ~Q(id=organization.id)).exists():
-                raise serializers.ValidationError({'name':'organization name already exists'})
-            organization['name'] = name
-
-        if doc:
-            doc_url = upload_pdf(doc)
-            organization['cac_document_url']=doc_url
-
-        for key, value in organization_data.items():
-            setattr(organization, key, value)
-        organization.save()
-
-        # Update socials
-        socials_data = validated_data.pop('socials', {})
-        socials = organization.socials  # OneToOne
-        for key, value in socials_data.items():
-            setattr(socials, key, value)
-        socials.save()
-
-        return super().update(instance, validated_data)
-

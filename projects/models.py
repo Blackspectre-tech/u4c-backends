@@ -7,6 +7,8 @@ from accounts.models import TimeStamps
 from django.utils.html import format_html
 from accounts.utils import resize_and_upload
 from core.settings import IMG
+from django.core.validators import MinLengthValidator,MaxLengthValidator
+
 # Create your models here.
 
 
@@ -58,6 +60,7 @@ class Project(TimeStamps, models.Model):
     country = models.CharField(max_length=30, blank=False)
     longitude = models.DecimalField(max_digits=65, decimal_places=6, null=True, blank=False)
     latitude = models.DecimalField(max_digits=65, decimal_places=6, null=True, blank=False)
+    location = models.CharField(max_length=150, blank=False)
     categories = models.ManyToManyField(Category, related_name='projects', blank=False)
     image_url = models.URLField(blank=False)
     description = HTMLField(blank=False, null=True)
@@ -120,7 +123,7 @@ class Milestone(TimeStamps, models.Model):
     ]
     
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
-    milestone_no = models.IntegerField()
+    milestone_no = models.IntegerField(default=1,)
     title = models.CharField(max_length=250)
     details = HTMLField(blank=False, null=True)
     goal=models.DecimalField(decimal_places=2,max_digits=16)
@@ -181,6 +184,7 @@ class Expense(models.Model):
 
 
 class Update(models.Model):
+    Project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='updates')
     title = models.CharField(max_length=255)
     details = models.TextField()
     image_url = models.URLField()

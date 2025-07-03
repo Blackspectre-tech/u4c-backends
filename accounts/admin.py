@@ -52,7 +52,7 @@ class OrganizationProfileInline(admin.StackedInline):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'name','website','country','location','description','cac_document',
+                'name','website','country','location','description','cac_document_url',
             )
         else:  # adding new object
             return ()
@@ -60,7 +60,7 @@ class OrganizationProfileInline(admin.StackedInline):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'name','website','country','location','description','cac_document',
+                'name','website','country','location','description','cac_document_url',
             )
         else:  # Adding a new object
                 return ()

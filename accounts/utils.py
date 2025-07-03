@@ -156,6 +156,12 @@ def organization_approval_mail(organization, reason=None, approved=True):
 
 
 def resize_and_upload_avatar(image_file):
+
+    try:
+        img = Image.open(image_file)
+        img.verify()  # Will raise an exception if not a valid image
+    except Exception:
+        raise ValidationError("Uploaded file is not a valid image.")
     img = Image.open(image_file)
     img = img.convert("RGB")
     img = img.resize((600, 600))  # Resize
@@ -169,6 +175,12 @@ def resize_and_upload_avatar(image_file):
 
 
 def resize_and_upload(image_file, location, max_size=1024):
+    try:
+        img = Image.open(image_file)
+        img.verify()  # Will raise an exception if not a valid image
+    except Exception:
+        raise ValidationError("Uploaded file is not a valid image.")
+    
     img = Image.open(image_file)
     img = img.convert("RGB")
     img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
@@ -179,6 +191,7 @@ def resize_and_upload(image_file, location, max_size=1024):
 
     result = upload(buffer, folder=f"u4c/{location}")
     return result['secure_url']
+
 
 def upload_pdf(file):
     result = upload(

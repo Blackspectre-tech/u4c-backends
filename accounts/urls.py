@@ -12,6 +12,8 @@ from .views import (
     UserConfirmPasswordResetView,
     UpdateProfileView,
     UpdateOrganizationView,
+    UploadAvatarView,
+
 )
 
 urlpatterns = [
@@ -25,4 +27,6 @@ urlpatterns = [
     path('confirm-password-reset/', UserConfirmPasswordResetView.as_view()),
     path('update-userprofile/', UpdateProfileView.as_view()),
     path('update-organization/', UpdateOrganizationView.as_view()),
+    path('upload-avatar/',UploadAvatarView.as_view())
+
 ]

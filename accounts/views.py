@@ -6,20 +6,22 @@ from django.utils import timezone
 from django.conf import settings
 from rest_framework import permissions, parsers
 from django.shortcuts import get_object_or_404
-
+from drf_nested_multipart.parser import NestedMultipartAndFileParser
 from .serializers import (
     UserRegisterationSerializer,
+    UpdateProfileSerializer,
     AccountActivationSerializer, 
     ResendAccountActivationSerializer,
     UserPasswordResetSerializer,
     UserConfirmPasswordResetSerializer,
-    UpdateProfileSerializer,
-    OrganizationRegisterationSerializer,
-    UpdateOrganizationSerializer
+    OrganizationRegistrationSerializer,
+    UpdateOrganizationSerializer,
+    UploadAvatarSerializer,
+
     )
 from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp
 from .models import Organization, UserProfile
-from .permissions import IsOwnerOfOrganization, Is_Organization
+from .permissions import IsOwnerOfOrganization, Is_Organization,Is_Donor
 
 # Create your views here.
 
@@ -31,13 +33,16 @@ class RegisterUserView(generics.GenericAPIView):
         return Response(serializer.data, status= status.HTTP_201_CREATED)
 
 
-class RegisterOrganizationView(generics.GenericAPIView):
-    def post(self, request):
-        serializer = OrganizationRegisterationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
 
-        return Response(serializer.data, status= status.HTTP_201_CREATED)
+class RegisterOrganizationView(generics.GenericAPIView):
+    parser_classes = [NestedMultipartAndFileParser] 
+    serializer_class = OrganizationRegistrationSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        org = serializer.save()
+        return Response(self.get_serializer(org).data, status=status.HTTP_201_CREATED)
 
 
 
@@ -49,6 +54,7 @@ class AccountActivationView(generics.GenericAPIView):
         return Response({'message': 'Account Activated Successfully'}, status= status.HTTP_200_OK)
         
 
+
 class UserResendActivationView(generics.GenericAPIView):
     serializer_class = ResendAccountActivationSerializer
 
@@ -56,6 +62,7 @@ class UserResendActivationView(generics.GenericAPIView):
         serializer = ResendAccountActivationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response({"message":"New Activation OTP has been sent to your email"})
+
 
 
 class UserPasswordResetView(generics.GenericAPIView):
@@ -105,7 +112,7 @@ class UserConfirmPasswordResetView(generics.GenericAPIView):
 
 
 class UpdateProfileView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated,Is_Donor]
     parser_classes=[parsers.MultiPartParser]
 
     def patch(self, request):
@@ -115,7 +122,7 @@ class UpdateProfileView(generics.GenericAPIView):
         )
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Profile updated successfully."})
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -131,9 +138,19 @@ class UpdateOrganizationView(generics.GenericAPIView):
         )
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Organization details updated successfully."}) #or serializer.data depending on how its needed
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+class UploadAvatarView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser]
+    def patch(self,request):
+        serializer = UploadAvatarSerializer(request.user,data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Profile picture updated successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # class UpdateOrganizationView(generics.UpdateAPIView):

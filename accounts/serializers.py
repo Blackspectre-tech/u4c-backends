@@ -169,18 +169,18 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
 
 
-class UserUpdateSerializer(serializers.ModelSerializer):
-    phone_number = PhoneNumberField(
-        validators=[UniqueValidator(queryset=User.objects.all())]
-    )
+# class UserUpdateSerializer(serializers.ModelSerializer):
+#     phone_number = PhoneNumberField(
+#         validators=[UniqueValidator(queryset=User.objects.all())]
+#     )
 
-    class Meta:
-        model = User
-        fields = ['phone_number','avatar']
+#     class Meta:
+#         model = User
+#         fields = ['phone_number','avatar']
     
-    def update(self, instance, validated_data):
+#     def update(self, instance, validated_data):
 
-        return super().update(instance, validated_data)
+#         return super().update(instance, validated_data)
     
 
 
@@ -228,11 +228,12 @@ class UploadAvatarSerializer(serializers.Serializer):
 
         if image_file:
             try:
-                image_url = resize_and_upload_avatar(image_file)
+                image_url, image_id = resize_and_upload_avatar(image_file)
             except ValidationError as e:
                 raise serializers.ValidationError({'image': e.message})  # Pass to serializer error
 
         instance.avatar = image_url
+        instance.img_public_id = image_id
         instance.save()
         return instance
 

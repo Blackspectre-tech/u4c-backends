@@ -1,39 +1,168 @@
 from django.shortcuts import render
-from .serializers import (
-    ProjectSerializer,
-    UpdateSerializer,
-    )
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+from rest_framework.exceptions import ValidationError
 from rest_framework import generics, status,exceptions, permissions, parsers
 from rest_framework.response import Response
 from drf_nested_multipart.parser import NestedMultipartAndFileParser
-from accounts.permissions import Is_Organization, Is_Donor
-from .models import Project
-from rest_framework.views import APIView
-import pprint
+
+from accounts.permissions import Is_Org, Is_Donor,isOrgObjOwner,isDonorObjOwner
+from .models import Project, Update,Expense,Milestone,Organization,Comment, MilestoneImage
+from .paginations import StandardResultsSetPagination
+from .serializers import (
+    ProjectSerializer,
+    PostUpdateSerializer,
+    MiliestoneImagesSerializer,
+    MilestoneSerializer,
+    ExpensesSerializer,
+    CommentSerializer,
+    )
+
 # Create your views here.
 
-class ProjectCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated,Is_Organization]
+class ProjectCreateView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated,Is_Org,]
     parser_classes=[NestedMultipartAndFileParser]
 
     def post(self, request):
-        organization = request.user.organization
-        serializer = ProjectSerializer(data=request.data, context={'request': request}) 
+        org = request.user.organization
+        if org.approval_status != Organization.APPROVED:
+            raise ValidationError({'Organization':'Organization is not approved to post projects'})
+        serializer = ProjectSerializer(data=request.data) 
         serializer.is_valid(raise_exception=True)
-        serializer.save(organization=organization)
+        serializer.save(organization=org)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+
+class listApprovedProjectsView(generics.ListAPIView):
+    queryset = Project.objects.filter(approval_status=Project.APPROVED)
+    serializer_class = ProjectSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['categories__name','status']
+    search_fields = ['title']
+    pagination_class = StandardResultsSetPagination
+
+
+
+class listOrgProjectsView(generics.ListAPIView):
+    serializer_class = ProjectSerializer
+
+    def get_queryset(self, request):
+        org = get_object_or_404(Organization,self.kwargs['pk'])
+        org_projects = Project.objects.filter(organization=org)
+        return org_projects
+
+
+
+class RetrieveProjectsView(generics.RetrieveAPIView):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+    lookup_field = 'pk'
+
+
+
+
 class PostUpdateView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated,Is_Organization]
-    parser_classes=[parsers.MultiPartParser]
-    serializer_class = UpdateSerializer
-    def perform_create(self, serializer):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        Is_Org,
+        isOrgObjOwner
+        ]
+    parser_classes=[NestedMultipartAndFileParser]
+    serializer_class = PostUpdateSerializer
+    def perform_create(self, request):
         pk = self.kwargs['pk']
-        project=Project.ojects.get(pk=pk)
+        project = get_object_or_404(Project, pk=pk)
+        self.check_object_permissions(request, project)
+        serializer = PostUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         serializer.save(project=project)
         return Response(serializer.data,status=status.HTTP_201_CREATED)
 
+
+class PostMilestoneImages(generics.GenericAPIView):
+    parser_classes=[NestedMultipartAndFileParser]
+    permission_classes = [
+        permissions.IsAuthenticated,
+        Is_Org]
+    
+    def post(self, request, **kwargs):
+        milestone = get_object_or_404(Milestone, pk=kwargs['pk'])
+        if milestone.project.organization != request.user.organization:
+            raise ValidationError ({'message':'only project creators can update images'})
+        serializer = MiliestoneImagesSerializer(data = request.data, context={'milestone':milestone})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'message':'images uploaded successfully'},status=status.HTTP_201_CREATED)
+
         
+class MilestoneRetrieveView(generics.RetrieveAPIView):
+    queryset = Milestone.objects.all()
+    serializer_class =MilestoneSerializer
+    lookup_field = 'pk'
 
 
+class ExpensesCreateView(generics.CreateAPIView):
+    parser_classes=[NestedMultipartAndFileParser]
+    permission_classes = [permissions.IsAuthenticated,Is_Org,isOrgObjOwner]
+    serializer_class = ExpensesSerializer
+    
+    def perform_create(self, serializer):
+        milestone = get_object_or_404(Milestone, id=self.kwargs['pk'])
+        org = milestone.project 
+        self.check_object_permissions(self.request, org)
+        serializer.save(milestone=milestone) 
+
+
+
+class CommentCreateView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated, Is_Donor]
+    serializer_class = CommentSerializer
+    def perform_create(self, serializer):
+        profile=self.request.user.profile
+        project = get_object_or_404(Project,pk=self.kwargs['pk'])
+        serializer.save(profile=profile, project=project)
+
+
+
+class listCommentsByProjectsView(generics.ListAPIView):
+    serializer_class = CommentSerializer
+
+    def get_queryset(self, request):
+        project = get_object_or_404(Project,pk=self.kwargs['pk'])
+        comments = Comment.objects.filter(Project=project)
+        return comments
+
+
+
+
+class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CommentSerializer
+    queryset = Comment.objects.all()
+    permission_classes = [
+        permissions.IsAuthenticated,
+        Is_Donor,isDonorObjOwner]
+    lookup_field = 'pk'
+
+
+
+
+# class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = MilestoneImage
+#     serializer_class = MyModelSerializer
+
+#     def perform_destroy(self, instance):
+#         # ✅ Do something before deletion
+#         print(f"Item {instance} is about to be deleted")
+
+#         # e.g., send email, archive data, deduct credits, etc.
+#         # You can call another function here:
+#         # archive_instance(instance)
+
+#         # ✅ Perform the actual deletion
+#         instance.delete()
+
+#         # ✅ Optionally do something after deletion
+#         print(f"Item {instance} has been deleted")

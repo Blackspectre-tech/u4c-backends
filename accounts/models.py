@@ -48,6 +48,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone_number = PhoneNumberField(unique=True, null=False, blank=False)
     avatar = models.URLField(blank=True, null=True)
+    img_public_id =models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     otp = models.CharField(max_length=6,null=True,blank=True)
@@ -132,3 +133,74 @@ class Social(models.Model):
     facebook = models.URLField(null=True, blank=True)
     youtube = models.URLField(null=True, blank=True)
     twitter = models.URLField(null=True, blank=True)
+
+
+
+
+
+
+
+
+
+
+
+
+# import cloudinary
+# import cloudinary.uploader
+# import cloudinary.api
+# from django.db import models
+# from cloudinary.models import CloudinaryField
+# from urllib.parse import urlparse
+# import re
+
+# class MyModel(models.Model):
+#     image = CloudinaryField('image')
+
+#     def delete(self, *args, **kwargs):
+#         # Extract public_id from the image URL
+#         public_id = self.extract_public_id(self.image.url)
+
+#         if public_id:
+#             try:
+#                 # Delete the image from Cloudinary
+#                 cloudinary.uploader.destroy(public_id)
+#                 print(f"Image with public_id {public_id} deleted from Cloudinary.")
+#             except Exception as e:
+#                 print(f"Error deleting image from Cloudinary: {e}")
+        
+#         # Call the parent class's delete method to remove the object from the database
+#         super(MyModel, self).delete(*args, **kwargs)
+
+#     def extract_public_id(self, image_url):
+#         """
+#         Extracts the public ID from a Cloudinary image URL.
+
+#         Args:
+#             image_url: The Cloudinary image URL.
+
+#         Returns:
+#             The extracted public ID, or None if extraction fails.
+#         """
+#         try:
+#             # Attempt to extract public_id using urlparse and regex
+#             path = urlparse(image_url).path
+#             match = re.search(r'/v\d+/(.+?)(?:\.\w+)?$', path)
+#             if match:
+#                 return match.group(1)
+#             else:
+#                 return None
+#         except Exception as e:
+#             print(f"Error extracting public_id: {e}")
+#             return None
+
+# # Example usage (replace with your actual model name and fields)
+# # Assuming you have a view where you handle user deletion
+# def delete_my_model_instance(request, instance_id):
+#     try:
+#         instance = MyModel.objects.get(id=instance_id)
+#         instance.delete()
+#         return JsonResponse({'message': 'Instance and associated Cloudinary image deleted.'})
+#     except MyModel.DoesNotExist:
+#         return JsonResponse({'message': 'Instance not found.'}, status=404)
+#     except Exception as e:
+#         return JsonResponse({'message': str(e)}, status=500)

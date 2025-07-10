@@ -8,7 +8,7 @@ from decimal import Decimal
 # from django.core.exceptions import ValidationError
 from django.forms import ValidationError as FormValidationError
 from accounts.utils import project_approval_mail
-from .models import Category, Project, Milestone, Milestone_Images
+from .models import Category, Project, Milestone, MilestoneImage
 from accounts.utils import resize_and_upload
 from core.settings import IMG
 from django import forms
@@ -301,7 +301,7 @@ class MilestoneimagesAdminForm(forms.ModelForm):
     upload_image = forms.ImageField(required=False, label='Upload Image')
 
     class Meta:
-        model = Milestone_Images
+        model = MilestoneImage
         fields = ['upload_image']
     
     def save(self, commit=True):
@@ -320,14 +320,14 @@ class MilestoneimagesAdminForm(forms.ModelForm):
 
 
 class MilestoneImagesInline(admin.StackedInline):
-    model = Milestone_Images
+    model = MilestoneImage
     extra = 1
     form = MilestoneimagesAdminForm
 
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'image', 'image_preview','upload_image'
+                'image_url', 'image_preview','upload_image'
             )
         else:  # adding new object
             return ('upload_image',)
@@ -335,7 +335,7 @@ class MilestoneImagesInline(admin.StackedInline):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'image','image_preview'
+                'image_url','image_preview'
             )
         else:  # Adding a new object
                 return ()

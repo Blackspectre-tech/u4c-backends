@@ -1,14 +1,14 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from accounts.models import Organization, UserProfile
+from accounts.models import Organization, UserProfile,TimeStamps
 from tinymce.models import HTMLField
 from accounts.utils import html_cleaner
-from accounts.models import TimeStamps
 from django.utils.html import format_html
 from accounts.utils import resize_and_upload
 from core.settings import IMG
 from django.core.validators import MinLengthValidator,MaxLengthValidator
-
+from django.core.validators import MinValueValidator, MaxValueValidator
+from cloudinary.uploader import destroy
 # Create your models here.
 
 
@@ -27,6 +27,9 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        verbose_name_plural = "Categories"
 
 
 class Project(TimeStamps, models.Model):
@@ -39,7 +42,6 @@ class Project(TimeStamps, models.Model):
     Unimplemented ='Under Implementation'
     Cancelled ='Cancelled'
     Completed = 'Completed'
-
 
     approval = [
     (FLAGGED,'🚩FLAGGED'),
@@ -63,6 +65,7 @@ class Project(TimeStamps, models.Model):
     location = models.CharField(max_length=150, blank=False)
     categories = models.ManyToManyField(Category, related_name='projects', blank=False)
     image_url = models.URLField(blank=False)
+    img_public_id = models.CharField(max_length=255, blank=True, null=True)
     description = HTMLField(blank=False, null=True)
     problem_to_address = HTMLField(blank=False, null=True)
     solution = HTMLField(blank=False, null=True)
@@ -77,8 +80,6 @@ class Project(TimeStamps, models.Model):
     ended_at = models.DateTimeField(null=True)
     total_funds = models.DecimalField(decimal_places=2,max_digits=14,default=0)
     
-    
-
 
     def __str__(self):
         return self.title
@@ -86,9 +87,9 @@ class Project(TimeStamps, models.Model):
     @property
     def progress(self):
         return f'{(self.total_funds / self.goal) * 100 :.2f}%'
+    
 
     def save(self, *args, **kwargs):
-        # self.image = resize_and_upload(self.image, IMG['projects'] + self.title)
         html_fields = ['description', 'summary', 'problem_to_address', 'solution']
         for field in html_fields:
             value = getattr(self, field)
@@ -99,6 +100,11 @@ class Project(TimeStamps, models.Model):
                 setattr(self, field, sanitized)
         super().save(*args, **kwargs)
 
+
+    def delete(self, *args, **kwargs):
+        if self.img_public_id:
+            destroy(self.img_public_id)
+        super().delete(*args, **kwargs)
 
 
     def image_preview(self):
@@ -123,7 +129,7 @@ class Milestone(TimeStamps, models.Model):
     ]
     
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
-    milestone_no = models.IntegerField(default=1,)
+    milestone_no = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)],)
     title = models.CharField(max_length=250)
     details = HTMLField(blank=False, null=True)
     goal=models.DecimalField(decimal_places=2,max_digits=16)
@@ -151,14 +157,19 @@ class Milestone(TimeStamps, models.Model):
     
 
 
-class Milestone_Images(models.Model):
+class MilestoneImage(models.Model):
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, related_name= 'images')
-    image = models.URLField()
+    image_url = models.URLField()
+    img_public_id = models.CharField(max_length=255, blank=True, null=True)
     
 
     def __str__(self):
         return self.image
     
+    def delete(self, *args, **kwargs):
+        if self.img_public_id:
+            destroy(self.img_public_id)
+        super().delete(*args, **kwargs)
 
     def image_preview(self):
         if self.image:
@@ -177,10 +188,14 @@ class Expense(models.Model):
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     proof_pdf_url = models.URLField() 
-
+    pdf_public_id = models.CharField(max_length=255, blank=True, null=True)
     def __str__(self):
         return self.milestone.title
 
+    def delete(self, *args, **kwargs):
+        if self.pdf_public_id:
+            destroy(self.pdf_public_id)
+        super().delete(*args, **kwargs)
 
 
 class Update(models.Model):
@@ -188,9 +203,9 @@ class Update(models.Model):
     title = models.CharField(max_length=255)
     details = models.TextField()
     image_url = models.URLField()
+    img_public_id =models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
    
-
 
     class Meta:
         ordering = ["-created_at"]
@@ -198,13 +213,38 @@ class Update(models.Model):
     def __str__(self):
         return self.title
     
+    def delete(self, *args, **kwargs):
+        if self.img_public_id:
+            destroy(self.img_public_id)
+        super().delete(*args, **kwargs)
 
 
-class Donations(models.Model):
-    pass
+class Donation(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='donations')
+    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='donations')
+    amount = models.DecimalField(decimal_places=2,max_digits=14, blank=False)
+    date = models.DateTimeField(auto_now_add=True)
 
-class Comment(models.Model):
-    pass
+    class Meta:
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"{self.user_profile.username} | amount: {self.amount} | project{self.project.title}"
 
 
 
+
+class Comment(TimeStamps,models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='comments')
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='comments')
+    details = models.TextField()
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return self.profile.username
+    
+    @property
+    def username(self):
+        return self.profile.username

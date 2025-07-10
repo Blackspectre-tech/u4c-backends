@@ -171,49 +171,39 @@ def resize_and_upload_avatar(image_file):
     buffer.seek(0)
 
     result = upload(buffer, folder=f"u4c/avatars")
-    return result['secure_url']
+    return result['secure_url'], result['public_id']
 
 
 def resize_and_upload(image_file, location, max_size=1024):
     try:
         img = Image.open(image_file)
-        img.verify()  # Will raise an exception if not a valid image
+        img.verify()  # Raises error if file is not a valid image
     except Exception:
         raise ValidationError("Uploaded file is not a valid image.")
-    
+
+    # Reopen and process the image
     img = Image.open(image_file)
     img = img.convert("RGB")
     img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
 
     buffer = BytesIO()
-    img.save(buffer, format='JPEG', quality=85, optimize=True, progressive=True) # setting teh quality to 85%
+    img.save(buffer, format='JPEG', quality=85, optimize=True, progressive=True)
     buffer.seek(0)
 
+    # Upload to Cloudinary
     result = upload(buffer, folder=f"u4c/{location}")
-    return result['secure_url']
+
+    # Return both the URL and the public_id
+    return result['secure_url'], result['public_id']
 
 
 def upload_pdf(file):
     result = upload(
         file,
         resource_type="raw",
-        folder="cac_documents"
+        folder="u4c/pdf"
     )
-    return result["secure_url"]
-
-# def resize_and_upload(image_file, location, max_size=1024):
-#     img = Image.open(image_file)
-#     img = img.convert("RGB")
-
-#     # Resize with aspect ratio preserved
-#     img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-
-#     buffer = BytesIO()
-#     img.save(buffer, format='JPEG', quality=85, optimize=True, progressive=True)
-#     buffer.seek(0)
-
-#     result = upload(buffer, folder=f"u4c/{location}")
-#     return result['secure_url']
+    return result["secure_url"], result['public_id']
 
 
 

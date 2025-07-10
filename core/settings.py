@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'phonenumber_field',
     'tinymce',
     'drf_standardized_errors',
+    'django_filters',
     
     
 ]
@@ -157,8 +158,8 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-    
+    ),
+    # 'DEFAULT_RENDERER_CLASSES':[('rest_framework.renderers.JSONRenderer'),]
 }
 DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True}
 

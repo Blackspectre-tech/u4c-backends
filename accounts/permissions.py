@@ -1,14 +1,26 @@
 from rest_framework.permissions import BasePermission
 
-class Is_Organization(BasePermission):
+class Is_Org(BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_organization)
         
 
-class IsOwnerOfOrganization(BasePermission):
+class isOrgOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj.user == request.user
+
+
+class isDonorObjOwner(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return obj.profile == request.user.profile
+
+class isOrgObjOwner(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return obj.organization == request.user.organization
+
 
 class Is_Donor(BasePermission):
     def has_permission(self, request, view):

@@ -21,7 +21,7 @@ from .serializers import (
     )
 from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp
 from .models import Organization, UserProfile
-from .permissions import IsOwnerOfOrganization, Is_Organization,Is_Donor
+from .permissions import isOrgOwner, Is_Org,Is_Donor
 
 # Create your views here.
 
@@ -127,7 +127,7 @@ class UpdateProfileView(generics.GenericAPIView):
 
 
 class UpdateOrganizationView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated,IsOwnerOfOrganization]
+    permission_classes = [permissions.IsAuthenticated,isOrgOwner]
     parser_classes=[parsers.MultiPartParser]
 
     def patch(self, request):
@@ -151,6 +151,15 @@ class UploadAvatarView(generics.GenericAPIView):
             serializer.save()
             return Response({"message": "Profile picture updated successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class RetrieveOrganization(generics.RetrieveAPIView):
+#     permission_classes = [permissions.AllowAny]
+#     serializer_class = ProjectSerializer
+
+#     def get_queryset(self, request):
+#         organization = Organization.objects.filter(organization=self.request.user.organization)
+#         return my_projects
 
 
 # class UpdateOrganizationView(generics.UpdateAPIView):

@@ -6,6 +6,7 @@ from .views import (
     RetrieveProjectsView,
     listOrgProjectsView,
     PostMilestoneImages,
+    MilestoneImagesRetrieveUpdateDestroyAPIView,
     MilestoneRetrieveView,
     ExpensesCreateView,
     CommentCreateView,
@@ -25,6 +26,5 @@ urlpatterns = [
     path('milestones/<int:pk>/', MilestoneRetrieveView.as_view()),
     path('milestones/<int:pk>/post-images/', PostMilestoneImages.as_view()),
     path('milestones/<int:pk>/add-expenses', ExpensesCreateView.as_view()),
-    
-    #retrieve image & delete image
+    path('milestones/images/<int:pk>', MilestoneImagesRetrieveUpdateDestroyAPIView.as_view()),
 ]

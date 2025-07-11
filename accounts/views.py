@@ -22,12 +22,14 @@ from .serializers import (
 from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp
 from .models import Organization, UserProfile
 from .permissions import isOrgOwner, Is_Org,Is_Donor
+from rest_framework.views import APIView
 
 # Create your views here.
 
 class RegisterUserView(generics.GenericAPIView):
+    serializer_class = UserRegisterationSerializer
     def post(self, request):
-        serializer = UserRegisterationSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status= status.HTTP_201_CREATED)
@@ -47,8 +49,10 @@ class RegisterOrganizationView(generics.GenericAPIView):
 
 
 class AccountActivationView(generics.GenericAPIView):
+    serializer_class = AccountActivationSerializer
+    
     def post(self, request):
-        serializer = AccountActivationSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Account Activated Successfully'}, status= status.HTTP_200_OK)
@@ -59,7 +63,7 @@ class UserResendActivationView(generics.GenericAPIView):
     serializer_class = ResendAccountActivationSerializer
 
     def post(self, request):
-        serializer = ResendAccountActivationSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response({"message":"New Activation OTP has been sent to your email"})
 
@@ -69,7 +73,7 @@ class UserPasswordResetView(generics.GenericAPIView):
     serializer_class = UserPasswordResetSerializer
 
     def post(self, request):
-        serializer = UserPasswordResetSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
             user=get_user_model().objects.get(email=serializer.validated_data.get("email"))
@@ -93,7 +97,7 @@ class UserConfirmPasswordResetView(generics.GenericAPIView):
     permission_classes = []
 
     def post(self, request):
-        serializer = UserConfirmPasswordResetSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             otp = serializer.validated_data.get("otp")
             new_password = serializer.validated_data.get("new_password")
@@ -114,12 +118,11 @@ class UserConfirmPasswordResetView(generics.GenericAPIView):
 class UpdateProfileView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated,Is_Donor]
     parser_classes=[parsers.MultiPartParser]
+    serializer_class = UpdateProfileSerializer
 
     def patch(self, request):
         profile = get_object_or_404(UserProfile, user=request.user)
-        serializer = UpdateProfileSerializer(
-            profile, data=request.data, partial=True
-        )
+        serializer = self.get_serializer(profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -129,13 +132,13 @@ class UpdateProfileView(generics.GenericAPIView):
 class UpdateOrganizationView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated,isOrgOwner]
     parser_classes=[parsers.MultiPartParser]
+    serializer_class = UpdateOrganizationSerializer
 
     def patch(self, request):
         organization = get_object_or_404(Organization, user=request.user)
         self.check_object_permissions(request, organization)
-        serializer = UpdateOrganizationSerializer(
-            organization, data=request.data, partial=True
-        )
+        serializer = self.get_serializer(organization, data=request.data, partial=True)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -145,8 +148,10 @@ class UpdateOrganizationView(generics.GenericAPIView):
 class UploadAvatarView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [parsers.MultiPartParser]
+    serializer_class = UploadAvatarSerializer
+    
     def patch(self,request):
-        serializer = UploadAvatarSerializer(request.user,data=request.data)
+        serializer = self.get_serializer(request.user,data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Profile picture updated successfully."}, status=status.HTTP_200_OK)
@@ -157,7 +162,7 @@ class UploadAvatarView(generics.GenericAPIView):
 #     permission_classes = [permissions.AllowAny]
 #     serializer_class = ProjectSerializer
 
-#     def get_queryset(self, request):
+#     def get_queryset(self):
 #         organization = Organization.objects.filter(organization=self.request.user.organization)
 #         return my_projects
 

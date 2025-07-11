@@ -4,12 +4,11 @@ from .models import (
     MilestoneImage, Expense, Update,
     Comment,Donation,
     )
-from accounts.utils import resize_and_upload, upload_pdf
-from core.settings import IMG
+from accounts.utils import resize_image
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.db import transaction
-from cloudinary.uploader import destroy
+from drf_spectacular.utils import extend_schema_field
 
 
 
@@ -20,9 +19,9 @@ class MiliestoneImagesSerializer(serializers.ModelSerializer):
         
     class Meta:
         model = MilestoneImage
-        fields = ['id','image_url', 'images']
+        fields = ['id','image', 'images']
         extra_kwargs = {
-            'image_url': {'read_only': True},
+            'image': {'read_only': True},
             'id': {'read_only': True},
         }
 
@@ -33,11 +32,10 @@ class MiliestoneImagesSerializer(serializers.ModelSerializer):
 
         if images:
             for img in images:
-                image_url, image_id = resize_and_upload(img, f"{IMG['milestones']}{milestone.title}")
+                image = resize_image(img)
                 instances.append(MilestoneImage(
                     milestone=milestone,
-                    image_url=image_url,
-                    img_public_id = image_id
+                    image=image,
                 ))
             
             MilestoneImage.objects.bulk_create(instances)
@@ -49,11 +47,10 @@ class MiliestoneImagesSerializer(serializers.ModelSerializer):
 
 
 class ExpensesSerializer(serializers.ModelSerializer):
-    pdf = serializers.FileField(write_only=True, required=True)
 
     class Meta:
         model = Expense
-        fields = ['amount_spent','description','date','proof_pdf_url','pdf',]
+        fields = ['amount_spent','description','date','proof_pdf',]
         extra_kwargs = {
         'proof_pdf_url': {'read_only': True},
         }  
@@ -64,13 +61,6 @@ class ExpensesSerializer(serializers.ModelSerializer):
         if value.size > 1024 * 1024:
             raise serializers.ValidationError("File size cannot exceed 1MB.")
         return value
-
-    def create(self, validated_data, **kwargs):
-        pdf = validated_data.pop('pdf',None)
-        if pdf:
-            pdf_url, public_id = upload_pdf(pdf)
-
-        return Expense.objects.create(pdf_public_id=public_id,proof_pdf_url=pdf_url,**validated_data)
 
 
 
@@ -86,33 +76,24 @@ class MilestoneSerializer(serializers.ModelSerializer):
         'id': {'read_only': True},
         }
     
-    def update(self, instance, validated_data):
-        image_id = instance.id
-        destroy(image_id)
-        return super().update(instance, validated_data)
     
-
-    
-
 
 
 
 class PostUpdateSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(write_only=True)
     
     class Meta:
         model = Update
-        fields = ['title', 'details','image','image_url','created_at']
+        fields = ['title', 'details','image','created_at']
         extra_kwargs = {
-            'image_url': {'read_only': True},
             'created_at': {'read_only': True},
         }
 
     def create(self, validated_data):
         image = validated_data.pop('image', None)
-        image_url, image_id = resize_and_upload(image, IMG['updates'])
+        validated_data['image'] = resize_image(image)
 
-        return Update.objects.create(image_url=image_url,img_public_id=image_id,**validated_data) 
+        return Update.objects.create(**validated_data) 
 
 
 
@@ -142,14 +123,13 @@ class ProjectSerializer(serializers.ModelSerializer):
     categories_display = serializers.SerializerMethodField(read_only=True)
     milestones = MilestoneSerializer(many=True, required=False)
 
-    image = serializers.ImageField(write_only=True, required=True)
 
     class Meta:
         model = Project
         fields = [
             'id','title','categories_display', 'goal', 'country', 'location', 'longitude', 'latitude',
             'description', 'categories', 'image', 'problem_to_address',
-            'solution', 'summary', 'video', 'milestones', 'image_url',
+            'solution', 'summary', 'video', 'milestones',
             ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -164,7 +144,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             'solution':{'required': True},
             'summary':{'required': True},
             'video': {'required': False},
-            'image_url': {'required': False},
+            'image': {'required': True},
         }
 
     def validate(self, attrs):
@@ -192,7 +172,8 @@ class ProjectSerializer(serializers.ModelSerializer):
         attrs['categories'] = found_category_objects 
         
         return attrs
-
+    
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_categories_display(self, obj):
         return [cat.name for cat in obj.categories.all()]
 
@@ -229,9 +210,8 @@ class ProjectSerializer(serializers.ModelSerializer):
             # Handle image upload
             if image:
                 try:
-                    image_url, image_id = resize_and_upload(image, f"{IMG['projects']}{validated_data.get('title')}")
-                    project.image_url = image_url
-                    project.img_public_id = image_id
+                    image = resize_image(image)
+                    project.image = image
                 except ValidationError as e:
                     raise serializers.ValidationError({'image': e.message})
 

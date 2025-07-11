@@ -5,12 +5,10 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from decimal import Decimal
-# from django.core.exceptions import ValidationError
 from django.forms import ValidationError as FormValidationError
 from accounts.utils import project_approval_mail
 from .models import Category, Project, Milestone, MilestoneImage
-from accounts.utils import resize_and_upload
-from core.settings import IMG
+from accounts.utils import resize_image
 from django import forms
 from django.forms.models import BaseInlineFormSet
 # Register your models here.
@@ -18,12 +16,12 @@ from django.forms.models import BaseInlineFormSet
 
 
 
-class ProjectAdminForm(forms.ModelForm):
-    upload_image = forms.ImageField(required=False, label='Upload Image')
+# class ProjectAdminForm(forms.ModelForm):
+#     upload_image = forms.ImageField(required=False, label='Upload Image')
 
-    class Meta:
-        model = Project
-        fields = ['upload_image']
+#     class Meta:
+#         model = Project
+#         fields = ['upload_image']
     
 
 # enabling markup formating for readonly textfields for the admin panel
@@ -104,7 +102,6 @@ class MilestoneInline(admin.StackedInline):
 class ProjectAdmin(admin.ModelAdmin):
 
     inlines = [MilestoneInline]
-    form = ProjectAdminForm
     list_display = (
         "title", 'goal', 'approval_status', 'status', 'progress'
     )
@@ -118,7 +115,7 @@ class ProjectAdmin(admin.ModelAdmin):
                 'organization', 'categories', 'title', 'goal', 'total_funds', 'progress', 'country', 'longitude',
                 'latitude', 'approval_status', 'video',
                 'formatted_problem_to_address', 'formatted_solution', 'formatted_summary',
-                'formatted_description', 'image_preview','created_at', 'updated_at',
+                'formatted_description','image','created_at', 'updated_at',
             )
 
             if obj.approval_status != Project.PENDING and obj.approval_status != Project.APPROVED:
@@ -129,7 +126,7 @@ class ProjectAdmin(admin.ModelAdmin):
         else:  # adding new object
             return (
                 'organization', 'categories', 'title', 'goal', 'country', 'longitude',
-                'latitude', 'upload_image', 'video','description', 
+                'latitude', 'image', 'video','description', 
                 'problem_to_address', 'solution', 'summary', 
             )
 
@@ -138,7 +135,7 @@ class ProjectAdmin(admin.ModelAdmin):
             fields = (
                 'organization','categories', 'title', 'goal', 'country', 'longitude',
                 'latitude', 'formatted_description', 'milestones', 'image', 'video', 'approval_status',
-                'formatted_problem_to_address', 'formatted_solution', 'formatted_summary','image_preview',
+                'formatted_problem_to_address', 'formatted_solution', 'formatted_summary',
                 'created_at', 'updated_at', 'progress',
             )
 
@@ -286,56 +283,47 @@ class ProjectAdmin(admin.ModelAdmin):
         return redirect(reverse('admin:projects_project_changelist'))
 
 
-    def save_model(self, request, obj, form, change):
-
-        image_file = form.cleaned_data.get('upload_image')
-        if image_file:
-            image_url = resize_and_upload(image_file, IMG['projects'] + str(obj.title))
-            obj.image = image_url
-        super().save_model(request, obj, form, change)
 
 
 
+# class MilestoneimagesAdminForm(forms.ModelForm):
+#     upload_image = forms.ImageField(required=False, label='Upload Image')
 
-class MilestoneimagesAdminForm(forms.ModelForm):
-    upload_image = forms.ImageField(required=False, label='Upload Image')
-
-    class Meta:
-        model = MilestoneImage
-        fields = ['upload_image']
+#     class Meta:
+#         model = MilestoneImage
+#         fields = ['upload_image']
     
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        image_file = self.cleaned_data.get('upload_image')
+    # def save(self, commit=True):
+    #     instance = super().save(commit=False)
+    #     image_file = self.cleaned_data.get('upload_image')
 
-        if image_file:
+    #     if image_file:
             
-            image_url = resize_and_upload(image_file, IMG['milestones'] + instance.milestone.title)
-            instance.image = image_url
+    #         image_url = resize_image(image_file, IMG['milestones'] + instance.milestone.title)
+    #         instance.image = image_url
 
-        if commit:
-            instance.save()
-        return instance
+    #     if commit:
+    #         instance.save()
+    #     return instance
 
 
 
 class MilestoneImagesInline(admin.StackedInline):
     model = MilestoneImage
     extra = 1
-    form = MilestoneimagesAdminForm
 
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'image_url', 'image_preview','upload_image'
+                'image'
             )
         else:  # adding new object
-            return ('upload_image',)
+            return ('image',)
 
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'image_url','image_preview'
+                'image'
             )
         else:  # Adding a new object
                 return ()

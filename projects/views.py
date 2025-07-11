@@ -24,12 +24,13 @@ from .serializers import (
 class ProjectCreateView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated,Is_Org,]
     parser_classes=[NestedMultipartAndFileParser]
+    serializer_class = ProjectSerializer
 
     def post(self, request):
         org = request.user.organization
         if org.approval_status != Organization.APPROVED:
             raise ValidationError({'Organization':'Organization is not approved to post projects'})
-        serializer = ProjectSerializer(data=request.data) 
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(organization=org)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -49,7 +50,7 @@ class listApprovedProjectsView(generics.ListAPIView):
 class listOrgProjectsView(generics.ListAPIView):
     serializer_class = ProjectSerializer
 
-    def get_queryset(self, request):
+    def get_queryset(self):
         org = get_object_or_404(Organization,self.kwargs['pk'])
         org_projects = Project.objects.filter(organization=org)
         return org_projects
@@ -64,7 +65,7 @@ class RetrieveProjectsView(generics.RetrieveAPIView):
 
 
 
-class PostUpdateView(generics.GenericAPIView):
+class PostUpdateView(generics.CreateAPIView):
     permission_classes = [
         permissions.IsAuthenticated,
         Is_Org,
@@ -72,27 +73,26 @@ class PostUpdateView(generics.GenericAPIView):
         ]
     parser_classes=[NestedMultipartAndFileParser]
     serializer_class = PostUpdateSerializer
-    def perform_create(self, request):
+    def perform_create(self, serializer):
         pk = self.kwargs['pk']
         project = get_object_or_404(Project, pk=pk)
-        self.check_object_permissions(request, project)
-        serializer = PostUpdateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        self.check_object_permissions(self.request, project)
         serializer.save(project=project)
-        return Response(serializer.data,status=status.HTTP_201_CREATED)
 
 
 class PostMilestoneImages(generics.GenericAPIView):
-    parser_classes=[NestedMultipartAndFileParser]
+    parser_classes=[parsers.MultiPartParser]
     permission_classes = [
         permissions.IsAuthenticated,
         Is_Org]
+    serializer_class = MiliestoneImagesSerializer
     
     def post(self, request, **kwargs):
+        print (request.data)
         milestone = get_object_or_404(Milestone, pk=kwargs['pk'])
         if milestone.project.organization != request.user.organization:
             raise ValidationError ({'message':'only project creators can update images'})
-        serializer = MiliestoneImagesSerializer(data = request.data, context={'milestone':milestone})
+        serializer = self.get_serializer(data = request.data, context={'milestone':milestone})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message':'images uploaded successfully'},status=status.HTTP_201_CREATED)
@@ -130,7 +130,7 @@ class CommentCreateView(generics.CreateAPIView):
 class listCommentsByProjectsView(generics.ListAPIView):
     serializer_class = CommentSerializer
 
-    def get_queryset(self, request):
+    def get_queryset(self):
         project = get_object_or_404(Project,pk=self.kwargs['pk'])
         comments = Comment.objects.filter(Project=project)
         return comments
@@ -149,20 +149,19 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-# class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-#     queryset = MilestoneImage
-#     serializer_class = MyModelSerializer
+class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = MilestoneImage
+    serializer_class = MiliestoneImagesSerializer
+    permission_classes = [permissions.IsAuthenticated,Is_Org]
 
-#     def perform_destroy(self, instance):
-#         # ✅ Do something before deletion
-#         print(f"Item {instance} is about to be deleted")
+    def perform_destroy(self, instance):
+        if instance.milestone.project.organization != self.request.user.organization:
+            raise ValidationError({'message':'you are not permited to delete this item'})
+        return super().perform_destroy(instance)
 
-#         # e.g., send email, archive data, deduct credits, etc.
-#         # You can call another function here:
-#         # archive_instance(instance)
-
-#         # ✅ Perform the actual deletion
-#         instance.delete()
-
-#         # ✅ Optionally do something after deletion
-#         print(f"Item {instance} has been deleted")
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        if instance.milestone.project.organization != self.request.user.organization:
+            raise ValidationError({'message':'you are not permited to delete this item'})
+        
+        return super().perform_update(serializer)

@@ -8,7 +8,7 @@ from django import forms
 from django.urls import path, reverse
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
-from .utils import organization_approval_mail, upload_pdf
+from .utils import organization_approval_mail
 from django.contrib.admin.models import LogEntry
 from django.utils.html import format_html
 from django.contrib.contenttypes.models import ContentType
@@ -112,21 +112,21 @@ class CustomUserAdmin(UserAdmin):
 
 
 
-class OrganizationAdminForm(forms.ModelForm):
-    upload_cac = forms.FileField(required=False)
+# class OrganizationAdminForm(forms.ModelForm):
+#     upload_cac = forms.FileField(required=False)
 
-    class Meta:
-        model = Organization
-        fields = ['upload_cac']
+#     class Meta:
+#         model = Organization
+#         fields = ['upload_cac']
     
-    def clean_upload_cac(self):
-        file = self.cleaned_data.get("upload_cac")
-        if file:
-            if not file.name.endswith('.pdf'):
-                raise ValidationError("Only PDF files are allowed.")
-            if file.size > 1024 * 1024: # 1MB
-                raise ValidationError("File size cannot exceed 1MB.")
-        return file
+#     def clean_upload_cac(self):
+#         file = self.cleaned_data.get("upload_cac")
+#         if file:
+#             if not file.name.endswith('.pdf'):
+#                 raise ValidationError("Only PDF files are allowed.")
+#             if file.size > 1024 * 1024: # 1MB
+#                 raise ValidationError("File size cannot exceed 1MB.")
+#         return file
 
 class SocialsInline(admin.StackedInline):
     model = Social
@@ -144,7 +144,6 @@ class SocialsInline(admin.StackedInline):
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
     inlines = [SocialsInline]
-    form = OrganizationAdminForm
 
     list_display = (
         "name", 'user__email', 'approval_status'
@@ -159,7 +158,7 @@ class OrganizationAdmin(admin.ModelAdmin):
         if obj:  # editing existing object
             fields = (
                 'name', 'website', 'country', 'user',
-                'location', 'description', 'approval_status','cac_document_url','reg_no',
+                'location', 'description', 'approval_status','reg_no','cac_document',
             )
 
             if obj.approval_status == Organization.APPROVED:
@@ -172,8 +171,8 @@ class OrganizationAdmin(admin.ModelAdmin):
                 return fields
         else:  # adding new object
             return (
-                'user', 'name', 'website', 'country', 'upload_cac',
-                'location', 'description','reg_no',
+                'user', 'name', 'website', 'country',
+                'location', 'description','reg_no','cac_document',
             )
 
 
@@ -182,7 +181,7 @@ class OrganizationAdmin(admin.ModelAdmin):
         if obj:  # Editing an existing 
             read_only = (
                 'name', 'website', 'country', 'reg_no',
-                'location', 'description', 'approval_status', 'user','cac_document_url',
+                'location', 'description', 'approval_status', 'user','cac_document',
             )
 
             if obj.approval_status == Organization.APPROVED:
@@ -270,7 +269,7 @@ class OrganizationAdmin(admin.ModelAdmin):
         organization.save()
         
         try:
-            organization_approval_mail(organization, reason)
+            organization_approval_mail(organization, reason, approved=False)
         except Exception as e:
             messages.error(request, f"Organization disapproved but email failed: {e}")
         else:
@@ -280,32 +279,8 @@ class OrganizationAdmin(admin.ModelAdmin):
         return redirect(reverse('admin:accounts_organization_changelist'))
 
 
-# def save_model(self, request, obj, form, change):
-
-#         image_file = form.cleaned_data.get('upload_image')
-#         if image_file:
-#             image_url = upload_pdf(image_file, IMG['projects'] + str(obj.title))
-#             obj.image = image_url
-#         super().save_model(request, obj, form, change)
-
-
-
-
-
-# if value.content_type != 'application/pdf':
-#             raise serializers.ValidationError("Only PDF files are allowed.")
-
-#         # ✅ Validate file size (1MB max)
-#         max_size_mb = 1
-#         if value.size > max_size_mb * 1024 * 1024:
-#             raise serializers.ValidationError("File size must not exceed 1MB.")
-
 
     def save_model(self, request, obj, form, change):
-        pdf_file = form.cleaned_data.get('upload_cac')
-        pdf_url = upload_pdf(pdf_file)
-        obj.cac_document_url = pdf_url
-
         user = obj.user
         user.is_organization = True
         user.save()

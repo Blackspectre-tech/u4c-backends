@@ -1,14 +1,12 @@
 from django.db import models
-from django.contrib.auth import get_user_model
 from accounts.models import Organization, UserProfile,TimeStamps
 from tinymce.models import HTMLField
 from accounts.utils import html_cleaner
 from django.utils.html import format_html
-from accounts.utils import resize_and_upload
-from core.settings import IMG
 from django.core.validators import MinLengthValidator,MaxLengthValidator
 from django.core.validators import MinValueValidator, MaxValueValidator
-from cloudinary.uploader import destroy
+from drf_spectacular.utils import extend_schema_field
+
 # Create your models here.
 
 
@@ -64,10 +62,9 @@ class Project(TimeStamps, models.Model):
     latitude = models.DecimalField(max_digits=65, decimal_places=6, null=True, blank=False)
     location = models.CharField(max_length=150, blank=False)
     categories = models.ManyToManyField(Category, related_name='projects', blank=False)
-    image_url = models.URLField(blank=False)
-    img_public_id = models.CharField(max_length=255, blank=True, null=True)
+    image = models.ImageField(upload_to='projects/',blank=False, null=False)
     description = HTMLField(blank=False, null=True)
-    problem_to_address = HTMLField(blank=False, null=True)
+    problem_to_address = HTMLField(blank=False, null=False)
     solution = HTMLField(blank=False, null=True)
     summary = HTMLField(blank=False, null=True)
     video = models.URLField(null=True, blank=True)
@@ -101,15 +98,9 @@ class Project(TimeStamps, models.Model):
         super().save(*args, **kwargs)
 
 
-    def delete(self, *args, **kwargs):
-        if self.img_public_id:
-            destroy(self.img_public_id)
-        super().delete(*args, **kwargs)
-
-
     def image_preview(self):
-        if self.image_url:
-            return format_html('<img src="{}" style="max-height: 200px;" />', self.image_url)
+        if self.image:
+            return format_html('<img src="{}" style="max-height: 200px;" />', self.image)
         return "No Image"
 
     image_preview.short_description = "Image Preview"
@@ -159,17 +150,12 @@ class Milestone(TimeStamps, models.Model):
 
 class MilestoneImage(models.Model):
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, related_name= 'images')
-    image_url = models.URLField()
-    img_public_id = models.CharField(max_length=255, blank=True, null=True)
+    image = models.ImageField(upload_to='milestone images/',blank=False, null=False)
     
 
     def __str__(self):
         return self.image
     
-    def delete(self, *args, **kwargs):
-        if self.img_public_id:
-            destroy(self.img_public_id)
-        super().delete(*args, **kwargs)
 
     def image_preview(self):
         if self.image:
@@ -187,23 +173,19 @@ class Expense(models.Model):
     description = models.TextField()
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
-    proof_pdf_url = models.URLField() 
-    pdf_public_id = models.CharField(max_length=255, blank=True, null=True)
+    proof_pdf = models.FileField(upload_to='expenses/',blank=False, null=False) 
+
+
     def __str__(self):
         return self.milestone.title
 
-    def delete(self, *args, **kwargs):
-        if self.pdf_public_id:
-            destroy(self.pdf_public_id)
-        super().delete(*args, **kwargs)
 
 
 class Update(models.Model):
     Project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='updates')
     title = models.CharField(max_length=255)
     details = models.TextField()
-    image_url = models.URLField()
-    img_public_id =models.CharField(max_length=255, blank=True, null=True)
+    image = models.ImageField(upload_to='updates/',blank=False, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
    
 
@@ -213,10 +195,6 @@ class Update(models.Model):
     def __str__(self):
         return self.title
     
-    def delete(self, *args, **kwargs):
-        if self.img_public_id:
-            destroy(self.img_public_id)
-        super().delete(*args, **kwargs)
 
 
 class Donation(models.Model):
@@ -246,5 +224,6 @@ class Comment(TimeStamps,models.Model):
         return self.profile.username
     
     @property
+    @extend_schema_field(str)
     def username(self):
         return self.profile.username

@@ -13,9 +13,8 @@ from .utils import (
     validate_otp, 
     generate_otp, 
     send_account_activation_otp, 
-    resize_and_upload, 
-    resize_and_upload_avatar,
-    upload_pdf
+    resize_image, 
+    resize_avatar,
 )
 from .models import Organization, UserProfile, Social, User
 
@@ -63,7 +62,6 @@ class SocialsSerializer(serializers.ModelSerializer):
 class OrganizationRegistrationSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()  #nested user creation
     socials = SocialsSerializer(required=False)
-    cac_document = serializers.FileField(write_only=True, required=True)
     reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
     website = serializers.CharField(required = False)
     class Meta:
@@ -79,6 +77,7 @@ class OrganizationRegistrationSerializer(serializers.ModelSerializer):
             'cac_document',
             'website',
         ]
+
 
     def validate_cac_document(self, value):
         if not value.name.endswith('.pdf'):
@@ -96,7 +95,6 @@ class OrganizationRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         socials_data = validated_data.pop('socials', {})
-        cac_doc = validated_data.pop('cac_document')
 
         # Create user
         user_data['is_organization'] = True
@@ -105,13 +103,9 @@ class OrganizationRegistrationSerializer(serializers.ModelSerializer):
         user_serializer.is_valid(raise_exception=True)
         user = user_serializer.save()
 
-        # Upload CAC document
-        doc_url = upload_pdf(cac_doc)
-
         # Create organization
         org = Organization.objects.create(
             user=user,
-            cac_document_url=doc_url,
             **validated_data
         )
 
@@ -169,24 +163,10 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
 
 
-# class UserUpdateSerializer(serializers.ModelSerializer):
-#     phone_number = PhoneNumberField(
-#         validators=[UniqueValidator(queryset=User.objects.all())]
-#     )
-
-#     class Meta:
-#         model = User
-#         fields = ['phone_number','avatar']
-    
-#     def update(self, instance, validated_data):
-
-#         return super().update(instance, validated_data)
-    
 
 
 class UpdateOrganizationSerializer(serializers.ModelSerializer):
     socials = SocialsSerializer()
-    cac_document = serializers.FileField(write_only=True)
 
     class Meta:
         model = Organization
@@ -209,12 +189,6 @@ class UpdateOrganizationSerializer(serializers.ModelSerializer):
                 setattr(socials, key, value)
             socials.save()
 
-        #handle CAC document
-        doc = validated_data.pop('cac_document', None)
-        if doc:
-            doc_url = upload_pdf(doc)
-            instance.cac_document = doc_url
-
         return super().update(instance, validated_data)
 
 
@@ -228,12 +202,11 @@ class UploadAvatarSerializer(serializers.Serializer):
 
         if image_file:
             try:
-                image_url, image_id = resize_and_upload_avatar(image_file)
+                image = resize_avatar(image_file)
             except ValidationError as e:
                 raise serializers.ValidationError({'image': e.message})  # Pass to serializer error
 
-        instance.avatar = image_url
-        instance.img_public_id = image_id
+        instance.avatar = image
         instance.save()
         return instance
 

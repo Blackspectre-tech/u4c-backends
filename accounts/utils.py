@@ -1,6 +1,8 @@
 from datetime import timedelta
 import time
 from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,17 +12,47 @@ import threading
 from rest_framework.exceptions import ValidationError
 from PIL import Image
 from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from cloudinary.uploader import upload
 from PIL import Image
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
 from bleach.sanitizer import Cleaner
 import markdown
+from datetime import datetime
 
-def send_email_in_thread(subject,message,from_email,recipient_list):
-    email_threading=threading.Thread(target=send_mail,args=(subject,message,from_email,recipient_list))
+
+# def send_email_in_thread(subject,message,from_email,recipient_list):
+#     email_threading=threading.Thread(target=send_mail,args=(subject,message,from_email,recipient_list))
+#     email_threading.start()
+#     send_mail(subject,message,from_email,recipient_list)
+
+
+
+def send_email_with_html(subject, context, html_template_path, from_email, recipient_list):
+    # Render the HTML template with context
+    html_content = render_to_string(html_template_path, context)
+    
+    # Fallback plain text version (optional)
+    text_content = f"{subject}"  # Or generate a plain version of the message
+
+    # Compose the email
+    email = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
+    email.attach_alternative(html_content, "text/html")
+    email.send()
+
+def send_email_in_thread(subject, context, html_template_path, from_email, recipient_list):
+    # Start a new thread to send the email
+    email_threading = threading.Thread(
+        target=send_email_with_html,
+        args=(subject, context, html_template_path, from_email, recipient_list)
+    )
     email_threading.start()
-    send_mail(subject,message,from_email,recipient_list)
+
+
+
+
+
 
 
 def generate_otp(length=6):
@@ -99,18 +131,22 @@ def validate_otp(otp, minutes=5):
 
 
 def send_account_activation_otp(email, otp):
-    subject = "Your OTP for your account Activation/Deactivation"
+    subject = "Your OTP for your account Activation"
     message = f"Your OTP is: {otp}.  It is valid for 5 minutes."
     from_email = settings.EMAIL_HOST_USER
     recipient_list = [email]
-    send_email_in_thread(subject, message, from_email, recipient_list)
+    context={'title':'Account Activation','message': message,'year': datetime.now().year}
+    html_template_path="email/mail_template.html",
+    send_email_in_thread(subject,context,html_template_path,from_email,recipient_list)
 
 def send_reset_password_otp(email, otp):
     subject = "Your OTP for Password Reset"
     message = f"Your OTP is: {otp}. It is valid for 5 minutes"
     from_email = settings.EMAIL_HOST_USER
     recipient_list = [email]
-    send_email_in_thread(subject, message, from_email, recipient_list)
+    context={'title':'Password Reset','message': message,'year': datetime.now().year}
+    html_template_path="email/mail_template.html",
+    send_email_in_thread(subject,context,html_template_path,from_email,recipient_list)
 
 
 
@@ -120,18 +156,22 @@ def project_approval_mail(project, reason=None, approved=True):
     if approved:
         subject = f"“{project.title}” approval"
         message = (
-            f"{project.organization.name},\n\n"
-            f"Your project request “{project.title}” has been approved:\n\n"
-            f"Regards,\n United-4-Change Admin Team")
+            f"{project.organization.name},"
+            f"Your project campaign “{project.title}” has been approved"
+            )
+        title = 'Project Approved'
     else:   
         subject = f"Your project “{project.title}” was disapproved"
         message = (
-            f"{project.organization.name},\n\n"
-            f"Your project request “{project.title}” was disapproved for this reason:\n\n"
-            f"{reason}\n\nRegards,\nAdmin Team")
+            f"{project.organization.name},"
+            f"Your project campaign “{project.title}” was disapproved for this reason:"
+            f"{reason}")
+        title = 'Project Disapproved'
     from_email = settings.EMAIL_HOST_USER
     recipient_list = [project.organization.user.email]
-    send_email_in_thread(subject, message, from_email, recipient_list)
+    context={'title':title,'message': message,'year': datetime.now().year}
+    html_template_path="email/mail_template.html",
+    send_email_in_thread(subject,context,html_template_path,from_email,recipient_list)
 
 
 
@@ -139,27 +179,29 @@ def organization_approval_mail(organization, reason=None, approved=True):
     if approved:
         subject = f"“{organization.name}” approval"
         message = (
-            f"{organization.name},\n\n"
-            f"Your Organization “{organization.name}” has been approved:\n\n"
-            f"Regards,\n United-4-Change Admin Team")
+            f"We are pleased to inform Your Organization “{organization.name}” has been approved, you can now create projects  on our platform"
+            )
+        title = 'Organization Approved'
     else:   
         subject = f"Your Organization “{organization.name}” was disapproved"
         message = (
-            f"{organization.name},\n\n"
-            f"Your organization “{organization.title}” was disapproved for this reason:\n\n"
-            f"{reason}\n\nRegards,\nAdmin Team")
+            f"Your organization “{organization.name}” was disapproved for the following reason:"
+            )
+        title = 'Organization Disapproved'
     from_email = settings.EMAIL_HOST_USER
     recipient_list = [organization.user.email]
-    send_email_in_thread(subject, message, from_email, recipient_list)
+    html_template_path="email/mail_template.html",
+    context={'reason': reason,'title':title,'message': message,'year': datetime.now().year}
+    send_email_in_thread(subject,context,html_template_path,from_email,recipient_list)
 
 
 
 
-def resize_and_upload_avatar(image_file):
-
+def resize_avatar(image_file):
     try:
         img = Image.open(image_file)
         img.verify()  # Will raise an exception if not a valid image
+        image_file.seek(0)
     except Exception:
         raise ValidationError("Uploaded file is not a valid image.")
     img = Image.open(image_file)
@@ -170,40 +212,48 @@ def resize_and_upload_avatar(image_file):
     img.save(buffer, format='JPEG', quality=85, optimize=True, progressive=True) # setting teh quality to 85%
     buffer.seek(0)
 
-    result = upload(buffer, folder=f"u4c/avatars")
-    return result['secure_url'], result['public_id']
+    # result = upload(buffer, folder=f"u4c/avatars")
+    # return result['secure_url'], result['public_id']
+    return buffer
 
-
-def resize_and_upload(image_file, location, max_size=1024):
+def resize_image(image_file, max_size=1024):
     try:
         img = Image.open(image_file)
-        img.verify()  # Raises error if file is not a valid image
+        img.verify()  # Check if it’s a valid image
+        image_file.seek(0)
     except Exception:
         raise ValidationError("Uploaded file is not a valid image.")
 
-    # Reopen and process the image
+    # Reopen and resize
     img = Image.open(image_file)
     img = img.convert("RGB")
     img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
 
+    # Save to buffer
     buffer = BytesIO()
     img.save(buffer, format='JPEG', quality=85, optimize=True, progressive=True)
     buffer.seek(0)
 
-    # Upload to Cloudinary
-    result = upload(buffer, folder=f"u4c/{location}")
-
-    # Return both the URL and the public_id
-    return result['secure_url'], result['public_id']
-
-
-def upload_pdf(file):
-    result = upload(
-        file,
-        resource_type="raw",
-        folder="u4c/pdf"
+    # Create InMemoryUploadedFile (mimics a real uploaded image)
+    resized_file = InMemoryUploadedFile(
+        file=buffer,
+        field_name="image",
+        name=image_file.name,  # preserve original filename
+        content_type="image/jpeg",
+        size=buffer.getbuffer().nbytes,
+        charset=None
     )
-    return result["secure_url"], result['public_id']
+
+    return resized_file
+
+
+# def upload_pdf(file):
+#     result = upload(
+#         file,
+#         resource_type="raw",
+#         folder="u4c/pdf"
+#     )
+#     return result["secure_url"], result['public_id']
 
 
 

@@ -1,5 +1,13 @@
-/.env
-**/migrations/
+# Environment
+.env
+
+# Django migration files
+**/migrations/*.py
+**/migrations/*.pyc
+
+# SQLite
 *.sqlite3
 db.sqlite3
-media
+
+# Media uploads
+/media/

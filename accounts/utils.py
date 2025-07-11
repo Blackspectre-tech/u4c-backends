@@ -13,7 +13,6 @@ from rest_framework.exceptions import ValidationError
 from PIL import Image
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from cloudinary.uploader import upload
 from PIL import Image
 import bleach
 from bleach.css_sanitizer import CSSSanitizer

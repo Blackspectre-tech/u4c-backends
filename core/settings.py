@@ -187,7 +187,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "United-4-Change Admin",
 
     # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
-    "site_brand": "United-4-Change",
+    "site_brand": "U4C",
 
     "show_ui_builder" : False,
 
@@ -201,7 +201,7 @@ JAZZMIN_SETTINGS = {
     # "login_logo_dark": None,
 
     # CSS classes that are applied to the logo above
-    # "site_logo_classes": "img-circle",
+    #"site_logo_classes": "img-circle",
 
     # Relative path to a favicon for your site, will default to site_logo if absent (ideally 32x32 px)
     # "site_icon": None,

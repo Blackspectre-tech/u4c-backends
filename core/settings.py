@@ -192,10 +192,10 @@ JAZZMIN_SETTINGS = {
     "show_ui_builder" : False,
 
     # Logo to use for your site, must be present in static files, used for brand on top left
-    "site_logo": "u4c.png",
+    "site_logo": "u4cmain.png",
 
     # Logo to use for your site, must be present in static files, used for login form logo (defaults to site_logo)
-    "login_logo": "u4c.png",
+    "login_logo": "u4clogin.png",
 
     # Logo to use for login form in dark themes (defaults to login_logo)
     # "login_logo_dark": None,

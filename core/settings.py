@@ -187,7 +187,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "United-4-Change Admin",
 
     # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
-    "site_brand": "U4C",
+    "site_brand": "United-4-Change",
 
     "show_ui_builder" : False,
 

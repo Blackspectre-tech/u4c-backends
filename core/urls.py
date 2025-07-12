@@ -29,7 +29,7 @@ urlpatterns = [
     # Redoc
     path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
-    path('', admin.site.urls),
+    path('admin', admin.site.urls),
     path('account/', include('accounts.urls')),
     path('projects/', include('projects.urls')),
     path('tinymce/', include('tinymce.urls')),

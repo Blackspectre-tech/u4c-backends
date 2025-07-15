@@ -168,15 +168,17 @@ class RetrieveOrganization(generics.RetrieveAPIView):
 class ProfileView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated, Is_Donor]
 
-    def get_serializer_class(self, *args, **kwargs):
-        if self.request.user.is_organization:
+    def get_serializer_class(self):
+        user = self.request.user
+        if user.is_authenticated and getattr(user, 'is_organization', False):
             return OrganizationSerializer
         return ProfileSerializer
 
     def get_object(self):
-        if self.request.user.is_organization:
-            return self.request.user.organization
-        return self.request.user.profile
+        user = self.request.user
+        if user.is_authenticated and getattr(user, 'is_organization', False):
+            return user.organization
+        return user.profile
 
 # class OrganizationView(generics.RetrieveAPIView):
 #     permission_classes = [permissions.IsAuthenticated, Is_Org]

@@ -173,7 +173,7 @@ class UpdateOrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ['socials', 'cac_document','website','location','description',]
+        fields = ['socials', 'cac_document','website','location','description','mission_statement']
 
     def validate_cac_document(self, value):
         if not value.name.endswith('.pdf'):

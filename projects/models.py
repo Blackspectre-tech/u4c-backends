@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import Organization, UserProfile,TimeStamps
+from accounts.models import Organization, Profile,TimeStamps
 from tinymce.models import HTMLField
 from accounts.utils import html_cleaner
 from django.utils.html import format_html
@@ -82,6 +82,7 @@ class Project(TimeStamps, models.Model):
         return self.title
 
     @property
+    @extend_schema_field(str)
     def progress(self):
         return f'{(self.total_funds / self.goal) * 100 :.2f}%'
     
@@ -199,8 +200,8 @@ class Update(models.Model):
 
 class Donation(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='donations')
-    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='donations')
-    amount = models.DecimalField(decimal_places=2,max_digits=14, blank=False)
+    user_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='donations')
+    amount = models.DecimalField(decimal_places=2,max_digits=14, blank=False, default=0)
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -208,13 +209,17 @@ class Donation(models.Model):
 
     def __str__(self):
         return f"{self.user_profile.username} | amount: {self.amount} | project{self.project.title}"
-
+    
+    @property
+    @extend_schema_field(str)
+    def username(self):
+        return self.user_profile.username
 
 
 
 class Comment(TimeStamps,models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='comments')
-    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='comments')
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
     details = models.TextField()
 
     class Meta:

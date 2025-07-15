@@ -54,6 +54,7 @@ class User(AbstractUser):
     otp_expiry = models.DateTimeField(null=True, blank=True)
     is_organization = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
+    wallet_address = models.CharField(max_length=255, unique=True,null=True, blank=True)
 
 
     USERNAME_FIELD = "email"
@@ -68,11 +69,12 @@ class User(AbstractUser):
     
     
 
-class UserProfile(models.Model):
+class Profile(models.Model):
     username = models.CharField(max_length=25, blank=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
+    anonymous = models.BooleanField(default=False)
     
     @property
     def fullname(self):
@@ -85,6 +87,8 @@ class UserProfile(models.Model):
 
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return f"{self.username}"
 
 class Organization(models.Model):
 
@@ -101,7 +105,7 @@ class Organization(models.Model):
 
     name = models.CharField(max_length=100)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='organization')
-    website = models.URLField()
+    website = models.URLField(null=True, blank=True)
     country = models.CharField(max_length=50)
     location = models.CharField(max_length=200)
     description=models.TextField()
@@ -113,6 +117,7 @@ class Organization(models.Model):
     approved_by = models.CharField(max_length=30, null=True)
     disapproved_by = models.CharField(max_length=30, null=True)
     disapproval_reason= models.TextField(null=True)
+    mission_statement = models.CharField(max_length=200)
     
 
     def save(self, *args, **kwargs):

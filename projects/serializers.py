@@ -112,10 +112,20 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 
+class DonationSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField()
+    class Meta:
+        model = Donation
+        fields = [ 'username', 'amount']
+
+    # @extend_schema_field(serializers.CharField)
+    # def get_username(self,obj):
+    #     return obj.username
+
 
 
 class ProjectSerializer(serializers.ModelSerializer):
-    
+
     categories = serializers.ListField(
         child = serializers.CharField(min_length=5),
         min_length=1, required=True,write_only=True
@@ -123,13 +133,14 @@ class ProjectSerializer(serializers.ModelSerializer):
     categories_display = serializers.SerializerMethodField(read_only=True)
     milestones = MilestoneSerializer(many=True, required=False)
 
-
+    progress = serializers.SerializerMethodField(read_only=True)
+    donations = DonationSerializer(read_only=True)
     class Meta:
         model = Project
         fields = [
             'id','title','categories_display', 'goal', 'country', 'location', 'longitude', 'latitude',
             'description', 'categories', 'image', 'problem_to_address',
-            'solution', 'summary', 'video', 'milestones',
+            'solution', 'summary', 'video', 'milestones','donations','progress',
             ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -176,8 +187,10 @@ class ProjectSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_categories_display(self, obj):
         return [cat.name for cat in obj.categories.all()]
-
-
+    
+    @extend_schema_field(serializers.CharField)
+    def get_progress(self,obj):
+        return obj.progress
 
     def create(self, validated_data,**kwargs):
         categories_data = validated_data.pop('categories', None)
@@ -218,3 +231,11 @@ class ProjectSerializer(serializers.ModelSerializer):
             project.save()
         
         return project
+    
+
+class ProjectListSerializer(serializers.ModelSerializer):
+    organization = serializers.StringRelatedField(read_only=True)
+    progress = serializers.ReadOnlyField()
+    class Meta:
+        model = Project
+        fields = ['id','title','image','goal','progress','summary','status','organization',]

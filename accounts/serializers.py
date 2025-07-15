@@ -16,7 +16,7 @@ from .utils import (
     resize_image, 
     resize_avatar,
 )
-from .models import Organization, UserProfile, Social, User
+from .models import Organization, Profile, Social, User
 
 class UserRegistionUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
@@ -30,10 +30,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
         validators=[UniqueValidator(queryset=User.objects.all())]
     )
     password = serializers.CharField(write_only=True)
+    wallet_address = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
-        fields = ['email', 'phone_number', 'password', 'is_organization']
+        fields = ['email', 'phone_number', 'password', 'is_organization', 'wallet_address']
 
     def create(self, validated_data):
         user = User.objects.create(
@@ -59,7 +60,7 @@ class SocialsSerializer(serializers.ModelSerializer):
         fields = ['instagram', 'facebook', 'youtube', 'twitter']
 
 
-class OrganizationRegistrationSerializer(serializers.ModelSerializer):
+class OrganizationSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()  #nested user creation
     socials = SocialsSerializer(required=False)
     reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
@@ -76,6 +77,7 @@ class OrganizationRegistrationSerializer(serializers.ModelSerializer):
             'reg_no',
             'cac_document',
             'website',
+            'mission_statement',
         ]
 
 
@@ -118,19 +120,20 @@ class OrganizationRegistrationSerializer(serializers.ModelSerializer):
         return org
 
 
-class UserRegisterationSerializer(serializers.ModelSerializer):
+class ProfileSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
     username = serializers.CharField(
-        validators=[UniqueValidator(queryset=UserProfile.objects.all())],
+        validators=[UniqueValidator(queryset=Profile.objects.all())],
         required=True)
-
+    
     class Meta:
-        model = UserProfile
+        model = Profile
         fields = [
             "user",
             "username",
             "first_name",
             "last_name",
+            "anonymous"
         ]
 
     
@@ -143,7 +146,7 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
         user = user_serializer.save()
 
         # Create UserProfile
-        profile = UserProfile.objects.create(
+        profile = Profile.objects.create(
             user=user,
             **validated_data
         )
@@ -154,11 +157,11 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
-        validators=[UniqueValidator(queryset=UserProfile.objects.all())],
+        validators=[UniqueValidator(queryset=Profile.objects.all())],
         )
     
     class Meta:
-        model = UserProfile
+        model = Profile
         fields = ['username', 'first_name', 'last_name']
 
 
@@ -270,4 +273,12 @@ class UserConfirmPasswordResetSerializer(serializers.Serializer):
             raise serializers.ValidationError(err.messages)
 
         return attrs
+
+
+class WalletSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ['wallet_address']
+
     

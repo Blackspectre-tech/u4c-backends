@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from.models import User,Organization,UserProfile,Social
+from.models import User,Organization,Profile,Social
 from django.utils.translation import gettext_lazy as _
 from django.contrib import admin, messages
 from django.shortcuts import redirect
@@ -38,7 +38,7 @@ class LogEntryAdmin(admin.ModelAdmin):
 
 
 class UserProfileInline(admin.StackedInline):
-    model = UserProfile
+    model = Profile
     can_delete = False
     verbose_name_plural = 'User Profile'
     fk_name = 'user'
@@ -52,7 +52,7 @@ class OrganizationProfileInline(admin.StackedInline):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'name','website','country','location','description','cac_document_url',
+                'name','website','country','location','description','cac_document',
             )
         else:  # adding new object
             return ()
@@ -60,7 +60,7 @@ class OrganizationProfileInline(admin.StackedInline):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'name','website','country','location','description','cac_document_url',
+                'name','website','country','location','description','cac_document',
             )
         else:  # Adding a new object
                 return ()
@@ -290,7 +290,7 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 
 
-@admin.register(UserProfile)
+@admin.register(Profile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user__email','username', 'user__is_active',)
     list_filter = ('user__is_active',)

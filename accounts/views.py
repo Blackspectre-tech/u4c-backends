@@ -8,26 +8,27 @@ from rest_framework import permissions, parsers
 from django.shortcuts import get_object_or_404
 from drf_nested_multipart.parser import NestedMultipartAndFileParser
 from .serializers import (
-    UserRegisterationSerializer,
+    ProfileSerializer,
     UpdateProfileSerializer,
     AccountActivationSerializer, 
     ResendAccountActivationSerializer,
     UserPasswordResetSerializer,
     UserConfirmPasswordResetSerializer,
-    OrganizationRegistrationSerializer,
+    OrganizationSerializer,
     UpdateOrganizationSerializer,
     UploadAvatarSerializer,
+    WalletSerializer,
 
     )
 from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp
-from .models import Organization, UserProfile
+from .models import Organization, Profile
 from .permissions import isOrgOwner, Is_Org,Is_Donor
 from rest_framework.views import APIView
 
 # Create your views here.
 
 class RegisterUserView(generics.GenericAPIView):
-    serializer_class = UserRegisterationSerializer
+    serializer_class = ProfileSerializer
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -38,7 +39,7 @@ class RegisterUserView(generics.GenericAPIView):
 
 class RegisterOrganizationView(generics.GenericAPIView):
     parser_classes = [NestedMultipartAndFileParser] 
-    serializer_class = OrganizationRegistrationSerializer
+    serializer_class = OrganizationSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -121,8 +122,8 @@ class UpdateProfileView(generics.GenericAPIView):
     serializer_class = UpdateProfileSerializer
 
     def patch(self, request):
-        profile = get_object_or_404(UserProfile, user=request.user)
-        serializer = self.get_serializer(profile, data=request.data, partial=True)
+        profile = get_object_or_404(Profile, user=request.user)
+        serializer = self.get_serializer(instance=profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -137,7 +138,7 @@ class UpdateOrganizationView(generics.GenericAPIView):
     def patch(self, request):
         organization = get_object_or_404(Organization, user=request.user)
         self.check_object_permissions(request, organization)
-        serializer = self.get_serializer(organization, data=request.data, partial=True)
+        serializer = self.get_serializer(instance=organization, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -151,21 +152,50 @@ class UploadAvatarView(generics.GenericAPIView):
     serializer_class = UploadAvatarSerializer
     
     def patch(self,request):
-        serializer = self.get_serializer(request.user,data=request.data)
+        serializer = self.get_serializer(instance=request.user,data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Profile picture updated successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class RetrieveOrganization(generics.RetrieveAPIView):
-#     permission_classes = [permissions.AllowAny]
-#     serializer_class = ProjectSerializer
+class RetrieveOrganization(generics.RetrieveAPIView):
+    serializer_class = OrganizationSerializer
+    queryset = Organization.objects.all()
+    lookup_field = 'pk'
 
-#     def get_queryset(self):
-#         organization = Organization.objects.filter(organization=self.request.user.organization)
-#         return my_projects
 
+class ProfileView(generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAuthenticated, Is_Donor]
+
+    def get_serializer_class(self, *args, **kwargs):
+        if self.request.user.is_organization:
+            return OrganizationSerializer
+        return ProfileSerializer
+
+    def get_object(self):
+        if self.request.user.is_organization:
+            return self.request.user.organization
+        return self.request.user.profile
+
+# class OrganizationView(generics.RetrieveAPIView):
+#     permission_classes = [permissions.IsAuthenticated, Is_Org]
+#     serializer_class = OrganizationSerializer
+    
+#     def get_object(self):
+#         return self.request.user.organization
+
+
+class AddWalletView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = WalletSerializer
+    
+    def patch(self, request):
+        serializer = self.get_serializer(instance=request.user,data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
 # class UpdateOrganizationView(generics.UpdateAPIView):
 #     permission_classes = [permissions.IsAuthenticated]

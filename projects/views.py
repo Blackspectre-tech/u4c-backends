@@ -17,6 +17,7 @@ from .serializers import (
     MilestoneSerializer,
     ExpensesSerializer,
     CommentSerializer,
+    ProjectListSerializer,
     )
 
 # Create your views here.
@@ -39,7 +40,7 @@ class ProjectCreateView(generics.GenericAPIView):
 
 class listApprovedProjectsView(generics.ListAPIView):
     queryset = Project.objects.filter(approval_status=Project.APPROVED)
-    serializer_class = ProjectSerializer
+    serializer_class = ProjectListSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['categories__name','status']
     search_fields = ['title']
@@ -150,10 +151,10 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = MilestoneImage
+    queryset = MilestoneImage.objects.all()
     serializer_class = MiliestoneImagesSerializer
     permission_classes = [permissions.IsAuthenticated,Is_Org]
-
+    parser_classes = [parsers.MultiPartParser]
     def perform_destroy(self, instance):
         if instance.milestone.project.organization != self.request.user.organization:
             raise ValidationError({'message':'you are not permited to delete this item'})

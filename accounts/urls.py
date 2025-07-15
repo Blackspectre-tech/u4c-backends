@@ -13,7 +13,10 @@ from .views import (
     UpdateProfileView,
     UpdateOrganizationView,
     UploadAvatarView,
-
+    RetrieveOrganization,
+    AddWalletView,
+    # OrganizationView,
+    ProfileView,
 )
 
 urlpatterns = [
@@ -27,6 +30,9 @@ urlpatterns = [
     path('confirm-password-reset/', UserConfirmPasswordResetView.as_view()),
     path('update-userprofile/', UpdateProfileView.as_view()),
     path('update-organization/', UpdateOrganizationView.as_view()),
-    path('upload-avatar/',UploadAvatarView.as_view())
-
+    path('organization/<int:pk>/', RetrieveOrganization.as_view()),
+    path('upload-avatar/',UploadAvatarView.as_view()),
+    path('add-wallet/',AddWalletView.as_view()),
+    path('my-profile/',ProfileView.as_view()),
+    # path('my-organization/',OrganizationView.as_view()),
 ]

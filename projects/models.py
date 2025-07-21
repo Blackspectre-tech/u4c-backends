@@ -146,12 +146,16 @@ class Milestone(TimeStamps, models.Model):
     @property
     def progress(self):
         return f'{(self.funds / self.goal) * 100:.2f}%'
-    
+
+
+def milestone_image_path(instance, filename):
+    milestone =instance.milestone
+    return f'milestone images/{milestone.project.title}/{milestone.milestone_no}/'
 
 
 class MilestoneImage(models.Model):
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, related_name= 'images')
-    image = models.ImageField(upload_to='milestone images/',blank=False, null=False)
+    image = models.ImageField(upload_to=milestone_image_path,blank=False, null=False)
     
 
     def __str__(self):

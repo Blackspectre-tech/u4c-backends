@@ -157,7 +157,7 @@ DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True}
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_USE_TLS = True
 EMAIL_PORT = config('EMAIL_PORT',cast=int)
 EMAIL_HOST_USER = config('EMAIL')
@@ -251,3 +251,5 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
     "UPDATE_LAST_LOGIN": True,
 }
+
+print("Sending from:", EMAIL_HOST_USER)

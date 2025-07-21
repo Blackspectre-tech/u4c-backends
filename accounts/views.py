@@ -180,12 +180,6 @@ class ProfileView(generics.RetrieveAPIView):
             return user.organization
         return user.profile
 
-# class OrganizationView(generics.RetrieveAPIView):
-#     permission_classes = [permissions.IsAuthenticated, Is_Org]
-#     serializer_class = OrganizationSerializer
-    
-#     def get_object(self):
-#         return self.request.user.organization
 
 
 class AddWalletView(generics.GenericAPIView):

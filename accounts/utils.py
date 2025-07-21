@@ -34,11 +34,15 @@ def send_email_with_html(subject, context, html_template_path, from_email, recip
     
     # Fallback plain text version (optional)
     text_content = f"{subject}"  # Or generate a plain version of the message
-
+    from_email = f'United4Change Team <{from_email}>'
     # Compose the email
     email = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
     email.attach_alternative(html_content, "text/html")
-    email.send()
+
+    try:
+        email.send(fail_silently=False)
+    except Exception as e:
+        print("Failed to send email:", e)
 
 def send_email_in_thread(subject, context, html_template_path, from_email, recipient_list):
     # Start a new thread to send the email

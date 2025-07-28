@@ -41,8 +41,10 @@ def send_email_with_html(subject, context, html_template_path, from_email, recip
 
     try:
         email.send(fail_silently=False)
+        print("email sent")
     except Exception as e:
         print("Failed to send email:", e)
+
 
 def send_email_in_thread(subject, context, html_template_path, from_email, recipient_list):
     # Start a new thread to send the email

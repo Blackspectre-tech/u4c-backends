@@ -157,11 +157,11 @@ DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True}
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_HOST = 'smtp.gmail.com' #config('EMAIL_HOST')
 EMAIL_USE_TLS = True
 EMAIL_PORT = config('EMAIL_PORT',cast=int)
-EMAIL_HOST_USER = config('EMAIL')
-EMAIL_HOST_PASSWORD = config('EMAIL_KEY')
+EMAIL_HOST_USER = "blackspectre.ng@gmail.com" #config('EMAIL')
+EMAIL_HOST_PASSWORD = "vyqo ysyt bmwa ewxv" #config('EMAIL_KEY')
 
 
 SPECTACULAR_SETTINGS = {

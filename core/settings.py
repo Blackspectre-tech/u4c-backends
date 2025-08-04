@@ -155,13 +155,24 @@ REST_FRAMEWORK = {
 }
 DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True}
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com' #config('EMAIL_HOST')
-EMAIL_USE_TLS = True
-EMAIL_PORT = config('EMAIL_PORT',cast=int)
-EMAIL_HOST_USER = "blackspectre.ng@gmail.com" #config('EMAIL')
-EMAIL_HOST_PASSWORD = "vyqo ysyt bmwa ewxv" #config('EMAIL_KEY')
+# EMAIL_HOST = 'smtp.gmail.com' #config('EMAIL_HOST')
+# EMAIL_USE_TLS = True
+# EMAIL_PORT = config('EMAIL_PORT',cast=int)
+# EMAIL_HOST_USER = "blackspectre.ng@gmail.com" #config('EMAIL')
+# EMAIL_HOST_PASSWORD = "vyqo ysyt bmwa ewxv" #config('EMAIL_KEY')
+
+
+# EMAIL_BACKEND = "django_zoho_zeptomail.backend.ZeptoMailBackend"
+# ZEPTO_MAIL = {
+#     "API_KEY": "your_zeptomail_api_key",
+#     "FROM_EMAIL": "noreply@yourdomain.com",
+#     "TEMPLATE": None,  # If using a static template from ZeptoMail
+#     "REGION": "us",    # or "eu" depending on your ZeptoMail region
+# }
+RESEND_API_KEY = config("RESEND_API_KEY")
+RESEND_SENDER_EMAIL = config("EMAIL")
 
 
 SPECTACULAR_SETTINGS = {
@@ -251,5 +262,3 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
     "UPDATE_LAST_LOGIN": True,
 }
-
-print("Sending from:", EMAIL_HOST_USER)

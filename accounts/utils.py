@@ -19,44 +19,45 @@ from bleach.css_sanitizer import CSSSanitizer
 from bleach.sanitizer import Cleaner
 import markdown
 from datetime import datetime
+from resend import Emails
+import resend
+
+resend.api_key = settings.RESEND_API_KEY
 
 
-# def send_email_in_thread(subject,message,from_email,recipient_list):
-#     email_threading=threading.Thread(target=send_mail,args=(subject,message,from_email,recipient_list))
-#     email_threading.start()
-#     send_mail(subject,message,from_email,recipient_list)
 
 
-
-def send_email_with_html(subject, context, html_template_path, from_email, recipient_list):
+def send_email_with_html(subject, context, html_template_path, recipient_list):
     # Render the HTML template with context
     html_content = render_to_string(html_template_path, context)
     
     # Fallback plain text version (optional)
     text_content = f"{subject}"  # Or generate a plain version of the message
-    from_email = f'United4Change Team <{from_email}>'
+    #from_email = f'United4Change Team <{from_email}>'
     # Compose the email
-    email = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
-    email.attach_alternative(html_content, "text/html")
+    #email = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
+    #email.attach_alternative(html_content, "text/html")
+
+    
 
     try:
-        email.send(fail_silently=False)
-        print("email sent")
+        Emails.send({
+        "from": f"United-4-Change <{settings.RESEND_SENDER_EMAIL}>",
+        "to": recipient_list,
+        "subject": subject,
+        "html": html_content
+    })
     except Exception as e:
         print("Failed to send email:", e)
 
 
-def send_email_in_thread(subject, context, html_template_path, from_email, recipient_list):
+def send_email_in_thread(subject, context, html_template_path, recipient_list):
     # Start a new thread to send the email
     email_threading = threading.Thread(
         target=send_email_with_html,
-        args=(subject, context, html_template_path, from_email, recipient_list)
+        args=(subject, context, html_template_path, recipient_list)
     )
     email_threading.start()
-
-
-
-
 
 
 
@@ -66,16 +67,6 @@ def generate_otp(length=6):
     return otp
 
 
-# def validate_otp(otp, minutes=5):
-#     try:
-#         user = get_user_model().objects.get(otp=otp)
-#     except get_user_model().DoesNotExist:
-#         return None
-#     time_diff = timezone.now() - user.otp_expiry
-#     if user.otp == otp and time_diff < timedelta(minutes=minutes):
-#         user.otp = None
-#         user.otp_expiry = None
-#         return user
 
 def validate_otp(otp, minutes=5):
     User = get_user_model()
@@ -98,18 +89,6 @@ def validate_otp(otp, minutes=5):
 
     return user
 
-# def send_otp_by_phone(phone_number,otp):
-#     account_sid="your_account_id"
-#     auth_token="your_auth_token"
-#     twilio_phone_number="your_twilio_phone_number"
-
-#     client=Client(account_sid,auth_token)
-#     message=client.messages.create(
-#        body=f"Your OTP is: {otp}",
-#        from_=twilio_phone_number,
-#        to=phone_number
-
-#     )
 
 
 # def send_verify_email_otp(email, otp):
@@ -138,20 +117,20 @@ def validate_otp(otp, minutes=5):
 def send_account_activation_otp(email, otp):
     subject = "Your OTP for your account Activation"
     message = f"Your OTP is: {otp}.  It is valid for 5 minutes."
-    from_email = settings.EMAIL_HOST_USER
+    # from_email = settings.EMAIL_HOST_USER
     recipient_list = [email]
     context={'title':'Account Activation','message': message,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
-    send_email_in_thread(subject,context,html_template_path,from_email,recipient_list)
+    send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 def send_reset_password_otp(email, otp):
     subject = "Your OTP for Password Reset"
     message = f"Your OTP is: {otp}. It is valid for 5 minutes"
-    from_email = settings.EMAIL_HOST_USER
+    # from_email = settings.EMAIL_HOST_USER
     recipient_list = [email]
     context={'title':'Password Reset','message': message,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
-    send_email_in_thread(subject,context,html_template_path,from_email,recipient_list)
+    send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 
 
@@ -172,11 +151,11 @@ def project_approval_mail(project, reason=None, approved=True):
             f"Your project campaign “{project.title}” was disapproved for this reason:"
             f"{reason}")
         title = 'Project Disapproved'
-    from_email = settings.EMAIL_HOST_USER
+    # from_email = settings.EMAIL_HOST_USER
     recipient_list = [project.organization.user.email]
     context={'title':title,'message': message,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
-    send_email_in_thread(subject,context,html_template_path,from_email,recipient_list)
+    send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 
 
@@ -193,11 +172,11 @@ def organization_approval_mail(organization, reason=None, approved=True):
             f"Your organization “{organization.name}” was disapproved for the following reason:"
             )
         title = 'Organization Disapproved'
-    from_email = settings.EMAIL_HOST_USER
+    # from_email = settings.EMAIL_HOST_USER
     recipient_list = [organization.user.email]
     html_template_path="email/mail_template.html",
     context={'reason': reason,'title':title,'message': message,'year': datetime.now().year}
-    send_email_in_thread(subject,context,html_template_path,from_email,recipient_list)
+    send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 
 

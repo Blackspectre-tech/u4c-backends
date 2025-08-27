@@ -163,6 +163,6 @@ class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
     def perform_update(self, serializer):
         instance = serializer.instance
         if instance.milestone.project.organization != self.request.user.organization:
-            raise ValidationError({'message':'you are not permited to delete this item'})
+            raise ValidationError({'message':'you are not permited to update this item'})
         
         return super().perform_update(serializer)

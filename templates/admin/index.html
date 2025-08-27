@@ -1,0 +1,92 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div class="container-fluid mt-3" style="margin-left: 20px;">
+
+  <div class="row">
+
+    <!-- 👥 Total Donors -->
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 rounded-4 bg-primary text-white h-100 shadow-lg widget-card ">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-uppercase fw-semibold">Total Donors</h6>
+            <h2 class="fw-bold">{{ total_donors }}</h2>
+          </div>
+          <div>
+            <img src="https://img.icons8.com/ios-filled/100/ffffff/conference-call.png" 
+                 alt="Users" class="img-fluid" style="width:60px;height:60px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📦 Total Campaigns -->
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 rounded-4 bg-success text-white h-100 shadow-lg widget-card">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-uppercase fw-semibold">Total Campaigns</h6>
+            <h2 class="fw-bold">{{ total_campaigns }}</h2>
+          </div>
+          <div>
+            <img src="https://img.icons8.com/ios-filled/100/ffffff/task.png" 
+                 alt="Campaigns" class="img-fluid" style="width:60px;height:60px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 💰 Vault Wallet Balance -->
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 rounded-4 text-white h-100 bg-info shadow-lg widget-card">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-uppercase fw-semibold">Vault Wallet Balance</h6>
+            <h2 class="fw-bold">$ {{ vault_balance }}</h2>
+          </div>
+          <div>
+            <img src="https://img.icons8.com/?size=100&id=JdQzqQws4sSP&format=png&color=ffffff" 
+                 alt="Vault" class="img-fluid" style="width:60px;height:60px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🏦 Treasury Balance -->
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card border-0 rounded-4 bg-danger text-white h-100 shadow-lg widget-card">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-uppercase fw-semibold">Treasury Balance</h6>
+            <h2 class="fw-bold">$ {{ treasury_balance }}</h2>
+          </div>
+          <div>
+            <img src="https://img.icons8.com/ios-filled/100/ffffff/money-bag.png" 
+                 alt="Treasury" class="img-fluid" style="width:60px;height:60px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add hover lift effect -->
+<!-- <style>
+.widget-card {
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.3s ease;
+  border-radius: 0.5rem; /* rounded corners */
+}
+.widget-card:hover {
+  transform: translateY(-8px) scale(1.03); /* slightly bigger and lifted */
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+  background-color: #f8f9fa; /* subtle background change on hover */
+} -->
+
+</style>
+
+<!-- Keep default admin content below -->
+{{ block.super }}
+{% endblock %}
+

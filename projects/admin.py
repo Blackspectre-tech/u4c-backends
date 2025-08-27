@@ -49,16 +49,16 @@ class MilestoneFormSet(BaseInlineFormSet):
 
         total_goal = Decimal("0.00")
 
-        for form in self.forms:
-            if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
-                goal = form.cleaned_data.get('goal', Decimal("0.00"))
-                total_goal += goal
+        # for form in self.forms:
+        #     if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+        #         goal = form.cleaned_data.get('goal', Decimal("0.00"))
+        #         total_goal += goal
 
         # Access the parent instance's goal (the Project's goal)
-        project_goal = self.instance.goal or Decimal("0.00")
+        # project_goal = self.instance.goal or Decimal("0.00")
 
-        if total_goal != project_goal:
-            raise forms.ValidationError("⚠️ The total milestone goals must equal the project goal.")
+        if len(self.forms)>3:
+            raise forms.ValidationError("projects are limited to a maximum of 3 milestones")
 
 
 
@@ -114,8 +114,8 @@ class ProjectAdmin(admin.ModelAdmin):
             fields = (
                 'organization', 'categories', 'title', 'goal', 'total_funds', 'progress', 'country', 'longitude',
                 'latitude', 'approval_status', 'video',
-                'formatted_problem_to_address', 'formatted_solution', 'formatted_summary',
-                'formatted_description','image','created_at', 'updated_at',
+                'formatted_description','image','created_at', 'updated_at', 'formatted_summary',
+                #'formatted_problem_to_address', 'formatted_solution', 
             )
 
             if obj.approval_status != Project.PENDING and obj.approval_status != Project.APPROVED:
@@ -126,16 +126,16 @@ class ProjectAdmin(admin.ModelAdmin):
         else:  # adding new object
             return (
                 'organization', 'categories', 'title', 'goal', 'country', 'longitude',
-                'latitude', 'image', 'video','description', 
-                'problem_to_address', 'solution', 'summary', 
+                'latitude', 'image', 'video','description', 'summary', 
+                #'problem_to_address', 'solution',  
             )
 
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             fields = (
                 'organization','categories', 'title', 'goal', 'country', 'longitude',
-                'latitude', 'formatted_description', 'milestones', 'image', 'video', 'approval_status',
-                'formatted_problem_to_address', 'formatted_solution', 'formatted_summary',
+                'latitude', 'formatted_description', 'milestones', 'image', 'video', 'approval_status', 'formatted_summary',
+                # 'formatted_problem_to_address', 'formatted_solution', 
                 'created_at', 'updated_at', 'progress',
             )
 
@@ -148,21 +148,21 @@ class ProjectAdmin(admin.ModelAdmin):
         else:  # Adding a new object
             return ()
 
-    def formatted_solution(self, obj):
-        return render_markdown_safe(content=obj.solution)
+    # def formatted_solution(self, obj):
+    #     return render_markdown_safe(content=obj.solution)
     
     def formatted_summary(self, obj):
-        return render_markdown_safe(content=obj.summary)
+         return render_markdown_safe(content=obj.summary)
     
     def formatted_description(self, obj):
         return render_markdown_safe(content=obj.description)
 
-    def formatted_problem_to_address(self, obj):
-        return render_markdown_safe(content=obj.problem_to_address)
+    # def formatted_problem_to_address(self, obj):
+    #     return render_markdown_safe(content=obj.problem_to_address)
     
-    formatted_problem_to_address.short_description = "Problem_to_address"   
+    #formatted_problem_to_address.short_description = "Problem_to_address"   
     formatted_description.short_description = "Description"
-    formatted_solution.short_description = "Solution"
+    # formatted_solution.short_description = "Solution"
 
 
     change_form_template = None  # set in changeform_view

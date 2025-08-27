@@ -204,3 +204,5 @@ class AddWalletView(generics.GenericAPIView):
 #     serializer_class = UpdateOrganizationSerializer
 #     lookup_field = 'pk'
     
+# class OrgaKyc(generics.UpdateAPIView):
+#     permission_classes = [permissions.IsAuthenticated, isOrgOwner]

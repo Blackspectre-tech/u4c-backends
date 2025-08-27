@@ -46,7 +46,7 @@ class User(AbstractUser):
     first_name = None
     last_name = None
     email = models.EmailField(unique=True)
-    phone_number = PhoneNumberField(unique=True, null=False, blank=False)
+    phone_number = PhoneNumberField(unique=True)
     avatar = models.ImageField(upload_to='avatars/',blank=True, null=True)
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
@@ -107,17 +107,17 @@ class Organization(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='organization')
     website = models.URLField(null=True, blank=True)
     country = models.CharField(max_length=50)
-    location = models.CharField(max_length=200)
+    address = models.CharField(max_length=200)
     description=models.TextField()
-    cac_document = models.FileField(null=False,blank=False)
-    reg_no = models.CharField(max_length=8, blank = False)
+    cac_document = models.FileField(null=True,blank=True)
+    reg_no = models.CharField(max_length=8, blank = True,null=True)
     approval_status = models.CharField(max_length=20, choices=approval, default=PENDING)
     approverd_at = models.DateTimeField(null=True,blank=True)
     disapproverd_at = models.DateTimeField(null=True,blank=True)
     approved_by = models.CharField(max_length=30, null=True)
     disapproved_by = models.CharField(max_length=30, null=True)
     disapproval_reason= models.TextField(null=True)
-    mission_statement = models.CharField(max_length=200)
+    #about_org = models.CharField(max_length=200)
     
 
     def save(self, *args, **kwargs):

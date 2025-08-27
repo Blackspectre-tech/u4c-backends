@@ -52,7 +52,7 @@ class OrganizationProfileInline(admin.StackedInline):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'name','website','country','location','description','cac_document',
+                'name','website','country','address','description','cac_document',
             )
         else:  # adding new object
             return ()
@@ -60,7 +60,7 @@ class OrganizationProfileInline(admin.StackedInline):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'name','website','country','location','description','cac_document',
+                'name','website','country','address','description','cac_document',
             )
         else:  # Adding a new object
                 return ()
@@ -158,7 +158,7 @@ class OrganizationAdmin(admin.ModelAdmin):
         if obj:  # editing existing object
             fields = (
                 'name', 'website', 'country', 'user',
-                'location', 'description', 'approval_status','reg_no','cac_document',
+                'address', 'description', 'approval_status','reg_no','cac_document',
             )
 
             if obj.approval_status == Organization.APPROVED:
@@ -172,7 +172,7 @@ class OrganizationAdmin(admin.ModelAdmin):
         else:  # adding new object
             return (
                 'user', 'name', 'website', 'country',
-                'location', 'description','reg_no','cac_document',
+                'address', 'description','reg_no','cac_document',
             )
 
 
@@ -181,7 +181,7 @@ class OrganizationAdmin(admin.ModelAdmin):
         if obj:  # Editing an existing 
             read_only = (
                 'name', 'website', 'country', 'reg_no',
-                'location', 'description', 'approval_status', 'user','cac_document',
+                'address', 'description', 'approval_status', 'user','cac_document',
             )
 
             if obj.approval_status == Organization.APPROVED:

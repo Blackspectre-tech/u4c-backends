@@ -68,12 +68,16 @@ class ExpensesSerializer(serializers.ModelSerializer):
 class MilestoneSerializer(serializers.ModelSerializer):
     images = MiliestoneImagesSerializer(read_only=True, many=True)
     expenses = ExpensesSerializer(read_only=True, many=True)
+    percentage = serializers.IntegerField()
+    goal = serializers.CharField(required=False)
+    milestone_no = serializers.IntegerField(required=False)
 
     class Meta:
         model = Milestone
-        fields = ['id','milestone_no','title','details','goal','images','expenses']
+        fields = ['id','milestone_no','percentage','title','details','goal','images','expenses',]
         extra_kwargs = {
         'id': {'read_only': True},
+        #'goal': {'read_only': True},
         }
     
     
@@ -135,12 +139,14 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     progress = serializers.SerializerMethodField(read_only=True)
     donations = DonationSerializer(read_only=True)
+    duration_in_days = serializers.IntegerField(min_value=14, max_value=365)
     class Meta:
         model = Project
         fields = [
-            'id','title','categories_display', 'goal', 'country', 'location', 'longitude', 'latitude',
-            'description', 'categories', 'image', 'problem_to_address',
-            'solution', 'summary', 'video', 'milestones','donations','progress',
+            'id','title','categories_display', 'goal', 'country', 'address', 'longitude', 'latitude',
+            'description', 'categories', 'image', 'summary', 'duration_in_days', 
+            #'problem_to_address','solution', 
+            'video', 'milestones','donations','progress',
             ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -148,14 +154,15 @@ class ProjectSerializer(serializers.ModelSerializer):
             'goal':{'required': True},
             'country': {'required': True},
             'description':{'required': True},
-            'location': {'required': True},
+            'address': {'required': True},
             'longitude':{'required': True},
             'latitude':{'required': True},
-            'problem_to_address':{'required': True},
-            'solution':{'required': True},
+            #'problem_to_address':{'required': True},
+            #'solution':{'required': True},
             'summary':{'required': True},
             'video': {'required': False},
             'image': {'required': True},
+            'duration_in_days': {'required': True},
         }
 
     def validate(self, attrs):
@@ -203,12 +210,30 @@ class ProjectSerializer(serializers.ModelSerializer):
 
             # Validate milestone goal total
             p_goal = project.goal
-            total_goal = sum(Decimal(item['goal']) for item in milestones_data)
-            if total_goal != p_goal:
-                raise serializers.ValidationError({
-                    'milestones.goal': 'The sum of all milestone goals must equal the project goal.'
-                })
+            
+            count = 0
+            previous_percentage = 0
 
+            for item in milestones_data:
+                current_percentage = item['percentage']
+                
+                # 1. Monotonicity check
+                if current_percentage <= previous_percentage:
+                    raise serializers.ValidationError({
+                        'milestones.percentage': "Milestone percentages must be in increasing order."
+                     })
+                count +=1
+                item['goal'] = (p_goal/100) * Decimal(current_percentage)
+                item['milestone_no'] = count
+                previous_percentage = current_percentage
+        
+            
+            if milestones_data[-1]['percentage'] != 100:
+                raise serializers.ValidationError({
+                    'milestones.percentage': "The final milestone must be set to 100%."
+                })
+            
+            
             try:
                 milestone_instances = [
                     Milestone(project=project, **data)
@@ -238,4 +263,4 @@ class ProjectListSerializer(serializers.ModelSerializer):
     progress = serializers.ReadOnlyField()
     class Meta:
         model = Project
-        fields = ['id','title','image','goal','progress','summary','status','organization',]
+        fields = ['id','title','image','goal','progress','description','summary','status','organization',]

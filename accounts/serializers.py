@@ -29,12 +29,24 @@ class UserCreateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         validators=[UniqueValidator(queryset=User.objects.all())]
     )
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True,required=True)
+
+    password2 = serializers.CharField(write_only=True, required=True)
+
     wallet_address = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
-        fields = ['email', 'phone_number', 'password', 'is_organization', 'wallet_address']
+        fields = ['email', 'phone_number', 'password', 'password2', 'is_organization', 'wallet_address']
+
+    def validate(self, attrs):
+        password = attrs['password']
+        password2=attrs['password2']
+        if password != password2:
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
+        if len(password)<8:
+            raise serializers.ValidationError({"password": "Password should be eight or more characters."})
+        return attrs
 
     def create(self, validated_data):
         user = User.objects.create(
@@ -63,7 +75,7 @@ class SocialsSerializer(serializers.ModelSerializer):
 class OrganizationSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()  #nested user creation
     socials = SocialsSerializer(required=False)
-    reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
+    #reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
     website = serializers.CharField(required = False)
     class Meta:
         model = Organization
@@ -71,22 +83,22 @@ class OrganizationSerializer(serializers.ModelSerializer):
             'user',
             'name',
             'country',
-            'location',
+            'address',
             'description',
             'socials',
-            'reg_no',
-            'cac_document',
+            #'reg_no',
+            #'cac_document',
             'website',
-            'mission_statement',
+            #'about_org',
         ]
 
 
-    def validate_cac_document(self, value):
-        if not value.name.endswith('.pdf'):
-            raise serializers.ValidationError("Only PDF files are allowed.")
-        if value.size > 1024 * 1024:
-            raise serializers.ValidationError("File size cannot exceed 1MB.")
-        return value
+    # def validate_cac_document(self, value):
+    #     if not value.name.endswith('.pdf'):
+    #         raise serializers.ValidationError("Only PDF files are allowed.")
+    #     if value.size > 1024 * 1024:
+    #         raise serializers.ValidationError("File size cannot exceed 1MB.")
+    #     return value
 
     def validate(self, attrs):
         name = attrs['name'].title()
@@ -173,14 +185,14 @@ class UpdateOrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ['socials', 'cac_document','website','location','description','mission_statement']
+        fields = ['socials','website','address','description']
 
-    def validate_cac_document(self, value):
-        if not value.name.endswith('.pdf'):
-            raise serializers.ValidationError("Only PDF files are allowed.")
-        if value.size > 1024 * 1024:
-            raise serializers.ValidationError("File size cannot exceed 1MB.")
-        return value    
+    # def validate_cac_document(self, value):
+    #     if not value.name.endswith('.pdf'):
+    #         raise serializers.ValidationError("Only PDF files are allowed.")
+    #     if value.size > 1024 * 1024:
+    #         raise serializers.ValidationError("File size cannot exceed 1MB.")
+    #     return value    
 
 
     def update(self, instance, validated_data):
@@ -281,4 +293,4 @@ class WalletSerializer(serializers.ModelSerializer):
         model = User
         fields = ['wallet_address']
 
-    
+   

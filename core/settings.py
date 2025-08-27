@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     #project apps
     'accounts',
     'projects',
+    'transactions',
+    'web_info',
 
     #others
     'rest_framework',

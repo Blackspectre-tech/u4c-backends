@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from core.admin import my_admin_site
 
 
 urlpatterns = [
@@ -29,7 +30,8 @@ urlpatterns = [
     # Redoc
     path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
+    path("admin/", my_admin_site.urls),
     path('account/', include('accounts.urls')),
     path('projects/', include('projects.urls')),
     path('tinymce/', include('tinymce.urls')),

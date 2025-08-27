@@ -60,12 +60,12 @@ class Project(TimeStamps, models.Model):
     country = models.CharField(max_length=30, blank=False)
     longitude = models.DecimalField(max_digits=65, decimal_places=6, null=True, blank=False)
     latitude = models.DecimalField(max_digits=65, decimal_places=6, null=True, blank=False)
-    location = models.CharField(max_length=150, blank=False)
+    address = models.CharField(max_length=150, blank=False)
     categories = models.ManyToManyField(Category, related_name='projects', blank=False)
     image = models.ImageField(upload_to='projects/',blank=False, null=False)
     description = HTMLField(blank=False, null=True)
-    problem_to_address = HTMLField(blank=False, null=False)
-    solution = HTMLField(blank=False, null=True)
+    #problem_to_address = HTMLField(blank=False, null=False)
+    #solution = HTMLField(blank=False, null=True)
     summary = HTMLField(blank=False, null=True)
     video = models.URLField(null=True, blank=True)
     approval_status = models.CharField(max_length=20, choices=approval, default=PENDING)
@@ -76,19 +76,21 @@ class Project(TimeStamps, models.Model):
     status = models.CharField(max_length=20, choices=status, default=Funding)
     ended_at = models.DateTimeField(null=True)
     total_funds = models.DecimalField(decimal_places=2,max_digits=14,default=0)
-    
-
+    duration_in_days = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(14), MaxValueValidator(365)])
+    wallet_address = models.CharField(max_length=255,null=True, blank=True)
+    contract_id = models.IntegerField(null=True, blank=True)
+    progress = models.DecimalField(decimal_places=2,max_digits=5,default=0.00)
     def __str__(self):
         return self.title
 
-    @property
-    @extend_schema_field(str)
-    def progress(self):
-        return f'{(self.total_funds / self.goal) * 100 :.2f}%'
+    # @property
+    # @extend_schema_field(str)
+    # def progress(self):
+    #     return f'{(self.total_funds / self.goal) * 100 :.2f}%'
     
 
     def save(self, *args, **kwargs):
-        html_fields = ['description', 'summary', 'problem_to_address', 'solution']
+        html_fields = ['description', 'summary']
         for field in html_fields:
             value = getattr(self, field)
             if value:
@@ -121,13 +123,13 @@ class Milestone(TimeStamps, models.Model):
     ]
     
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
-    milestone_no = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)],)
+    milestone_no = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)],)
     title = models.CharField(max_length=250)
     details = HTMLField(blank=False, null=True)
+    percentage = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
     goal=models.DecimalField(decimal_places=2,max_digits=16)
     status = models.CharField(max_length=25, choices=status, default=Not_Started)
     funds=models.DecimalField(decimal_places=2,max_digits=14,default=0)
-
 
     def save(self, *args, **kwargs):
         self.details = html_cleaner.clean(

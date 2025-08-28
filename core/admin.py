@@ -15,9 +15,9 @@ class MyAdminSite(AdminSite):
     def index(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context["user_count"] = User.objects.count()
-        extra_context["treasury_balance"] = platform_wallet_bal()
-        extra_context["vault_balance"] = vault_bal()
-        extra_context["total_campaigns"] = 5
+        extra_context["treasury_balance"] = 0 #platform_wallet_bal()
+        extra_context["vault_balance"] = 0#vault_bal()
+        extra_context["total_campaigns"] = 0
         return super().index(request, extra_context=extra_context)
 
 # ✅ Save the default site before replacing it

@@ -80,8 +80,12 @@ class Project(TimeStamps, models.Model):
     wallet_address = models.CharField(max_length=255,null=True, blank=True)
     contract_id = models.IntegerField(null=True, blank=True)
     progress = models.DecimalField(decimal_places=2,max_digits=5,default=0.00)
+    
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = ['-progress']
 
     # @property
     # @extend_schema_field(str)

@@ -117,7 +117,6 @@ class Organization(models.Model):
     approved_by = models.CharField(max_length=30, null=True)
     disapproved_by = models.CharField(max_length=30, null=True)
     disapproval_reason= models.TextField(null=True)
-    #about_org = models.CharField(max_length=200)
     
 
     def save(self, *args, **kwargs):

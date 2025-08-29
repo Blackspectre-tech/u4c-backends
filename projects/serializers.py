@@ -12,7 +12,7 @@ from drf_spectacular.utils import extend_schema_field
 
 
 
-class MiliestoneImagesSerializer(serializers.ModelSerializer):
+class MilestoneImagesSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
         child=serializers.ImageField(max_length=1000000,allow_empty_file=False),
         required=True, write_only=True,allow_empty=False,max_length=6,)
@@ -66,7 +66,7 @@ class ExpensesSerializer(serializers.ModelSerializer):
 
 
 class MilestoneSerializer(serializers.ModelSerializer):
-    images = MiliestoneImagesSerializer(read_only=True, many=True)
+    images = MilestoneImagesSerializer(read_only=True, many=True)
     expenses = ExpensesSerializer(read_only=True, many=True)
     percentage = serializers.IntegerField()
     goal = serializers.CharField(required=False)
@@ -135,7 +135,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         min_length=1, required=True,write_only=True
     )
     categories_display = serializers.SerializerMethodField(read_only=True)
-    milestones = MilestoneSerializer(many=True, required=False)
+    milestones = MilestoneSerializer(many=True, required=True)
 
     progress = serializers.SerializerMethodField(read_only=True)
     donations = DonationSerializer(read_only=True)
@@ -187,17 +187,48 @@ class ProjectSerializer(serializers.ModelSerializer):
         
         # If all categories exist, store the actual Category objects in attrs
         # We replace the list of names with the list of objects for `create`
-        attrs['categories'] = found_category_objects 
+        attrs['categories'] = found_category_objects
+
+        # Validate milestone
+        milestones = attrs.get('milestones') 
+        if len(milestones) > 3:
+            raise serializers.ValidationError('You can only have a maximum of 3 milestones.')
+                 
+        p_goal =  attrs.get('goal')
+        milestones = attrs.get('milestones')
+        count = 0
+        previous_percentage = 0
+
+        for item in milestones:
+            current_percentage = item['percentage']
+            
+            # 1. Monotonicity check
+            if current_percentage <= previous_percentage:
+                raise serializers.ValidationError({
+                    'milestones.percentage': "Milestone percentages must be in increasing order."
+                    })
+            count +=1
+            item['goal'] = (p_goal/100) * Decimal(current_percentage)
+            item['milestone_no'] = count
+            previous_percentage = current_percentage
+    
         
+        if milestones[-1]['percentage'] != 100:
+            raise serializers.ValidationError({
+                'milestones.percentage': "The final milestone must be set to 100%."
+            })
+        
+        attrs['milestones'] = milestones
+
         return attrs
     
     @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_categories_display(self, obj):
         return [cat.name for cat in obj.categories.all()]
     
-    @extend_schema_field(serializers.CharField)
-    def get_progress(self,obj):
-        return obj.progress
+    # @extend_schema_field(serializers.CharField)
+    # def get_progress(self,obj):
+    #     return obj.progress
 
     def create(self, validated_data,**kwargs):
         categories_data = validated_data.pop('categories', None)
@@ -209,29 +240,29 @@ class ProjectSerializer(serializers.ModelSerializer):
             project.categories.set(categories_data)
 
             # Validate milestone goal total
-            p_goal = project.goal
+            # p_goal = project.goal
             
-            count = 0
-            previous_percentage = 0
+            # count = 0
+            # previous_percentage = 0
 
-            for item in milestones_data:
-                current_percentage = item['percentage']
+            # for item in milestones_data:
+            #     current_percentage = item['percentage']
                 
-                # 1. Monotonicity check
-                if current_percentage <= previous_percentage:
-                    raise serializers.ValidationError({
-                        'milestones.percentage': "Milestone percentages must be in increasing order."
-                     })
-                count +=1
-                item['goal'] = (p_goal/100) * Decimal(current_percentage)
-                item['milestone_no'] = count
-                previous_percentage = current_percentage
+            #     # 1. Monotonicity check
+            #     if current_percentage <= previous_percentage:
+            #         raise serializers.ValidationError({
+            #             'milestones.percentage': "Milestone percentages must be in increasing order."
+            #          })
+            #     count +=1
+            #     item['goal'] = (p_goal/100) * Decimal(current_percentage)
+            #     item['milestone_no'] = count
+            #     previous_percentage = current_percentage
         
             
-            if milestones_data[-1]['percentage'] != 100:
-                raise serializers.ValidationError({
-                    'milestones.percentage': "The final milestone must be set to 100%."
-                })
+            # if milestones_data[-1]['percentage'] != 100:
+            #     raise serializers.ValidationError({
+            #         'milestones.percentage': "The final milestone must be set to 100%."
+            #     })
             
             
             try:
@@ -256,6 +287,17 @@ class ProjectSerializer(serializers.ModelSerializer):
             project.save()
         
         return project
+    
+    def update(self, instance, validated_data):
+        new_image = validated_data.get('image')
+        if new_image:
+            try:
+                image = resize_image(image)
+                instance.image = image
+            except ValidationError as e:
+                raise serializers.ValidationError({'image': e.message})
+
+        return super().update(instance, validated_data)
     
 
 class ProjectListSerializer(serializers.ModelSerializer):

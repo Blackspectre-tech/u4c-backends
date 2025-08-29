@@ -89,7 +89,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
             #'reg_no',
             #'cac_document',
             'website',
-            #'about_org',
         ]
 
 
@@ -174,7 +173,7 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Profile
-        fields = ['username', 'first_name', 'last_name']
+        fields = ['username', 'first_name', 'last_name', 'anonymous']
 
 
 

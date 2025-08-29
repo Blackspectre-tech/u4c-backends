@@ -13,7 +13,7 @@ from .paginations import StandardResultsSetPagination
 from .serializers import (
     ProjectSerializer,
     PostUpdateSerializer,
-    MiliestoneImagesSerializer,
+    MilestoneImagesSerializer,
     MilestoneSerializer,
     ExpensesSerializer,
     CommentSerializer,
@@ -35,7 +35,6 @@ class ProjectCreateView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(organization=org)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 
 class listApprovedProjectsView(generics.ListAPIView):
@@ -61,7 +60,22 @@ class listOrgProjectsView(generics.ListAPIView):
 class RetrieveProjectsView(generics.RetrieveAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+    permission_classes = [isOrgObjOwner]
     lookup_field = 'pk'
+
+    def perform_destroy(self, instance):
+        self.check_object_permissions(self.request, instance)
+        if instance.approval_status == Project.APPROVED:
+            raise ValidationError({'message':'Approved project cannot be deleted'})
+        return super().perform_destroy(instance)
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        self.check_object_permissions(self.request, instance)
+        if instance.approval_status == Project.APPROVED:
+            raise ValidationError({'message':'approved project cannot be altered'})
+        
+        return super().perform_update(serializer) 
 
 
 
@@ -86,7 +100,7 @@ class PostMilestoneImages(generics.GenericAPIView):
     permission_classes = [
         permissions.IsAuthenticated,
         Is_Org]
-    serializer_class = MiliestoneImagesSerializer
+    serializer_class = MilestoneImagesSerializer
     
     def post(self, request, **kwargs):
         print (request.data)
@@ -152,9 +166,11 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MilestoneImage.objects.all()
-    serializer_class = MiliestoneImagesSerializer
+    serializer_class = MilestoneImagesSerializer
     permission_classes = [permissions.IsAuthenticated,Is_Org]
     parser_classes = [parsers.MultiPartParser]
+    lookup_field = 'pk'
+    
     def perform_destroy(self, instance):
         if instance.milestone.project.organization != self.request.user.organization:
             raise ValidationError({'message':'you are not permited to delete this item'})

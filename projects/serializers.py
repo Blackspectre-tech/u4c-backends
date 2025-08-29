@@ -137,7 +137,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     categories_display = serializers.SerializerMethodField(read_only=True)
     milestones = MilestoneSerializer(many=True, required=True)
 
-    progress = serializers.SerializerMethodField(read_only=True)
+    # progress = serializers.SerializerMethodField(read_only=True)
     donations = DonationSerializer(read_only=True)
     duration_in_days = serializers.IntegerField(min_value=14, max_value=365)
     class Meta:
@@ -163,6 +163,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             'video': {'required': False},
             'image': {'required': True},
             'duration_in_days': {'required': True},
+            'progress': {'read_only': True},
         }
 
     def validate(self, attrs):

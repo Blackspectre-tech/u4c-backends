@@ -24,8 +24,17 @@ from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail
 from .models import Organization, Profile
 from .permissions import isOrgOwner, Is_Org,Is_Donor
 from rest_framework.views import APIView
-
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
 # Create your views here.
+
+
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
 
 class RegisterUserView(generics.GenericAPIView):
     serializer_class = ProfileSerializer

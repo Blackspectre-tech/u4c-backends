@@ -191,14 +191,6 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-# IMG = {
-#     'projects':'projects/',
-#     'avatars':'avatars/',
-#     'milestones':'milestones/',
-#     'updates':'updates/'
-# }
-
-
 JAZZMIN_SETTINGS = {
     # title of the window (Will default to current_admin_site.site_title if absent or None)
     "site_title": "United-4-Change Admin",

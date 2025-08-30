@@ -117,6 +117,8 @@ class Organization(models.Model):
     approved_by = models.CharField(max_length=30, null=True)
     disapproved_by = models.CharField(max_length=30, null=True)
     disapproval_reason= models.TextField(null=True)
+    total_campaigns = models.IntegerField(default=0)
+    approved_campaigns = models.IntegerField(default=0)
     
 
     def save(self, *args, **kwargs):

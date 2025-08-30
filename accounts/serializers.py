@@ -17,9 +17,59 @@ from .utils import (
     resize_avatar,
 )
 from .models import Organization, Profile, Social, User
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
+
 
 class UserRegistionUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"detail": "Invalid credentials."})
+
+        # If user exists but is not active
+        if not user.is_active:
+            # generate/send OTP again
+            otp = generate_otp()
+            user.otp = otp
+            user.otp_expiry = timezone.now()
+            user.save()
+
+            # send email (replace with your email backend logic)
+            send_account_activation_otp(
+                user.email, otp
+            )
+
+            return {
+                "message": "Account not verified. OTP sent to your email.",
+                "is_active": user.is_active,
+            }
+
+        # If user is active → normal login
+        if not user.check_password(password):
+            raise serializers.ValidationError({"detail": "Invalid credentials."})
+
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "is_active": user.is_active,
+        }
+
+
+
 
 
 class UserCreateSerializer(serializers.ModelSerializer):

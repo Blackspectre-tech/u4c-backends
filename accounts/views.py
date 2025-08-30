@@ -170,7 +170,7 @@ class RetrieveOrganization(generics.RetrieveAPIView):
 
 
 class ProfileView(generics.RetrieveAPIView):
-    permission_classes = [permissions.IsAuthenticated, Is_Donor]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
         user = self.request.user

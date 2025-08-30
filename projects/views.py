@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
-from rest_framework.exceptions import ValidationError
-from rest_framework import generics, status,exceptions, permissions, parsers
+from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework import generics, status, permissions, parsers
 from rest_framework.response import Response
 from drf_nested_multipart.parser import NestedMultipartAndFileParser
 
@@ -57,23 +57,42 @@ class listOrgProjectsView(generics.ListAPIView):
 
 
 
-class RetrieveProjectsView(generics.RetrieveAPIView):
-    queryset = Project.objects.all()
+class RetrieveProjectsView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectSerializer
-    permission_classes = [isOrgObjOwner]
     lookup_field = 'pk'
+    #http_method_names = ['get', 'put', 'delete']
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if self.request.method == "GET":
+            return Project.objects.all()
+
+        elif self.request.method in ["PUT", "DELETE","PATCH"]:
+            return Project.objects.filter(
+                organization=user.organization
+            )
+
+        return MilestoneImage.objects.none()
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            # Public read access
+            return [permissions.AllowAny()]
+        # Require authentication for PUT, PATCH, DELETE
+        return [permissions.IsAuthenticated(),Is_Org(), isOrgObjOwner()]
 
     def perform_destroy(self, instance):
         self.check_object_permissions(self.request, instance)
         if instance.approval_status == Project.APPROVED:
-            raise ValidationError({'message':'Approved project cannot be deleted'})
+            raise PermissionDenied('Approved projects cannot be deleted')
         return super().perform_destroy(instance)
 
     def perform_update(self, serializer):
         instance = serializer.instance
         self.check_object_permissions(self.request, instance)
         if instance.approval_status == Project.APPROVED:
-            raise ValidationError({'message':'approved project cannot be altered'})
+            raise PermissionDenied('approved projects cannot be altered')
         
         return super().perform_update(serializer) 
 
@@ -106,7 +125,7 @@ class PostMilestoneImages(generics.GenericAPIView):
         print (request.data)
         milestone = get_object_or_404(Milestone, pk=kwargs['pk'])
         if milestone.project.organization != request.user.organization:
-            raise ValidationError ({'message':'only project creators can update images'})
+            raise PermissionDenied('only project creators can update images')
         serializer = self.get_serializer(data = request.data, context={'milestone':milestone})
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -173,12 +192,12 @@ class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
     
     def perform_destroy(self, instance):
         if instance.milestone.project.organization != self.request.user.organization:
-            raise ValidationError({'message':'you are not permited to delete this item'})
+            raise PermissionDenied('you are not permited to delete this item')
         return super().perform_destroy(instance)
 
     def perform_update(self, serializer):
         instance = serializer.instance
         if instance.milestone.project.organization != self.request.user.organization:
-            raise ValidationError({'message':'you are not permited to update this item'})
+            raise PermissionDenied('you are not permited to update this item')
         
         return super().perform_update(serializer)

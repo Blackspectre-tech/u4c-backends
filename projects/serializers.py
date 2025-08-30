@@ -69,7 +69,7 @@ class MilestoneSerializer(serializers.ModelSerializer):
     images = MilestoneImagesSerializer(read_only=True, many=True)
     expenses = ExpensesSerializer(read_only=True, many=True)
     percentage = serializers.IntegerField()
-    goal = serializers.CharField(required=False)
+    goal = serializers.DecimalField(required=False,decimal_places=2,max_digits=14)
     milestone_no = serializers.IntegerField(required=False)
 
     class Meta:
@@ -131,35 +131,31 @@ class DonationSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
 
     categories = serializers.ListField(
-        child = serializers.CharField(min_length=5),
-        min_length=1, required=True,write_only=True
+        child=serializers.CharField(min_length=5),
+        min_length=1, required=True, write_only=True
     )
     categories_display = serializers.SerializerMethodField(read_only=True)
     milestones = MilestoneSerializer(many=True, required=True)
-
-    # progress = serializers.SerializerMethodField(read_only=True)
     donations = DonationSerializer(read_only=True)
     duration_in_days = serializers.IntegerField(min_value=14, max_value=365)
+
     class Meta:
         model = Project
         fields = [
-            'id','title','categories_display', 'goal', 'country', 'address', 'longitude', 'latitude',
-            'description', 'categories', 'image', 'summary', 'duration_in_days', 
-            #'problem_to_address','solution', 
-            'video', 'milestones','donations','progress',
-            ]
+            'id', 'title', 'categories_display', 'goal', 'country', 'address', 'longitude', 'latitude',
+            'description', 'categories', 'image', 'summary', 'duration_in_days',
+            'video', 'milestones', 'donations', 'progress',
+        ]
         extra_kwargs = {
             'id': {'read_only': True},
             'title': {'required': True},
-            'goal':{'required': True},
+            'goal': {'required': True},
             'country': {'required': True},
-            'description':{'required': True},
+            'description': {'required': True},
             'address': {'required': True},
-            'longitude':{'required': True},
-            'latitude':{'required': True},
-            #'problem_to_address':{'required': True},
-            #'solution':{'required': True},
-            'summary':{'required': True},
+            'longitude': {'required': True},
+            'latitude': {'required': True},
+            'summary': {'required': True},
             'video': {'required': False},
             'image': {'required': True},
             'duration_in_days': {'required': True},
@@ -167,71 +163,63 @@ class ProjectSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
+        instance = getattr(self, "instance", None)
+
+        # ---------- Categories ----------
         incoming_category_names = attrs.get('categories')
-        
-        # Ensure consistent casing for comparison with database
-        processed_category_names = [name.title() for name in incoming_category_names]
-        
-        # Retrieve actual Category objects based on the processed names
-        # Use a list() to force evaluation of queryset
-        found_category_objects = list(Category.objects.filter(name__in=processed_category_names))
-        
-        # Get names of found objects
-        found_names_set = {cat.name for cat in found_category_objects}
-        
-        # Determine missing names
-        desired_names_set = set(processed_category_names)
-        missing_names = desired_names_set - found_names_set
+        if incoming_category_names:
+            processed_category_names = [name.title() for name in incoming_category_names]
+            found_category_objects = list(Category.objects.filter(name__in=processed_category_names))
+            found_names_set = {cat.name for cat in found_category_objects}
+            desired_names_set = set(processed_category_names)
+            missing_names = desired_names_set - found_names_set
 
-        if missing_names:
-            raise serializers.ValidationError(f"The following categories do not exist: {missing_names}")
-        
-        # If all categories exist, store the actual Category objects in attrs
-        # We replace the list of names with the list of objects for `create`
-        attrs['categories'] = found_category_objects
+            if missing_names:
+                raise serializers.ValidationError(f"The following categories do not exist: {missing_names}")
 
-        # Validate milestone
-        milestones = attrs.get('milestones') 
-        if len(milestones) > 3:
-            raise serializers.ValidationError('You can only have a maximum of 3 milestones.')
-                 
-        p_goal =  attrs.get('goal')
-        milestones = attrs.get('milestones')
-        count = 0
-        previous_percentage = 0
+            attrs['categories'] = found_category_objects
 
-        for item in milestones:
-            current_percentage = item['percentage']
-            
-            # 1. Monotonicity check
-            if current_percentage <= previous_percentage:
-                raise serializers.ValidationError({
-                    'milestones.percentage': "Milestone percentages must be in increasing order."
+        # ---------- Milestones ----------
+        milestones = attrs.get("milestones", None)
+        new_goal = attrs.get("goal", getattr(instance, "goal", None))
+
+        if milestones is not None:
+            if len(milestones) > 3:
+                raise serializers.ValidationError("You can only have a maximum of 3 milestones.")
+
+            count = 0
+            previous_percentage = 0
+            for item in milestones:
+                current_percentage = item['percentage']
+                if current_percentage <= previous_percentage:
+                    raise serializers.ValidationError({
+                        'milestones.percentage': "Milestone percentages must be in increasing order."
                     })
-            count +=1
-            item['goal'] = (p_goal/100) * Decimal(current_percentage)
-            item['milestone_no'] = count
-            previous_percentage = current_percentage
-    
-        
-        if milestones[-1]['percentage'] != 100:
-            raise serializers.ValidationError({
-                'milestones.percentage': "The final milestone must be set to 100%."
-            })
-        
-        attrs['milestones'] = milestones
+                count += 1
+                item['goal'] = (new_goal / 100) * Decimal(current_percentage)
+                item['milestone_no'] = count
+                previous_percentage = current_percentage
+
+            if milestones[-1]['percentage'] != 100:
+                raise serializers.ValidationError({
+                    'milestones.percentage': "The final milestone must be set to 100%."
+                })
+
+            attrs['milestones'] = milestones
+
+        # If ONLY goal changes (PATCH goal), recalc existing milestones
+        elif "goal" in attrs and instance:
+            for milestone in instance.milestones.all():
+                milestone.goal = (Decimal(new_goal) / 100) * Decimal(milestone.percentage)
+                milestone.save()
 
         return attrs
-    
+
     @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_categories_display(self, obj):
         return [cat.name for cat in obj.categories.all()]
-    
-    # @extend_schema_field(serializers.CharField)
-    # def get_progress(self,obj):
-    #     return obj.progress
 
-    def create(self, validated_data,**kwargs):
+    def create(self, validated_data, **kwargs):
         categories_data = validated_data.pop('categories', None)
         milestones_data = validated_data.pop('milestones', None)
         image = validated_data.pop('image', None)
@@ -240,32 +228,6 @@ class ProjectSerializer(serializers.ModelSerializer):
             project = Project.objects.create(**validated_data)
             project.categories.set(categories_data)
 
-            # Validate milestone goal total
-            # p_goal = project.goal
-            
-            # count = 0
-            # previous_percentage = 0
-
-            # for item in milestones_data:
-            #     current_percentage = item['percentage']
-                
-            #     # 1. Monotonicity check
-            #     if current_percentage <= previous_percentage:
-            #         raise serializers.ValidationError({
-            #             'milestones.percentage': "Milestone percentages must be in increasing order."
-            #          })
-            #     count +=1
-            #     item['goal'] = (p_goal/100) * Decimal(current_percentage)
-            #     item['milestone_no'] = count
-            #     previous_percentage = current_percentage
-        
-            
-            # if milestones_data[-1]['percentage'] != 100:
-            #     raise serializers.ValidationError({
-            #         'milestones.percentage': "The final milestone must be set to 100%."
-            #     })
-            
-            
             try:
                 milestone_instances = [
                     Milestone(project=project, **data)
@@ -277,7 +239,6 @@ class ProjectSerializer(serializers.ModelSerializer):
                     "milestones": f"Invalid milestone data: {str(e)}"
                 })
 
-            # Handle image upload
             if image:
                 try:
                     image = resize_image(image)
@@ -286,19 +247,40 @@ class ProjectSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({'image': e.message})
 
             project.save()
-        
         return project
-    
+
     def update(self, instance, validated_data):
         new_image = validated_data.get('image')
+        milestones_data = validated_data.pop('milestones', None)
+        categories = validated_data.pop('categories', [])
+
         if new_image:
             try:
-                image = resize_image(image)
-                instance.image = image
+                validated_data['image'] = resize_image(new_image)
             except ValidationError as e:
                 raise serializers.ValidationError({'image': e.message})
 
-        return super().update(instance, validated_data)
+        with transaction.atomic():
+            if milestones_data is not None:
+                instance.milestones.all().delete()
+                for milestone_data in milestones_data:
+                    serializer = MilestoneSerializer(data=milestone_data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save(project=instance)
+
+            if categories:
+                instance.categories.set(categories)
+
+            instance = super().update(instance, validated_data)
+
+        return instance
+
+
+
+
+
+
+        
     
 
 class ProjectListSerializer(serializers.ModelSerializer):

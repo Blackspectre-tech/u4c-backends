@@ -27,6 +27,16 @@ class UserRegistionUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
 
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.validators import UniqueValidator
+from rest_framework import serializers
+from django.utils import timezone
+from rest_framework_simplejwt.tokens import RefreshToken
+
+class UserRegistionUniqueValidator(UniqueValidator):
+    message = "User with the provided email already exists"
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
@@ -36,30 +46,29 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError({"detail": "Invalid credentials."})
+            raise serializers.ValidationError({"email": "Invalid email"})
 
         # If user exists but is not active
         if not user.is_active:
-            # generate/send OTP again
             otp = generate_otp()
             user.otp = otp
             user.otp_expiry = timezone.now()
             user.save()
 
-            # send email (replace with your email backend logic)
-            send_account_activation_otp(
-                user.email, otp
-            )
+            send_account_activation_otp(user.email, otp)
 
             return {
-                "message": "Account not verified. OTP sent to your email.",
+                "email": "Account not verified. OTP sent to your email.",
                 "is_active": user.is_active,
             }
 
-        # If user is active → normal login
+        # If user is active → check password
         if not user.check_password(password):
-            raise serializers.ValidationError({"detail": "Invalid credentials."})
+            raise serializers.ValidationError({
+                "password": "Invalid password"
+            })
 
+        # Generate tokens if all good
         refresh = RefreshToken.for_user(user)
 
         return {

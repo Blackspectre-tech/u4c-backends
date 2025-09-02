@@ -20,7 +20,7 @@ from .serializers import (
     WalletSerializer,
 
     )
-from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp
+from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp,send_html_mail
 from .models import Organization, Profile
 from .permissions import isOrgOwner, Is_Org,Is_Donor
 from rest_framework.views import APIView
@@ -93,7 +93,7 @@ class UserPasswordResetView(generics.GenericAPIView):
             user=get_user_model().objects.get(email=serializer.validated_data.get("email"))
         except get_user_model().DoesNotExist:
             raise exceptions.NotAcceptable(
-                "User with the given email does not exist."
+                {"email":"User with the given email does not exist."}
             )
         
         otp = generate_otp()
@@ -118,13 +118,11 @@ class UserConfirmPasswordResetView(generics.GenericAPIView):
             user = validate_otp(otp)
             user.set_password(new_password)
             user.save()
-            send_mail(
-                subject=f"Profiter Password Reset",
-                message=f"Your password has been reset sucessfully",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[user.email],
-            )
-            return Response("Password reset successful.", status=status.HTTP_200_OK)
+            subject=f"Password Reset Successful",
+            message=f"Your password has been reset sucessfully, you can now login with your new password",
+            send_html_mail(user.email,subject,message)
+            
+            return Response({"message":"Password reset successful."}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

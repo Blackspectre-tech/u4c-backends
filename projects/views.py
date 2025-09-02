@@ -79,7 +79,6 @@ class RetrieveProjectsView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method == "GET":
             # Public read access
             return [permissions.AllowAny()]
-        # Require authentication for PUT, PATCH, DELETE
         return [permissions.IsAuthenticated(),Is_Org(), isOrgObjOwner()]
 
     def perform_destroy(self, instance):

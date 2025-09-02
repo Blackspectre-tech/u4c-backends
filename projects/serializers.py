@@ -32,7 +32,12 @@ class MilestoneImagesSerializer(serializers.ModelSerializer):
 
         if images:
             for img in images:
-                image = resize_image(img)
+
+                try:
+                    image = resize_image(img)
+                except ValidationError as e:
+                    raise serializers.ValidationError({'image': e.message})
+
                 instances.append(MilestoneImage(
                     milestone=milestone,
                     image=image,
@@ -55,11 +60,11 @@ class ExpensesSerializer(serializers.ModelSerializer):
         'proof_pdf_url': {'read_only': True},
         }  
 
-    def validate_pdf(self, value):
+    def validate_proof_pdf(self, value):
         if not value.name.endswith('.pdf'):
-            raise serializers.ValidationError("Only PDF files are allowed.")
+            raise serializers.ValidationError({"proof_pdf":"Only PDF files are allowed."})
         if value.size > 1024 * 1024:
-            raise serializers.ValidationError("File size cannot exceed 1MB.")
+            raise serializers.ValidationError({"proof_pdf":"File size cannot exceed 1MB."})
         return value
 
 
@@ -95,7 +100,12 @@ class PostUpdateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         image = validated_data.pop('image', None)
-        validated_data['image'] = resize_image(image)
+        try:
+            validated_data['image'] = resize_image(image)
+    
+        except ValidationError as e:
+            raise serializers.ValidationError({'image': e.message})
+        
 
         return Update.objects.create(**validated_data) 
 
@@ -175,7 +185,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             missing_names = desired_names_set - found_names_set
 
             if missing_names:
-                raise serializers.ValidationError(f"The following categories do not exist: {missing_names}")
+                raise serializers.ValidationError({"categories":f"The following categories do not exist: {missing_names}"})
 
             attrs['categories'] = found_category_objects
 
@@ -185,7 +195,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
         if milestones is not None:
             if len(milestones) > 3:
-                raise serializers.ValidationError("You can only have a maximum of 3 milestones.")
+                raise serializers.ValidationError({"milesontes":"You can only have a maximum of 3 milestones."})
 
             count = 0
             previous_percentage = 0

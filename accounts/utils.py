@@ -74,13 +74,13 @@ def validate_otp(otp, minutes=5):
     try:
         user = User.objects.get(otp=otp)
     except User.DoesNotExist:
-        raise ValidationError("Invalid OTP.")
+        raise ValidationError({"otp":"Invalid OTP."})
 
     if timezone.now() - user.otp_expiry > timedelta(minutes=minutes):
-        raise ValidationError("OTP has expired.")
+        raise ValidationError({"otp":"OTP has expired."})
 
     if user.otp != otp:
-        raise ValidationError("Incorrect OTP.")
+        raise ValidationError({"otp":"Incorrect OTP."})
 
     # Invalidate OTP after successful use
     user.otp = None
@@ -117,7 +117,6 @@ def validate_otp(otp, minutes=5):
 def send_account_activation_otp(email, otp):
     subject = "Your OTP for your account Activation"
     message = f"Your OTP is: {otp}.  It is valid for 5 minutes."
-    # from_email = settings.EMAIL_HOST_USER
     recipient_list = [email]
     context={'title':'Account Activation','message': message,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
@@ -126,14 +125,17 @@ def send_account_activation_otp(email, otp):
 def send_reset_password_otp(email, otp):
     subject = "Your OTP for Password Reset"
     message = f"Your OTP is: {otp}. It is valid for 5 minutes"
-    # from_email = settings.EMAIL_HOST_USER
     recipient_list = [email]
     context={'title':'Password Reset','message': message,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
     send_email_in_thread(subject,context,html_template_path,recipient_list)
 
-
-
+#general mail function
+def send_html_mail(email,subject,message):
+    recipient_list = [email]
+    context={'title':subject,'message': message,'year': datetime.now().year}
+    html_template_path="email/mail_template.html",
+    send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 
 def project_approval_mail(project, reason=None, approved=True):
@@ -151,7 +153,6 @@ def project_approval_mail(project, reason=None, approved=True):
             f"Your project campaign “{project.title}” was disapproved for this reason:"
             f"{reason}")
         title = 'Project Disapproved'
-    # from_email = settings.EMAIL_HOST_USER
     recipient_list = [project.organization.user.email]
     context={'title':title,'message': message,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
@@ -172,7 +173,6 @@ def organization_approval_mail(organization, reason=None, approved=True):
             f"Your organization “{organization.name}” was disapproved for the following reason:"
             )
         title = 'Organization Disapproved'
-    # from_email = settings.EMAIL_HOST_USER
     recipient_list = [organization.user.email]
     html_template_path="email/mail_template.html",
     context={'reason': reason,'title':title,'message': message,'year': datetime.now().year}

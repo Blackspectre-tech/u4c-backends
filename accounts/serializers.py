@@ -161,7 +161,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         name = attrs['name'].title()
         if Organization.objects.filter(name=name).exists():
-            raise serializers.ValidationError("Organization name already exists")
+            raise serializers.ValidationError({"name":"Organization name already exists"})
         return attrs
 
     def create(self, validated_data):
@@ -277,7 +277,7 @@ class UploadAvatarSerializer(serializers.Serializer):
             try:
                 image = resize_avatar(image_file)
             except ValidationError as e:
-                raise serializers.ValidationError({'image': e.message})  # Pass to serializer error
+                raise serializers.ValidationError({'image': e.message})
 
         instance.avatar = image
         instance.save()
@@ -286,7 +286,7 @@ class UploadAvatarSerializer(serializers.Serializer):
 
 
 class AccountActivationSerializer(serializers.Serializer):
-    otp = serializers.CharField(max_length=6, min_length=6)
+    otp = serializers.CharField(max_length=6, min_length=6,required=True)
 
     def validate(self, attrs):
         otp = attrs['otp']
@@ -306,7 +306,7 @@ class AccountActivationSerializer(serializers.Serializer):
 
 
 class ResendAccountActivationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    email = serializers.EmailField(required=True)
 
     def validate(self, attrs):
         user = (
@@ -329,18 +329,20 @@ class ResendAccountActivationSerializer(serializers.Serializer):
 
 
 class UserPasswordResetSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    email = serializers.EmailField(required=True)
 
 
 class UserConfirmPasswordResetSerializer(serializers.Serializer):
-    otp = serializers.CharField(max_length=6, min_length=6)
-    new_password = serializers.CharField(min_length=5, max_length=5)
+    otp = serializers.CharField(max_length=6, min_length=6,required=True)
+    new_password = serializers.CharField(min_length=5, max_length=5, required=True)
 
     def validate(self, attrs):        
-        try:
-            validate_password(password=attrs.get("new_password"), user = None)
-        except ValidationError as err:
-            raise serializers.ValidationError(err.messages)
+        # try:
+        #     validate_password(password=attrs.get("new_password"), user = None)
+        # except ValidationError as err:
+        #     raise serializers.ValidationError(err.messages)
+        if len(attrs.get("new_password"))<8:
+            raise serializers.ValidationError({"password": "Password should be eight or more characters."})
 
         return attrs
 

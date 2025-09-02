@@ -334,7 +334,7 @@ class UserPasswordResetSerializer(serializers.Serializer):
 
 class UserConfirmPasswordResetSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6, min_length=6,required=True)
-    new_password = serializers.CharField(min_length=5, max_length=5, required=True)
+    new_password = serializers.CharField(min_length=8, required=True)
 
     def validate(self, attrs):        
         # try:

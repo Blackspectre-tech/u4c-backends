@@ -82,7 +82,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 AUTH_USER_MODEL = 'accounts.User' 
-if DEBUG:
+TEST = config('TEST', cast=bool)
+if TEST:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

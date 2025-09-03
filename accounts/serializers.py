@@ -336,15 +336,15 @@ class UserConfirmPasswordResetSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6, min_length=6,required=True)
     new_password = serializers.CharField(min_length=8, required=True)
 
-    def validate(self, attrs):        
-        # try:
-        #     validate_password(password=attrs.get("new_password"), user = None)
-        # except ValidationError as err:
-        #     raise serializers.ValidationError(err.messages)
-        if len(attrs.get("new_password"))<8:
-            raise serializers.ValidationError({"password": "Password should be eight or more characters."})
+    # def validate(self, attrs):        
+    #     # try:
+    #     #     validate_password(password=attrs.get("new_password"), user = None)
+    #     # except ValidationError as err:
+    #     #     raise serializers.ValidationError(err.messages)
+    #     if len(attrs.get("new_password"))<8:
+    #         raise serializers.ValidationError({"password": "Password should be eight or more characters."})
 
-        return attrs
+    #     return attrs
 
 
 class WalletSerializer(serializers.ModelSerializer):

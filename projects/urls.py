@@ -12,11 +12,13 @@ from .views import (
     CommentCreateView,
     CommentRetrieveUpdateDestroyView,
     listCommentsByProjectsView,
+    MyProjectListView,
 )
 
 urlpatterns = [
     path('create/', ProjectCreateView.as_view()),
     path('', listApprovedProjectsView.as_view()),
+    path('my-projects/', MyProjectListView.as_view()),
     path('<int:pk>/', RetrieveProjectsView.as_view()),
     path('organization/<int:pk>/', listOrgProjectsView.as_view()),
     path('<int:pk>/comments/', listCommentsByProjectsView.as_view()),

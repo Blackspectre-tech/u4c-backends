@@ -140,7 +140,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
         model = Organization
         fields = [
             'user','name','country','address','description','socials',
-            'website','approved_projects','total_projects',
+            'website','approved_projects','total_projects','approval_status',
         ]
 
 

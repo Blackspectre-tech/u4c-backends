@@ -79,8 +79,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 
-
-
 class UserCreateSerializer(serializers.ModelSerializer):
     phone_number = PhoneNumberField(
         validators=[UniqueValidator(queryset=User.objects.all())]
@@ -131,23 +129,18 @@ class SocialsSerializer(serializers.ModelSerializer):
         fields = ['instagram', 'facebook', 'youtube', 'twitter']
 
 
+
 class OrganizationSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()  #nested user creation
     socials = SocialsSerializer(required=False)
     #reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
     website = serializers.CharField(required = False)
+    
     class Meta:
         model = Organization
         fields = [
-            'user',
-            'name',
-            'country',
-            'address',
-            'description',
-            'socials',
-            #'reg_no',
-            #'cac_document',
-            'website',
+            'user','name','country','address','description','socials',
+            'website','approved_projects','total_projects',
         ]
 
 
@@ -190,11 +183,27 @@ class OrganizationSerializer(serializers.ModelSerializer):
         return org
 
 
+
+# class OrganizationKYCSerializer(serializers.ModelSerializer)
+#     reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
+
+#     class Meta:
+#         model = Organization
+#         fields = ['reg_no','cac_document',]
+
+#     def validate_cac_document(self, value):
+#         if not value.name.endswith('.pdf'):
+#             raise serializers.ValidationError("Only PDF files are allowed.")
+#         if value.size > 1024 * 1024:
+#             raise serializers.ValidationError("File size cannot exceed 1MB.")
+#         return value
+
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
     username = serializers.CharField(
         validators=[UniqueValidator(queryset=Profile.objects.all())],
         required=True)
+    
     
     class Meta:
         model = Profile
@@ -236,8 +245,6 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
 
 
-
-
 class UpdateOrganizationSerializer(serializers.ModelSerializer):
     socials = SocialsSerializer()
 
@@ -263,7 +270,6 @@ class UpdateOrganizationSerializer(serializers.ModelSerializer):
             socials.save()
 
         return super().update(instance, validated_data)
-
 
 
 
@@ -304,7 +310,6 @@ class AccountActivationSerializer(serializers.Serializer):
 
             
 
-
 class ResendAccountActivationSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
@@ -332,6 +337,7 @@ class UserPasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
 
+
 class UserConfirmPasswordResetSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6, min_length=6,required=True)
     new_password = serializers.CharField(min_length=8, required=True)
@@ -347,10 +353,10 @@ class UserConfirmPasswordResetSerializer(serializers.Serializer):
     #     return attrs
 
 
+
 class WalletSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
         fields = ['wallet_address']
 
-   

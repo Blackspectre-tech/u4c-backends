@@ -33,8 +33,8 @@ class Category(models.Model):
 class Project(TimeStamps, models.Model):
 
     PENDING ='PENDING'
-    APPROVED='✅APPROVED'
-    DISAPPROVED ='❌DISAPPROVED'
+    APPROVED='APPROVED'
+    DISAPPROVED ='DISAPPROVED'
     FLAGGED='FLAGGED'
     Funding ='Funding'
     Unimplemented ='Under Implementation'
@@ -42,10 +42,10 @@ class Project(TimeStamps, models.Model):
     Completed = 'Completed'
 
     approval = [
-    (FLAGGED,'🚩FLAGGED'),
+    (FLAGGED,'FLAGGED'),
     (PENDING,'PENDING'),
-    (APPROVED,'✅APPROVED'),
-    (DISAPPROVED,'❌DISAPPROVED')]
+    (APPROVED,'APPROVED'),
+    (DISAPPROVED,'DISAPPROVED')]
 
     status = [
     (Funding,'Funding'),

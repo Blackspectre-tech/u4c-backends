@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from phonenumber_field.modelfields import PhoneNumberField
 from django.core.validators import MinLengthValidator,MaxLengthValidator
-
+#from projects.models import Project
 # Create your models here.
 
 
@@ -94,13 +94,13 @@ class Organization(models.Model):
 
 
     PENDING ='PENDING'
-    APPROVED='✅APPROVED'
-    DISAPPROVED ='❌DISAPPROVED'
+    APPROVED='APPROVED'
+    DISAPPROVED ='DISAPPROVED'
     
     approval = [
     (PENDING,'PENDING'),
-    (APPROVED,'✅APPROVED'),
-    (DISAPPROVED,'❌DISAPPROVED')]
+    (APPROVED,'APPROVED'),
+    (DISAPPROVED,'DISAPPROVED')]
 
 
     name = models.CharField(max_length=100)
@@ -109,6 +109,8 @@ class Organization(models.Model):
     country = models.CharField(max_length=50)
     address = models.CharField(max_length=200)
     description=models.TextField()
+
+    #kyc
     cac_document = models.FileField(null=True,blank=True)
     reg_no = models.CharField(max_length=8, blank = True,null=True)
     approval_status = models.CharField(max_length=20, choices=approval, default=PENDING)
@@ -116,10 +118,16 @@ class Organization(models.Model):
     disapproverd_at = models.DateTimeField(null=True,blank=True)
     approved_by = models.CharField(max_length=30, null=True)
     disapproved_by = models.CharField(max_length=30, null=True)
-    disapproval_reason= models.TextField(null=True)
-    total_campaigns = models.IntegerField(default=0)
-    approved_campaigns = models.IntegerField(default=0)
+    disapproval_reason= models.TextField(null=True)    
+
+
+    @property
+    def total_projects(self):
+        return self.projects.count()
     
+    @property
+    def approved_projects(self):
+        return self.projects.filter(approval_status = self.APPROVED).count()
 
     def save(self, *args, **kwargs):
         self.name = self.name.title()
@@ -131,6 +139,8 @@ class Organization(models.Model):
     def __str__(self):
         return f"{self.name}"
     
+
+
 
 class Social(models.Model):
     organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='socials')

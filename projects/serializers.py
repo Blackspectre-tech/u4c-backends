@@ -124,7 +124,8 @@ class CommentSerializer(serializers.ModelSerializer):
         }
     
 
-
+import logging
+logger = logging.getLogger(__name__)
 
 class DonationSerializer(serializers.ModelSerializer):
     username = serializers.ReadOnlyField()
@@ -173,9 +174,11 @@ class ProjectSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
+        logger.debug(f'all fields >>>>>>>>>>>>>>{attrs}')
+        print(attrs)
+        
         instance = getattr(self, "instance", None)
-        import logging
-        logger = logging.getLogger(__name__)
+        
 
         
 

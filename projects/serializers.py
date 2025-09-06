@@ -124,8 +124,7 @@ class CommentSerializer(serializers.ModelSerializer):
         }
     
 
-import logging
-logger = logging.getLogger(__name__)
+
 
 class DonationSerializer(serializers.ModelSerializer):
     username = serializers.ReadOnlyField()
@@ -174,18 +173,11 @@ class ProjectSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        logger.debug(f'all fields >>>>>>>>>>>>>>{attrs}')
-        print(attrs)
-        
         instance = getattr(self, "instance", None)
-        
-
-        
 
         # ---------- Categories ----------
         incoming_category_names = attrs.get('categories')
         if incoming_category_names:
-            logger.debug(f'data here>>>>>>>>>>>>>>{incoming_category_names}')
             processed_category_names = [name.title() for name in incoming_category_names]
             found_category_objects = list(Category.objects.filter(name__in=processed_category_names))
             found_names_set = {cat.name for cat in found_category_objects}
@@ -202,7 +194,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         new_goal = attrs.get("goal", getattr(instance, "goal", None))
 
         if milestones is not None:
-            logger.debug(f'data here>>>>>>>>>>>>>>{milestones}')
             if len(milestones) > 3:
                 raise serializers.ValidationError({"milesontes":"You can only have a maximum of 3 milestones."})
 

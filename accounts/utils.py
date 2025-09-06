@@ -164,7 +164,7 @@ def organization_approval_mail(organization, reason=None, approved=True):
     if approved:
         subject = f"“{organization.name}” approval"
         message = (
-            f"We are pleased to inform Your Organization “{organization.name}” has been approved, you can now create projects  on our platform"
+            f"We are pleased to inform you that Your Organization “{organization.name}” has been approved, you can now create projects  on our platform"
             )
         title = 'Organization Approved'
     else:   

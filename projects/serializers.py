@@ -178,7 +178,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         # ---------- Categories ----------
         incoming_category_names = attrs.get('categories')
         if incoming_category_names:
-            print(incoming_category_names)
+            print(incoming_category_names, flush=True)
             processed_category_names = [name.title() for name in incoming_category_names]
             found_category_objects = list(Category.objects.filter(name__in=processed_category_names))
             found_names_set = {cat.name for cat in found_category_objects}
@@ -195,7 +195,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         new_goal = attrs.get("goal", getattr(instance, "goal", None))
 
         if milestones is not None:
-            print(milestones)
+            print(milestones,flush=True)
             if len(milestones) > 3:
                 raise serializers.ValidationError({"milesontes":"You can only have a maximum of 3 milestones."})
 

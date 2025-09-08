@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     'accounts',
     'projects',
     'transactions',
-    'web_info',
+    'website',
 
     #others
     'rest_framework',

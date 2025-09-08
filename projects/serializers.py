@@ -82,7 +82,6 @@ class MilestoneSerializer(serializers.ModelSerializer):
         fields = ['id','milestone_no','percentage','title','details','goal','images','expenses',]
         extra_kwargs = {
         'id': {'read_only': True},
-        #'goal': {'read_only': True},
         }
     
     

@@ -34,6 +34,7 @@ urlpatterns = [
     path("admin/", my_admin_site.urls),
     path('account/', include('accounts.urls')),
     path('projects/', include('projects.urls')),
+    path('website/', include('website.urls')),
     path('tinymce/', include('tinymce.urls')),
 ]
 if settings.DEBUG:

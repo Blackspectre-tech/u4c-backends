@@ -51,7 +51,8 @@ def send_email_with_html(subject, context, html_template_path, recipient_list):
         print("Failed to send email:", e)
 
 
-def send_email_in_thread(subject, context, html_template_path, recipient_list):
+def send_email_in_thread(subject, context, html_template_path, recipient_list,support=True):
+    context['support']=support
     # Start a new thread to send the email
     email_threading = threading.Thread(
         target=send_email_with_html,
@@ -131,11 +132,11 @@ def send_reset_password_otp(email, otp):
     send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 #general mail function
-def send_html_mail(email,subject,message):
+def send_html_mail(email,subject,message, support=True):
     recipient_list = [email]
     context={'title':subject,'message': message,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
-    send_email_in_thread(subject,context,html_template_path,recipient_list)
+    send_email_in_thread(subject,context,html_template_path,recipient_list,support)
 
 
 def project_approval_mail(project, reason=None, approved=True):

@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class WebInfoConfig(AppConfig):
+class WebsiteConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'web_info'
+    name = 'website'

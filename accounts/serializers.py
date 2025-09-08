@@ -139,9 +139,12 @@ class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
         fields = [
-            'user','name','country','address','description','socials',
+            'id','user','name','country','address','description','socials',
             'website','approved_projects','total_projects','approval_status',
         ]
+        extra_kwargs = {
+        'id': {'read_only': True},
+        }  
 
 
     # def validate_cac_document(self, value):
@@ -184,19 +187,21 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 
 
-# class OrganizationKYCSerializer(serializers.ModelSerializer)
-#     reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
+class OrganizationKYCSerializer(serializers.ModelSerializer):
+    # reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
+    cac_document=serializers.FileField(required=True)
 
-#     class Meta:
-#         model = Organization
-#         fields = ['reg_no','cac_document',]
 
-#     def validate_cac_document(self, value):
-#         if not value.name.endswith('.pdf'):
-#             raise serializers.ValidationError("Only PDF files are allowed.")
-#         if value.size > 1024 * 1024:
-#             raise serializers.ValidationError("File size cannot exceed 1MB.")
-#         return value
+    class Meta:
+        model = Organization
+        fields = ['cac_document',]
+
+    def validate_cac_document(self, value):
+        if not value.name.endswith('.pdf'):
+            raise serializers.ValidationError("Only PDF files are allowed.")
+        if value.size > 2*(1024*1024):
+            raise serializers.ValidationError("File size cannot exceed 2MB.")
+        return value
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
@@ -208,12 +213,16 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
+            "id"
             "user",
             "username",
             "first_name",
             "last_name",
             "anonymous"
         ]
+        extra_kwargs = {
+            'id': {'read_only': True},
+        }
 
     
     def create(self, validated_data):

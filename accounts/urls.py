@@ -19,6 +19,7 @@ from .views import (
     AddWalletView,
     # OrganizationView,
     ProfileView,
+    OrganizationKYC,
 )
 
 urlpatterns = [
@@ -27,6 +28,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('register-user/', RegisterUserView.as_view()),
     path('register-organization/', RegisterOrganizationView.as_view()),
+    path('organization/kyc/', OrganizationKYC.as_view()),
     path('activate/', AccountActivationView.as_view()),
     path('resend-activation-otp/', UserResendActivationView.as_view()),
     path('password-reset/', UserPasswordResetView.as_view()),

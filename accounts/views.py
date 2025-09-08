@@ -18,6 +18,7 @@ from .serializers import (
     UpdateOrganizationSerializer,
     UploadAvatarSerializer,
     WalletSerializer,
+    OrganizationKYCSerializer
 
     )
 from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp,send_html_mail
@@ -60,7 +61,18 @@ class RegisterOrganizationView(generics.GenericAPIView):
             {"message": "Registration successful. Please check your email for the OTP to verify your account."},
             status= status.HTTP_201_CREATED)
 
-
+class OrganizationKYC(generics.GenericAPIView):
+    serializer_class = OrganizationKYCSerializer
+    permission_classes = [permissions.IsAuthenticated,Is_Org]
+    parser_classes=[parsers.MultiPartParser]
+    
+    def patch(self, request):
+        org = get_object_or_404(Organization, user=request.user)
+        serializer = self.get_serializer(instance=org, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
 
 class AccountActivationView(generics.GenericAPIView):
     serializer_class = AccountActivationSerializer

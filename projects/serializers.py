@@ -153,7 +153,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'categories_display', 'goal', 'country', 'address', 'longitude', 'latitude',
             'description', 'categories', 'image', 'summary', 'duration_in_days',
-            'video', 'milestones', 'donations', 'progress',
+            'video', 'milestones', 'donations', 'progress','approval_status','created_at',
         ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -168,7 +168,9 @@ class ProjectSerializer(serializers.ModelSerializer):
             'video': {'required': False},
             'image': {'required': True},
             'duration_in_days': {'required': True},
+            'approval_status': {'read_only': True},
             'progress': {'read_only': True},
+            'created_at': {'read_only': True},
         }
 
     def validate(self, attrs):
@@ -297,4 +299,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
     progress = serializers.ReadOnlyField()
     class Meta:
         model = Project
-        fields = ['id','title','image','goal','progress','description','summary','status','organization',]
+        fields = ['id','title','image','goal','progress','description','summary','status','organization','created_at',]
+        extra_kwargs = {
+            'created_at': {'read_only': True},
+        }

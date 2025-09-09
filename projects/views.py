@@ -77,6 +77,7 @@ class MyProjectListView(generics.ListAPIView):
 class RetrieveProjectsView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectSerializer
     lookup_field = 'pk'
+    parser_classes = [NestedMultipartAndFileParser]
     #http_method_names = ['get', 'put', 'delete']
 
     def get_queryset(self):

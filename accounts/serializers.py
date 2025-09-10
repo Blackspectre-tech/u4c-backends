@@ -144,6 +144,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
         'id': {'read_only': True},
+        'approved_projects': {'read_only': True},
+        'approval_status': {'read_only': True},
         }  
 
 

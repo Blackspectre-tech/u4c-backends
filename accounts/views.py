@@ -49,8 +49,7 @@ class RegisterUserView(generics.GenericAPIView):
 
 
 
-class RegisterOrganizationView(generics.GenericAPIView):
-    parser_classes = [NestedMultipartAndFileParser] 
+class RegisterOrganizationView(generics.GenericAPIView): 
     serializer_class = OrganizationSerializer
 
     def post(self, request, *args, **kwargs):

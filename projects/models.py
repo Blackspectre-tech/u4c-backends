@@ -40,6 +40,12 @@ class Project(TimeStamps, models.Model):
     Unimplemented ='Under Implementation'
     Cancelled ='Cancelled'
     Completed = 'Completed'
+    CRYPTO = 'Crypto'
+    BANK = 'Bank Transfer'
+    payout_options = [
+        (CRYPTO, f'{CRYPTO}'),
+        (BANK,f'{BANK}')
+    ]
 
     approval = [
     (FLAGGED,'FLAGGED'),
@@ -80,6 +86,11 @@ class Project(TimeStamps, models.Model):
     wallet_address = models.CharField(max_length=255,null=True, blank=True)
     contract_id = models.IntegerField(null=True, blank=True)
     progress = models.DecimalField(decimal_places=2,max_digits=5,default=0.00)
+#     deployed = models.BooleanField(default=False)
+    
+# #before deploying check if the user has an active fiat/crypto account 
+#     payout = models.CharField(max_length=20, choices=payout_options, default=CRYPTO)
+    
     
     def __str__(self):
         return self.title

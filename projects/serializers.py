@@ -284,10 +284,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 
             instance = super().update(instance, validated_data)
 
+        instance.approval_status = Project.PENDING
         return instance
-
-
-
 
 
 

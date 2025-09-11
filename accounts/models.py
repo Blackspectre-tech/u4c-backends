@@ -140,7 +140,17 @@ class Organization(models.Model):
         return f"{self.name}"
     
 
+# class Bank(models.Model):
+#     org = models.ForeignKey(Organization, on_delete=models.CASCADE)
+#     active = models.BooleanField(default=False)
+#     bank_name =
+#     account_number =
 
+# class Crypto(models.Model):
+#     org = models.ForeignKey(Organization, on_delete=models.CASCADE)
+#     active = models.BooleanField(default=False)
+#     currency = models.CharField()
+#     wallet_address = 
 
 class Social(models.Model):
     organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='socials')

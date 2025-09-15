@@ -35,7 +35,7 @@ class FaqSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Faq
-        fields = ['question', 'answer',]
+        fields = ['question', 'answer','category']
         # extra_kwargs = {
         # 'id': {'read_only': True},
         # }  

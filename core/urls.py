@@ -32,6 +32,7 @@ urlpatterns = [
 
     # path('admin/', admin.site.urls),
     path("admin/", my_admin_site.urls),
+    path('contract/', include('contract.urls', namespace='contract')),
     path('account/', include('accounts.urls')),
     path('projects/', include('projects.urls')),
     path('website/', include('website.urls')),

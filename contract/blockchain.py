@@ -9,7 +9,7 @@ w3 = Web3(Web3.HTTPProvider(ALCHEMY_HTTP))
 # use wss if you need web socket event subscriptions: Web3(Web3.WebsocketProvider(ALCHEMY_WS))
 
 # Load ABI (store ABI json file in your repo)
-with open("transactions/contract.json") as f:
+with open("contract/contract.json") as f:
     CONTRACT_ABI = json.load(f)
 
 CONTRACT_ADDRESS = Web3.to_checksum_address(config("CONTRACT_ADDRESS"))
@@ -62,8 +62,10 @@ def platform_wallet_bal():
     # get balance in Wei
     balance_wei = w3.eth.get_balance(config("PLATFORM_WALLET_ADDRESS"))
     # convert to ETH
-    balance_eth = w3.from_wei(balance_wei, 'ether')
-    return balance_eth
+    # balance_eth = w3.from_wei(balance_wei, 'ether')
+    return balance_wei
+
+
 
 #print(contract.functions.platformWallet().call())
 

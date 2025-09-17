@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     #project apps
     'accounts',
     'projects',
-    'transactions',
+    'contract',
     'website',
 
     #others
@@ -259,7 +259,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "ROTATE_REFRESH_TOKENS":True,
+    "ROTATE_REFRESH_TOKENS":False,
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
     "UPDATE_LAST_LOGIN": True,

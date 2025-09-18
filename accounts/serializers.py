@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import Token
 from rest_framework.validators import UniqueValidator
 from phonenumber_field.serializerfields import PhoneNumberField
 from django.db.models import Q
-
+from projects.models import Project
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from .utils import (
@@ -370,4 +370,13 @@ class WalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['wallet_address']
+    
+    def update(self, instance, validated_data):
+        if instance.is_organization:
+            wallet = validated_data.get('wallet_address', None)
+            Project.objects.filter(
+                organization = instance.organization,
+                deployed=False
+                ).update(wallet_address=wallet)
+        return super().update(instance, validated_data)
 

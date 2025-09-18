@@ -70,8 +70,6 @@ class Project(TimeStamps, models.Model):
     categories = models.ManyToManyField(Category, related_name='projects', blank=False)
     image = models.ImageField(upload_to='projects/',blank=False, null=False)
     description = HTMLField(blank=False, null=True)
-    #problem_to_address = HTMLField(blank=False, null=False)
-    #solution = HTMLField(blank=False, null=True)
     summary = HTMLField(blank=False, null=True)
     video = models.URLField(null=True, blank=True)
     approval_status = models.CharField(max_length=20, choices=approval, default=PENDING)
@@ -86,10 +84,10 @@ class Project(TimeStamps, models.Model):
     wallet_address = models.CharField(max_length=255,null=True, blank=True)
     contract_id = models.IntegerField(null=True, blank=True)
     progress = models.DecimalField(decimal_places=2,max_digits=5,default=0.00)
-#     deployed = models.BooleanField(default=False)
+    deployed = models.BooleanField(default=False)
     
-# #before deploying check if the user has an active fiat/crypto account 
-#     payout = models.CharField(max_length=20, choices=payout_options, default=CRYPTO)
+#before deploying check if the user has an active fiat/crypto account 
+    #payout = models.CharField(max_length=20, choices=payout_options, default=CRYPTO)
     
     
     def __str__(self):
@@ -127,14 +125,14 @@ class Project(TimeStamps, models.Model):
 
 class Milestone(TimeStamps, models.Model):
 
-    Awaiting_Report ='Waiting for Report'
-    Not_Started ='Not Started'
-    Implemented ='Implemented'
+    ACTIVE = 'Active'
+    NOT_STARTED ='Not Started'
+    COMPLETED = 'Completed'
     
     status = [
-    (Awaiting_Report,'Waiting for Report'),
-    (Not_Started,'Not Started'),
-    (Implemented,'Implemented')
+    (ACTIVE,'Active'),
+    (NOT_STARTED,'Not Started'),
+    (COMPLETED,'Completed')
     ]
     
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
@@ -143,8 +141,9 @@ class Milestone(TimeStamps, models.Model):
     details = HTMLField(blank=False, null=True)
     percentage = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
     goal=models.DecimalField(decimal_places=2,max_digits=16)
-    status = models.CharField(max_length=25, choices=status, default=Not_Started)
-    funds=models.DecimalField(decimal_places=2,max_digits=14,default=0)
+    status = models.CharField(max_length=25, choices=status, default=NOT_STARTED)
+    contract_index = models.IntegerField(null=True, blank=True)
+    withdrawn = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         self.details = html_cleaner.clean(
@@ -224,6 +223,7 @@ class Donation(models.Model):
     user_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='donations')
     amount = models.DecimalField(decimal_places=2,max_digits=14, blank=False, default=0)
     date = models.DateTimeField(auto_now_add=True)
+    tip = models.DecimalField(decimal_places=2,max_digits=14, blank=False, default=0)
 
     class Meta:
         ordering = ["-date"]

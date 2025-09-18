@@ -148,7 +148,7 @@ def alchemy_webhook(request):
     try:
         # Note: Implement HMAC signature verification for production.
         data = json.loads(request.body)
-        logs = data.get('event', {}).get('logs', [])
+        logs = data.get('logs', []) or data.get('event', {}).get('logs', [])
 
         if not logs:
             return JsonResponse({'status': 'no logs received'})

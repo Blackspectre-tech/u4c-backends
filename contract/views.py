@@ -180,7 +180,7 @@ def alchemy_webhook(request):
                     project = Project.objects.get(
                     approval_status=Project.APPROVED,
                     deployed=False,
-                    wallet_address=creator,
+                    wallet_address=creator.upper(),
                     goal=goal
                     )
                     project.contract_id = campaign_id

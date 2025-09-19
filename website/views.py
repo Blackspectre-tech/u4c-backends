@@ -2,6 +2,7 @@ from .serializers import ContactUsSerializer,FaqSerializer
 from rest_framework import generics,status
 from rest_framework.response import Response
 from .models import Faq
+from django_filters.rest_framework import DjangoFilterBackend
 # Create your views here.
 
 class ContactUsView(generics.GenericAPIView):
@@ -17,4 +18,6 @@ class ContactUsView(generics.GenericAPIView):
 class FaqListView(generics.ListAPIView):
     serializer_class = FaqSerializer
     queryset = Faq.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['category']
 

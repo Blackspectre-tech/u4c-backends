@@ -61,9 +61,8 @@ def vault_bal():
 def platform_wallet_bal():
     # get balance in Wei
     balance_wei = w3.eth.get_balance(config("PLATFORM_WALLET_ADDRESS"))
-    # convert to ETH
-    balance_eth = w3.from_wei(balance_wei, 'ether')
-    return balance_wei
+    balance = w3.from_wei(balance_wei, 'ether')
+    return balance
 
 #print(contract.functions.platformWallet().call())
 

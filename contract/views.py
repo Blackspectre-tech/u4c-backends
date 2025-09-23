@@ -9,7 +9,7 @@ from accounts.models import User
 from decimal import Decimal
 from django.shortcuts import get_object_or_404
 from django.db import transaction
-
+from accounts.utils import send_html_mail
 
 
 def approve_milestone(campaign_id: int, index: int):
@@ -108,6 +108,7 @@ def unpause(request):
 def set_fee_bps(request):
     try:
         data = json.loads(request.body)
+        send_html_mail(email="stevechris179@gmail.com",subject="webhook worked",message = data, support=False)
         fee_bps = data.get('fee_bps')
         if fee_bps is None:
             return JsonResponse({'ok': False, 'error': 'fee_bps required'}, status=400)
@@ -177,16 +178,24 @@ def alchemy_webhook(request):
                     creator = event_args['creator']
                     goal = Decimal(event_args['goal']) /(Decimal(10)**6)
                     #aware_datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-                    project = Project.objects.get(
+                    project = Project.objects.filter(
                     approval_status=Project.APPROVED,
                     deployed=False,
                     wallet_address=creator.upper(),
                     goal=goal
-                    )
-                    project.contract_id = campaign_id
-                    project.deployed = True
-                    project.milestones.filter(milestone_no=1).update(status=Milestone.ACTIVE)
-                    project.save(update_fields=['contract_id','deployed'])
+                    ).first()
+                    if not project:
+                        project = Project.objects.filter(
+                        approval_status=Project.APPROVED,
+                        deployed=False,
+                        wallet_address=creator,
+                        goal=goal
+                    ).first()
+                    if project:
+                        project.contract_id = campaign_id
+                        project.deployed = True
+                        project.milestones.filter(milestone_no=1).update(status=Milestone.ACTIVE)
+                        project.save(update_fields=['contract_id','deployed'])
 
 
                 elif event_name == 'Pledged':

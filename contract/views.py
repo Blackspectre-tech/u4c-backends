@@ -186,15 +186,8 @@ def alchemy_webhook(request):
                     project = Project.objects.filter(
                     approval_status=Project.APPROVED,
                     deployed=False,
-                    wallet_address=creator.upper(),
-                    goal=goal
-                    ).first()
-                    if not project:
-                        project = Project.objects.filter(
-                        approval_status=Project.APPROVED,
-                        deployed=False,
-                        wallet_address=creator,
-                        goal=goal
+                    wallet_address__iexact=creator,
+                    goal=goal.quantize(Decimal('0.01'))
                     ).first()
                     if project:
                         project.contract_id = campaign_id

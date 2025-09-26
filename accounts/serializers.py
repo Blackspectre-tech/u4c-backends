@@ -81,10 +81,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     phone_number = PhoneNumberField(
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all())],
+        required = True
     )
     email = serializers.EmailField(
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UserRegistionUniqueValidator(queryset=User.objects.all())]
     )
     password = serializers.CharField(write_only=True,required=True)
 

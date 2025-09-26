@@ -85,6 +85,7 @@ class Project(TimeStamps, models.Model):
     contract_id = models.IntegerField(null=True, blank=True)
     progress = models.DecimalField(decimal_places=2,max_digits=5,default=0.00)
     deployed = models.BooleanField(default=False)
+    deadline = models.DateTimeField(null=True, blank=True)
     
 #before deploying check if the user has an active fiat/crypto account 
     #payout = models.CharField(max_length=20, choices=payout_options, default=CRYPTO)

@@ -46,7 +46,7 @@ class User(AbstractUser):
     first_name = None
     last_name = None
     email = models.EmailField(unique=True)
-    phone_number = PhoneNumberField(unique=True)
+    phone_number = PhoneNumberField(unique=True, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/',blank=True, null=True)
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)

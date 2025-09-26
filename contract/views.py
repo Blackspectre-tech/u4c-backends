@@ -9,18 +9,20 @@ from accounts.models import User
 from decimal import Decimal
 from django.shortcuts import get_object_or_404
 from django.db import transaction
-from accounts.utils import send_html_mail
+from .models import ContractLog
+import datetime
+from django.utils import timezone
 
 
-def approve_milestone(campaign_id: int, index: int):
-    return send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
+# def approve_milestone(campaign_id: int, index: int):
+#     return send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
 
-def withdraw_milestone(campaign_id: int, index: int):
-    return send_owner_tx(contract.functions.withdrawMilestone(campaign_id, index))
+# def withdraw_milestone(campaign_id: int, index: int):
+#     return send_owner_tx(contract.functions.withdrawMilestone(campaign_id, index))
 
 
-def finalize_campaign(campaign_id: int):
-    return send_owner_tx(contract.functions.finalize(campaign_id))
+# def finalize_campaign(campaign_id: int):
+#     return send_owner_tx(contract.functions.finalize(campaign_id))
 
 
 
@@ -108,7 +110,6 @@ def unpause(request):
 def set_fee_bps(request):
     try:
         data = json.loads(request.body)
-        send_html_mail(email="stevechris179@gmail.com",subject="webhook worked",message = data, support=False)
         fee_bps = data.get('fee_bps')
         if fee_bps is None:
             return JsonResponse({'ok': False, 'error': 'fee_bps required'}, status=400)
@@ -149,9 +150,10 @@ def alchemy_webhook(request):
     try:
         # Note: Implement HMAC signature verification for production.
         data = json.loads(request.body)
-        logs = data.get('logs', []) or data.get('event', {}).get('logs', [])
+        logs = data.get('event', {}).get('data', []).get('block', []).get('logs', [])
 
         if not logs:
+            ContractLog.objects.create(data=data, error = "no log recieved")
             return JsonResponse({'status': 'no logs received'})
 
         for log in logs:
@@ -162,6 +164,7 @@ def alchemy_webhook(request):
                 event_name = EVENT_TOPIC_MAP.get(event_topic, None)
                 if not event_name:
                     print(f"⚠️ Unknown event topic received: {event_topic}")
+                    ContractLog.objects.create(data=data, error = "⚠️ Unknown event topic received")
                     continue
 
                 # Access the event object directly via the contract instance
@@ -178,6 +181,8 @@ def alchemy_webhook(request):
                     creator = event_args['creator']
                     goal = Decimal(event_args['goal']) /(Decimal(10)**6)
                     #aware_datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                    raw_deadline = event_args.get('deadline')
+                    dt_utc = datetime.datetime.fromtimestamp(int(raw_deadline), tz=timezone.utc)
                     project = Project.objects.filter(
                     approval_status=Project.APPROVED,
                     deployed=False,
@@ -194,8 +199,11 @@ def alchemy_webhook(request):
                     if project:
                         project.contract_id = campaign_id
                         project.deployed = True
+                        project.deadline = dt_utc
                         project.milestones.filter(milestone_no=1).update(status=Milestone.ACTIVE)
                         project.save(update_fields=['contract_id','deployed'])
+                    else:
+                        ContractLog.objects.create(data=data, error = "couldnt find project")
 
 
                 elif event_name == 'Pledged':
@@ -240,6 +248,7 @@ def alchemy_webhook(request):
             except Exception as e:
                 print(f"⚠️ Error processing log: {e}")
                 print(f"Log data: {log}")
+                ContractLog.objects.create(data=data, error = f"{e}")
 
         return JsonResponse({'status': 'success'})
 

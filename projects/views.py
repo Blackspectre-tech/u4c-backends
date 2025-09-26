@@ -42,7 +42,7 @@ class ProjectCreateView(generics.GenericAPIView):
 
 
 class listApprovedProjectsView(generics.ListAPIView):
-    queryset = Project.objects.filter(approval_status=Project.APPROVED)
+    queryset = Project.objects.filter(deployed=True)
     serializer_class = ProjectListSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['categories__name','status']

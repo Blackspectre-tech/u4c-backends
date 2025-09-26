@@ -12,6 +12,8 @@ from django.db import transaction
 from .models import ContractLog
 import datetime
 from django.utils import timezone
+from web3 import Web3 
+import traceback
 
 
 # def approve_milestone(campaign_id: int, index: int):
@@ -139,6 +141,43 @@ EVENT_TOPIC_MAP = {
     "0xc67423104bf96f5ca8826913ae711e8c2254e1b2c04af907b2312853ed4cbed2": "MilestoneAdded",
 }
 
+def _to_int_maybe_hex(v):
+    """Accept int, decimal string, or hex string like '0x1' and return int or None."""
+    if v is None:
+        return None
+    if isinstance(v, int):
+        return v
+    if isinstance(v, str):
+        try:
+            if v.startswith(("0x", "0X")):
+                return int(v, 16)
+            return int(v)
+        except Exception:
+            return None
+    return None
+
+def _normalize_alchemy_log(raw_log, block_obj=None):
+    """
+    Convert Alchemy webhook log shape into the geth/web3-style log dict that
+    contract.events.X().process_log expects.
+    """
+    tx = raw_log.get("transaction") or {}
+    block = block_obj or {}
+
+    return {
+        "address": raw_log.get("account", {}).get("address") or raw_log.get("address"),
+        "topics": raw_log.get("topics", []),
+        "data": raw_log.get("data", "0x"),
+        # numeric fields normalized to ints (web3 expects ints or numeric-like)
+        "blockNumber": _to_int_maybe_hex(raw_log.get("blockNumber") or block.get("number")),
+        "blockHash": raw_log.get("blockHash") or block.get("hash"),
+        "transactionHash": tx.get("hash") or raw_log.get("transactionHash"),
+        "transactionIndex": _to_int_maybe_hex(raw_log.get("transactionIndex") or tx.get("index")),
+        # Alchemy uses 'index' for log index; web3 expects 'logIndex'
+        "logIndex": _to_int_maybe_hex(raw_log.get("logIndex") or raw_log.get("index")),
+        "removed": raw_log.get("removed", False),
+    }
+
 @csrf_exempt
 def alchemy_webhook(request):
     """
@@ -150,98 +189,113 @@ def alchemy_webhook(request):
     try:
         # Note: Implement HMAC signature verification for production.
         data = json.loads(request.body)
-        logs = data.get('event', {}).get('data', []).get('block', []).get('logs', [])
+        # small fix here: use {} defaults for nested dicts (was [] previously)
+        logs = data.get('event', {}).get('data', {}).get('block', {}).get('logs', [])
 
         if not logs:
-            ContractLog.objects.create(data=data, error = "no log recieved")
+            ContractLog.objects.create(data=data, error="no log recieved")
             return JsonResponse({'status': 'no logs received'})
 
-        for log in logs:
-            event_topic = log['topics'][0]
+        # capture block object for normalization (if present)
+        block_obj = data.get('event', {}).get('data', {}).get('block', {})
+
+        for raw_log in logs:
+            # normalize Alchemy log into web3/geth style
+            web3_log = _normalize_alchemy_log(raw_log, block_obj=block_obj)
+
+            # get topic safely (may be missing)
+            topics = web3_log.get("topics") or []
+            if not topics:
+                ContractLog.objects.create(data=raw_log, error="no topics in log")
+                continue
+
+            event_topic = topics[0]
 
             try:
                 # Use the event topic to get the event object from the contract ABI.
                 event_name = EVENT_TOPIC_MAP.get(event_topic, None)
                 if not event_name:
                     print(f"⚠️ Unknown event topic received: {event_topic}")
-                    ContractLog.objects.create(data=data, error = "⚠️ Unknown event topic received")
+                    ContractLog.objects.create(data=raw_log, error="⚠️ Unknown event topic received")
                     continue
 
                 # Access the event object directly via the contract instance
                 event_object = getattr(contract.events, event_name)
-                event_data = event_object().process_log(log)
-                event_args = event_data['args']
 
-                print(f"✅ Received {event_name} event.")
-                print(f"Arguments: {event_args}")
+                # PASS THE NORMALIZED web3_log TO process_log
+                event_data = event_object().process_log(web3_log)
+                event_args = event_data['args']
 
                 # --- Your Business Logic Starts Here ---
                 if event_name == 'CampaignCreated':
                     campaign_id = event_args['id']
                     creator = event_args['creator']
-                    goal = Decimal(event_args['goal']) /(Decimal(10)**6)
-                    #aware_datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                    goal = Decimal(event_args['goal']) / (Decimal(10) ** 6)
+                    # aware_datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
                     raw_deadline = event_args.get('deadline')
-                    dt_utc = datetime.datetime.fromtimestamp(int(raw_deadline), tz=timezone.utc)
+                    # dt_utc = datetime.datetime.fromtimestamp(int(raw_deadline), tz=timezone.utc)
+                    dt_utc = datetime.datetime.fromtimestamp(int(raw_deadline), tz=datetime.timezone.utc)
                     project = Project.objects.filter(
-                    approval_status=Project.APPROVED,
-                    deployed=False,
-                    wallet_address__iexact=creator,
-                    goal=goal.quantize(Decimal('0.01'))
+                        approval_status=Project.APPROVED,
+                        deployed=False,
+                        wallet_address__iexact=creator,
+                        goal=goal.quantize(Decimal('0.01'))
                     ).first()
+                    print( f"goal i tried to find: {goal.quantize(Decimal('0.01'))} and type = {type(goal.quantize(Decimal('0.01')))}" )
                     if project:
                         project.contract_id = campaign_id
                         project.deployed = True
                         project.deadline = dt_utc
                         project.milestones.filter(milestone_no=1).update(status=Milestone.ACTIVE)
-                        project.save(update_fields=['contract_id','deployed'])
+                        project.save(update_fields=['contract_id', 'deployed'])
                     else:
-                        ContractLog.objects.create(data=data, error = "couldnt find project")
-
+                        ContractLog.objects.create(data=data, error="couldnt find project", notes=event_args)
 
                 elif event_name == 'Pledged':
                     campaign_id = event_args['id']
                     backer = event_args['backer']
-                    net_amount = Decimal(event_args['netAmount']) /(Decimal(10)**6)
-                    tip = Decimal(event_args['tip']) /(Decimal(10)**6)
+                    net_amount = Decimal(event_args['netAmount']) / (Decimal(10) ** 6)
+                    tip = Decimal(event_args['tip']) / (Decimal(10) ** 6)
                     with transaction.atomic():
                         user = get_object_or_404(User, wallet_address=backer)
-                        pledged_project = get_object_or_404(Project, contract_id=campaign_id)                        
+                        pledged_project = get_object_or_404(Project, contract_id=campaign_id)
                         active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
-                        
+
                         # Create the donation record.
                         Donation.objects.create(
-                            project=pledged_project, # Use pledged_project for consistency
+                            project=pledged_project,  # Use pledged_project for consistency
                             user_profile=user.profile,
                             amount=net_amount,
                             tip=tip
                         )
-                        
+
                         # Update the project's total funds.
                         pledged_project.total_funds += net_amount
                         pledged_project.save(update_fields=['total_funds'])
-                        
+
                         # Check if there is an active milestone and if the goal is met.
                         if active_milestone and pledged_project.total_funds >= active_milestone.goal:
                             # Mark the current active milestone as completed.
                             active_milestone.status = Milestone.COMPLETED
                             active_milestone.save(update_fields=['status'])
-                            
+
                             # Determine the number of the next milestone.
                             next_milestone_no = active_milestone.milestone_no + 1
-                            
+
                             # Find the next milestone.
                             next_milestone = pledged_project.milestones.filter(milestone_no=next_milestone_no).first()
-                            
+
                             # If the next milestone exists, activate it.
                             if next_milestone:
                                 next_milestone.status = Milestone.ACTIVE
                                 next_milestone.save(update_fields=['status'])
-                                                    
+
             except Exception as e:
-                print(f"⚠️ Error processing log: {e}")
-                print(f"Log data: {log}")
-                ContractLog.objects.create(data=data, error = f"{e}")
+                ContractLog.objects.create(
+                    data=raw_log,
+                    error=str(e),
+                    notes=traceback.format_exc()
+                )
 
         return JsonResponse({'status': 'success'})
 

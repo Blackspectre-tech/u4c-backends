@@ -189,7 +189,7 @@ def alchemy_webhook(request):
                     wallet_address__iexact=creator,
                     goal=goal.quantize(Decimal('0.01'))
                     ).first()
-                    if project:
+                    if project.exists():
                         project.contract_id = campaign_id
                         project.deployed = True
                         project.deadline = dt_utc

@@ -189,8 +189,8 @@ def alchemy_webhook(request):
     try:
         # Note: Implement HMAC signature verification for production.
         data = json.loads(request.body)
-        # small fix here: use {} defaults for nested dicts (was [] previously)
-        logs = data.get('event', {}).get('data', {}).get('block', {}).get('logs', [])
+        # logs = data.get('event', {}).get('data', {}).get('block', {}).get('logs', [])
+        logs = data['event']['data']['block'].get('logs',[])
 
         if not logs:
             ContractLog.objects.create(data=data, error="no log recieved")
@@ -215,7 +215,6 @@ def alchemy_webhook(request):
                 # Use the event topic to get the event object from the contract ABI.
                 event_name = EVENT_TOPIC_MAP.get(event_topic, None)
                 if not event_name:
-                    print(f"⚠️ Unknown event topic received: {event_topic}")
                     ContractLog.objects.create(data=raw_log, error="⚠️ Unknown event topic received")
                     continue
 
@@ -241,13 +240,12 @@ def alchemy_webhook(request):
                         wallet_address__iexact=creator,
                         goal=goal.quantize(Decimal('0.01'))
                     ).first()
-                    print( f"goal i tried to find: {goal.quantize(Decimal('0.01'))} and type = {type(goal.quantize(Decimal('0.01')))}" )
                     if project:
                         project.contract_id = campaign_id
                         project.deployed = True
                         project.deadline = dt_utc
                         project.milestones.filter(milestone_no=1).update(status=Milestone.ACTIVE)
-                        project.save(update_fields=['contract_id', 'deployed'])
+                        project.save(update_fields=['contract_id', 'deployed', 'deadline'])
                     else:
                         ContractLog.objects.create(data=data, error="couldnt find project", notes=event_args)
 
@@ -291,6 +289,7 @@ def alchemy_webhook(request):
                                 next_milestone.save(update_fields=['status'])
 
             except Exception as e:
+                # print(f"{e} traceback: {traceback.format_exc()}")
                 ContractLog.objects.create(
                     data=raw_log,
                     error=str(e),

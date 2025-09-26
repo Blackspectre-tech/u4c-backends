@@ -115,7 +115,7 @@ class ProjectAdmin(admin.ModelAdmin):
                 'organization', 'categories', 'title', 'goal', 'total_funds', 'progress', 'country', 'longitude',
                 'latitude', 'approval_status', 'video',
                 'formatted_description','image','created_at', 'updated_at', 'formatted_summary',
-                'deployed','wallet_address','contract_id','duration_in_days',
+                'deployed','wallet_address','contract_id','duration_in_days','deadline',
             )
 
             if obj.approval_status != Project.PENDING and obj.approval_status != Project.APPROVED:
@@ -135,7 +135,7 @@ class ProjectAdmin(admin.ModelAdmin):
             fields = (
                 'organization','categories', 'title', 'goal', 'country', 'longitude',
                 'latitude', 'formatted_description', 'milestones', 'image', 'video', 'approval_status', 'formatted_summary',
-                'created_at', 'updated_at', 'progress','deployed','wallet_address','contract_id','duration_in_days',
+                'created_at', 'updated_at', 'progress','deployed','wallet_address','contract_id','duration_in_days','deadline',
             )
 
             if obj.approval_status != Project.PENDING:

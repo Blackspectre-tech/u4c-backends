@@ -57,6 +57,7 @@ def set_allowed_token(request):
         allowed = data.get('allowed')
         if token is None or allowed is None:
             return JsonResponse({'ok': False, 'error': 'token_address and allowed required'}, status=400)
+        token = Web3.to_checksum_address(token)
         # convert allowed string to boolean
         if isinstance(allowed, str):
             allowed_bool = allowed.lower() in ('true','1','yes')
@@ -132,7 +133,7 @@ def set_fee_bps(request):
 # Replace the placeholder hashes with the actual hashes you calculated
 EVENT_TOPIC_MAP = {
     "0x54225ce5de7dc72a6f5cf898ef7283ada08aadfba3372fc87dfd0bf689261e45": "CampaignCreated",
-    "0xa004e6fb17cfc09684ed6477bd1bb07ff609d881603cda693bca2a233d507d94": "Pledged",
+    "0xf36ffe7645287fddf6deab03a17f4f024a0551da54638685d25cac0dbdf5b6be": "Pledged",
     "0xfcd29b1632c6748a9a4bb9b4cd5c6486c3c84a8550dce2368f83fef3969d9685": "Unpledged",
     "0x7c387a42b7678e1b26d65927d4a0176444d9c6509a72583dee248753b768db41": "CampaignStateChanged",
     "0xffe56bf760f6d13072fce783b476e75aa4fec7f9319bd00fd896ad53bd325848": "MilestoneApproved",
@@ -206,7 +207,7 @@ def alchemy_webhook(request):
             # get topic safely (may be missing)
             topics = web3_log.get("topics") or []
             if not topics:
-                ContractLog.objects.create(data=raw_log, error="no topics in log")
+                ContractLog.objects.create(data=data, error="no topics in log",notes=raw_log)
                 continue
 
             event_topic = topics[0]
@@ -215,7 +216,7 @@ def alchemy_webhook(request):
                 # Use the event topic to get the event object from the contract ABI.
                 event_name = EVENT_TOPIC_MAP.get(event_topic, None)
                 if not event_name:
-                    ContractLog.objects.create(data=raw_log, error="⚠️ Unknown event topic received")
+                    ContractLog.objects.create(data=data, error="⚠️ Unknown event topic received",notes=raw_log)
                     continue
 
                 # Access the event object directly via the contract instance
@@ -250,27 +251,28 @@ def alchemy_webhook(request):
                         ContractLog.objects.create(data=data, error="couldnt find project", notes=event_args)
 
                 elif event_name == 'Pledged':
+                    #print(f"yes it is a pledged event with the following data {logs[0]['transaction'].get('hash')}")
                     campaign_id = event_args['id']
                     backer = event_args['backer']
-                    net_amount = Decimal(event_args['netAmount']) / (Decimal(10) ** 6)
-                    tip = Decimal(event_args['tip']) / (Decimal(10) ** 6)
-                    with transaction.atomic():
-                        user = get_object_or_404(User, wallet_address=backer)
-                        pledged_project = get_object_or_404(Project, contract_id=campaign_id)
-                        active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
-
-                        # Create the donation record.
-                        Donation.objects.create(
-                            project=pledged_project,  # Use pledged_project for consistency
-                            user_profile=user.profile,
+                    net_amount = Decimal(event_args['netAmount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                    tipAmount = Decimal(event_args['tipAmount'])/ (Decimal(10) ** 6)
+                    tip = Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0)
+                    donation = Donation.objects.filter(
+                            wallet__iexact = backer,
                             amount=net_amount,
-                            tip=tip
-                        )
+                            tip=tip,
+                            status=Donation.PENDING
+                        ).first()
+                    print(f'donation instance found: {donation}')
+                    if donation:
+                        pledged_project = donation.project
+                        active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
 
                         # Update the project's total funds.
                         pledged_project.total_funds += net_amount
-                        pledged_project.save(update_fields=['total_funds'])
-
+                        pledged_project.progress = round((pledged_project.total_funds / pledged_project.goal)*100, 2)
+                        pledged_project.save(update_fields=['total_funds','progress'])
+    
                         # Check if there is an active milestone and if the goal is met.
                         if active_milestone and pledged_project.total_funds >= active_milestone.goal:
                             # Mark the current active milestone as completed.
@@ -287,9 +289,21 @@ def alchemy_webhook(request):
                             if next_milestone:
                                 next_milestone.status = Milestone.ACTIVE
                                 next_milestone.save(update_fields=['status'])
+                        
+                        donation.status = Donation.SUCCESSFUL
+                        donation.tx_hash = logs[0]['transaction'].get('hash')
+                        donation.save(update_fields=['status', 'tx_hash'])
 
+                    else: 
+                        ContractLog.objects.create(
+                            data=data,
+                            error="could not find donation record",
+                            notes=event_args
+                        )
+                    
+                    
             except Exception as e:
-                # print(f"{e} traceback: {traceback.format_exc()}")
+                print(f"{e} traceback: {traceback.format_exc()}")
                 ContractLog.objects.create(
                     data=raw_log,
                     error=str(e),

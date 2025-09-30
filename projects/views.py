@@ -18,6 +18,7 @@ from .serializers import (
     ExpensesSerializer,
     CommentSerializer,
     ProjectListSerializer,
+    DonationSerializer,
     )
 
 # Create your views here.
@@ -221,3 +222,15 @@ class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
             raise PermissionDenied('you are not permited to update this item')
         
         return super().perform_update(serializer)
+
+
+class MakeDonationsAPIView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated, Is_Donor]
+    serializer_class = DonationSerializer
+    
+    def perform_create(self, serializer):
+        profile=self.request.user.profile
+        project = get_object_or_404(Project,pk=self.kwargs['pk'])
+        if not project.deployed:
+            raise ValidationError('campaign is not deployed')
+        serializer.save(donor=profile, project=project)

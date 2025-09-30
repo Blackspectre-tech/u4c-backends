@@ -220,22 +220,36 @@ class Update(models.Model):
 
 
 class Donation(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='donations')
-    user_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='donations')
-    amount = models.DecimalField(decimal_places=2,max_digits=14, blank=False, default=0)
-    date = models.DateTimeField(auto_now_add=True)
-    tip = models.DecimalField(decimal_places=2,max_digits=14, blank=False, default=0)
 
+    PENDING = 'PENDING'
+    SUCCESSFUL ='SUCCESSFUL'
+    FAILED = 'FAILED'
+    
+    status = [
+    (PENDING,'PENDING'),
+    (SUCCESSFUL,'SUCCESSFUL'),
+    (FAILED,'FAILED')
+    ]
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='donations')
+    donor = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='donations')
+    amount = models.DecimalField(decimal_places=2,max_digits=14, blank=False)
+    date = models.DateTimeField(auto_now_add=True)
+    tip = models.DecimalField(decimal_places=2,max_digits=14, default=0)
+    status = models.CharField(max_length=25, choices=status, default=PENDING)
+    wallet = models.CharField(max_length=255, blank=True, null=True)
+    tx_hash = models.CharField(max_length=66, blank=True, null=True)
+    
     class Meta:
         ordering = ["-date"]
 
     def __str__(self):
-        return f"{self.user_profile.username} | amount: {self.amount} | project{self.project.title}"
+        return f"{self.donor.username} | amount: {self.amount} | project{self.project.title}"
     
     @property
     @extend_schema_field(str)
     def username(self):
-        return self.user_profile.username
+        return self.donor.username
 
 
 

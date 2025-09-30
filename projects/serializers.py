@@ -126,11 +126,17 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class DonationSerializer(serializers.ModelSerializer):
-    username = serializers.ReadOnlyField()
+
     class Meta:
         model = Donation
-        fields = [ 'username', 'amount']
-
+        fields = [ 'id','username', 'amount', 'tip', 'wallet', 'status']
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'username': {'read_only': True},
+            'tip': {'required': False},
+            'wallet': {'required': True},
+            'status': {'read_only': True},
+        }
     # @extend_schema_field(serializers.CharField)
     # def get_username(self,obj):
     #     return obj.username
@@ -145,7 +151,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     )
     categories_display = serializers.SerializerMethodField(read_only=True)
     milestones = MilestoneSerializer(many=True, required=True)
-    donations = DonationSerializer(read_only=True)
+    donations = serializers.SerializerMethodField()
     duration_in_days = serializers.IntegerField(min_value=14, max_value=365)
 
     class Meta:
@@ -233,6 +239,10 @@ class ProjectSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_categories_display(self, obj):
         return [cat.name for cat in obj.categories.all()]
+
+    def get_donations(self, obj):
+        donations = obj.donations.filter(status='SUCCESSFUL')
+        return DonationSerializer(donations, many=True).data
 
     def create(self, validated_data, **kwargs):
         categories_data = validated_data.pop('categories', None)

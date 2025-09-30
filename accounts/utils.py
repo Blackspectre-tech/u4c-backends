@@ -182,24 +182,24 @@ def organization_approval_mail(organization, reason=None, approved=True):
 
 
 
-def resize_avatar(image_file):
-    try:
-        img = Image.open(image_file)
-        img.verify()  # Will raise an exception if not a valid image
-        image_file.seek(0)
-    except Exception:
-        raise ValidationError("Uploaded file is not a valid image.")
-    img = Image.open(image_file)
-    img = img.convert("RGB")
-    img = img.resize((600, 600))  # Resize
+# def resize_avatar(image_file):
+#     try:
+#         img = Image.open(image_file)
+#         img.verify()  # Will raise an exception if not a valid image
+#         image_file.seek(0)
+#     except Exception:
+#         raise ValidationError("Uploaded file is not a valid image.")
+#     img = Image.open(image_file)
+#     img = img.convert("RGB")
+#     img = img.resize((600, 600))  # Resize
 
-    buffer = BytesIO()
-    img.save(buffer, format='JPEG', quality=85, optimize=True, progressive=True) # setting teh quality to 85%
-    buffer.seek(0)
+#     buffer = BytesIO()
+#     img.save(buffer, format='JPEG', quality=85, optimize=True, progressive=True) # setting teh quality to 85%
+#     buffer.seek(0)
 
-    # result = upload(buffer, folder=f"u4c/avatars")
-    # return result['secure_url'], result['public_id']
-    return buffer
+#     # result = upload(buffer, folder=f"u4c/avatars")
+#     # return result['secure_url'], result['public_id']
+#     return buffer
 
 def resize_image(image_file, max_size=1024):
     try:

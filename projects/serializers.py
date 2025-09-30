@@ -79,7 +79,7 @@ class MilestoneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Milestone
-        fields = ['id','milestone_no','percentage','title','details','goal','images','expenses',]
+        fields = ['id','milestone_no','percentage','title','details','goal','images','expenses','status']
         extra_kwargs = {
         'id': {'read_only': True},
         }

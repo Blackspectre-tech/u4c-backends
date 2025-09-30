@@ -13,8 +13,7 @@ from .utils import (
     validate_otp, 
     generate_otp, 
     send_account_activation_otp, 
-    resize_image, 
-    resize_avatar,
+    resize_image,
 )
 from .models import Organization, Profile, Social, User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -293,7 +292,7 @@ class UploadAvatarSerializer(serializers.Serializer):
 
         if image_file:
             try:
-                image = resize_avatar(image_file)
+                image = resize_image(image_file)
             except ValidationError as e:
                 raise serializers.ValidationError({'image': e.message})
 

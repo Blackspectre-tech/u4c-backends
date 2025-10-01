@@ -157,9 +157,9 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'id', 'title', 'categories_display', 'goal', 'country', 'address', 'longitude', 'latitude',
+            'id', 'organization_id', 'contract_id','title', 'categories_display', 'goal', 'country', 'address', 'longitude', 'latitude',
             'description', 'categories', 'image', 'summary', 'duration_in_days','wallet_address',
-            'video', 'milestones', 'donations', 'progress','approval_status','created_at','contract_id','deployed','deadline'
+            'video', 'milestones', 'donations', 'progress','approval_status','created_at','deployed','deadline'
         ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -239,7 +239,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_categories_display(self, obj):
         return [cat.name for cat in obj.categories.all()]
-
+    
+    @extend_schema_field(serializers.ListField(child=DonationSerializer()))
     def get_donations(self, obj):
         donations = obj.donations.filter(status='SUCCESSFUL')
         return DonationSerializer(donations, many=True).data

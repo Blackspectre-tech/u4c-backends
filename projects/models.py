@@ -103,6 +103,12 @@ class Project(TimeStamps, models.Model):
     #     return f'{(self.total_funds / self.goal) * 100 :.2f}%'
     
 
+    @property
+    @extend_schema_field(int)
+    def organization_id(self):
+        return self.organization.id
+
+
     def save(self, *args, **kwargs):
         html_fields = ['description', 'summary']
         for field in html_fields:

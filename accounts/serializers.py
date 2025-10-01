@@ -18,7 +18,7 @@ from .utils import (
 from .models import Organization, Profile, Social, User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from drf_spectacular.utils import extend_schema_field
 
 
 
@@ -94,8 +94,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'phone_number', 'password', 'password2', 'is_organization', 'wallet_address']
-
+        fields = ['email', 'phone_number', 'password', 'password2', 'is_organization', 'wallet_address', 'avatar']
+        extra_kwargs = {
+            'avatar': {'read_only': True},
+        }
     def validate(self, attrs):
         password = attrs['password']
         password2=attrs['password2']
@@ -187,6 +189,26 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
         return org
 
+class OrganizationMinorInfoSerializer(serializers.ModelSerializer):
+    socials = SocialsSerializer()
+    avatar = serializers.SerializerMethodField()
+    class Meta:
+        model = Organization
+        fields = ['name','website','description','country','address', 'socials', 'avatar',]
+
+
+    @extend_schema_field(serializers.ImageField())
+    def get_avatar(self, obj):
+        avatar_field = getattr(obj.user, "avatar", None)
+        if not avatar_field:
+            return None
+        try:
+            url = avatar_field.url  # may raise ValueError if no file
+        except ValueError:
+            return None
+
+        request = self.context.get("request")
+        return request.build_absolute_uri(url) if request else url
 
 
 class OrganizationKYCSerializer(serializers.ModelSerializer):

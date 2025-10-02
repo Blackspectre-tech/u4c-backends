@@ -157,7 +157,7 @@ class OrganizationAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             fields = (
-                'name', 'website', 'country', 'user',
+                'name', 'website', 'country', 'user', 'user__wallet_address',
                 'address', 'description', 'approval_status','reg_no','cac_document',
             )
 
@@ -180,7 +180,7 @@ class OrganizationAdmin(admin.ModelAdmin):
 
         if obj:  # Editing an existing 
             read_only = (
-                'name', 'website', 'country', 'reg_no',
+                'name', 'website', 'country', 'reg_no','user__wallet_address',
                 'address', 'description', 'approval_status', 'user','cac_document',
             )
 

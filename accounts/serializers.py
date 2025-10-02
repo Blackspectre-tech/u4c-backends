@@ -399,6 +399,6 @@ class WalletSerializer(serializers.ModelSerializer):
             Project.objects.filter(
                 organization = instance.organization,
                 deployed=False
-                ).update(wallet_address=wallet.upper())
+                ).update(wallet_address=wallet)
         return super().update(instance, validated_data)
 

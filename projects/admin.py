@@ -113,7 +113,7 @@ class ProjectAdmin(admin.ModelAdmin):
         if obj:  # editing existing object
             fields = (
                 'organization', 'categories', 'title', 'goal', 'total_funds', 'progress', 'country', 'longitude',
-                'latitude', 'approval_status', 'video',
+                'latitude', 'approval_status',
                 'formatted_description','image','created_at', 'updated_at', 'formatted_summary',
                 'deployed','wallet_address','contract_id','duration_in_days','deadline',
             )
@@ -126,7 +126,7 @@ class ProjectAdmin(admin.ModelAdmin):
         else:  # adding new object
             return (
                 'organization', 'categories', 'title', 'goal', 'country', 'longitude',
-                'latitude', 'image', 'video','description', 'summary', 
+                'latitude', 'image', 'description', 'summary', 
                 
             )
 
@@ -134,7 +134,7 @@ class ProjectAdmin(admin.ModelAdmin):
         if obj:  # Editing an existing object
             fields = (
                 'organization','categories', 'title', 'goal', 'country', 'longitude',
-                'latitude', 'formatted_description', 'milestones', 'image', 'video', 'approval_status', 'formatted_summary',
+                'latitude', 'formatted_description', 'milestones', 'image', 'approval_status', 'formatted_summary',
                 'created_at', 'updated_at', 'progress','deployed','wallet_address','contract_id','duration_in_days','deadline',
             )
 

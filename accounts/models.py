@@ -54,7 +54,7 @@ class User(AbstractUser):
     otp_expiry = models.DateTimeField(null=True, blank=True)
     is_organization = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
-    wallet_address = models.CharField(max_length=255, unique=True,null=True, blank=True)
+    wallet_address = models.CharField(max_length=255,null=True, blank=True)
 
 
     USERNAME_FIELD = "email"

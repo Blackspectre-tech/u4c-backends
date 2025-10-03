@@ -157,7 +157,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'id', 'organization_id', 'contract_id','title', 'categories_display', 'goal', 'country', 'address', 'longitude', 'latitude',
+            'id', 'organization_id', 'contract_id','title', 'categories_display', 'goal', 'country', 'address',
             'description', 'categories', 'image', 'summary', 'duration_in_days','wallet_address',
             'milestones', 'donations', 'progress','approval_status','created_at','deployed','deadline'
         ]
@@ -168,8 +168,6 @@ class ProjectSerializer(serializers.ModelSerializer):
             'country': {'required': True},
             'description': {'required': True},
             'address': {'required': True},
-            'longitude': {'required': False},
-            'latitude': {'required': False},
             'summary': {'required': True},
             'image': {'required': True},
             'duration_in_days': {'required': True},

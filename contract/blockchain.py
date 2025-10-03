@@ -90,84 +90,47 @@ def send_owner_tx(txn_func, tx_args: dict | None = None):
 
 
 
+erc20_abi = [
+    {
+        "constant": True,
+        "inputs": [{"name": "_owner", "type": "address"}],
+        "name": "balanceOf",
+        "outputs": [{"name": "balance", "type": "uint256"}],
+        "type": "function",
+    },
+    {
+        "constant": True,
+        "inputs": [],
+        "name": "decimals",
+        "outputs": [{"name": "", "type": "uint8"}],
+        "type": "function",
+    },
+]
 
+usdc_token_address = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
+usdc_contract = w3.eth.contract(address=usdc_token_address, abi =erc20_abi)
 
-
-
-
-
-
-
-
-
-
-# def send_owner_tx(txn_func, tx_args: dict | None = None):
-#     """Signs & sends a tx from the owner account (Polygon)."""
-#     from_addr = owner_address()
-#     nonce = w3.eth.get_transaction_count(from_addr, "pending")
-
-#     # Base transaction fields
-#     base = {
-#         "from": from_addr,
-#         "nonce": nonce,
-#         "gasPrice": w3.eth.gas_price,  # current gas price from Polygon RPC
-#         "chainId": 137,  # Polygon mainnet
-#         # "chainId": 80001,  # Polygon Mumbai testnet
-#     }
-#     if tx_args:
-#         base.update(tx_args)
-
-#     # First build tx without gas limit
-#     built = txn_func.build_transaction(base)
-
-#     # Estimate gas from RPC node
-#     gas_estimate = w3.eth.estimate_gas(built)
-
-#     # Add buffer (20% extra)
-#     gas_with_buffer = int(gas_estimate * 1.2)
-#     built["gas"] = gas_with_buffer
-
-#     print(f"Estimated gas: {gas_estimate}, using: {gas_with_buffer}")
-
-#     # Sign & send
-#     signed = w3.eth.account.sign_transaction(built, private_key=OWNER_PRIVATE_KEY)
-#     tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-
-#     return tx_hash.hex()
 
 def vault_bal():
-    balance = w3.eth.get_balance(CONTRACT_ADDRESS)
-    return w3.from_wei(balance, 'ether')
+    # balance = w3.eth.get_balance(CONTRACT_ADDRESS)
+    # pol_balance = round(w3.from_wei(balance, 'ether'), 2)
+
+    raw_balance = usdc_contract.functions.balanceOf(CONTRACT_ADDRESS).call()
+    decimals = usdc_contract.functions.decimals().call()
+    usdc_balance = raw_balance / (10 ** decimals)
+    usdc_balance = round(usdc_balance, 2)
+    
+    return usdc_balance
+
 
 def platform_wallet_bal():
-    # get balance in Wei
-    balance_wei = w3.eth.get_balance(config("SAFE_WALLET_ADDRESS"))
-    balance = w3.from_wei(balance_wei, 'ether')
-    return float(f"{balance:.2f}")
+    # # get balance in Wei
+    wallet = config("SAFE_WALLET_ADDRESS")
+    # balance_wei = w3.eth.get_balance(wallet)
+    # pol = w3.from_wei(balance_wei, 'ether')
 
-#print(contract.functions.platformWallet().call())
+    raw_balance = usdc_contract.functions.balanceOf(wallet).call()
+    decimals = usdc_contract.functions.decimals().call()
+    usdc = raw_balance / (10 ** decimals)
 
-
-# def send_owner_tx(txn_func, tx_args: dict | None = None):
-#     """Signs & sends a tx from the owner account."""
-#     from_addr = owner_address()
-#     #nonce = w3.eth.get_transaction_count(from_addr)
-#     nonce = w3.eth.get_transaction_count(from_addr, "pending")
-#     base = {
-#         "chainId": 137,  # for Polygon mainnet
-#         "from": from_addr,
-#         "nonce": nonce,
-#         "gas": 300_000,
-#         "gasPrice": w3.eth.gas_price,
-#         # Optionally set chainId if your RPC needs it:
-#         # "chainId": 11155111,  # sepolia
-#     }
-#     if tx_args:
-#         base.update(tx_args)
-
-#     built = txn_func.build_transaction(base)
-#     signed = w3.eth.account.sign_transaction(built, private_key=OWNER_PRIVATE_KEY)
-#     tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-#     return tx_hash.hex()
-
-
+    return round(usdc, 2)

@@ -19,7 +19,6 @@ from .serializers import (
     UploadAvatarSerializer,
     WalletSerializer,
     OrganizationKYCSerializer,
-    OrganizationMinorInfoSerializer,
 
     )
 from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp,send_html_mail
@@ -183,7 +182,7 @@ class UploadAvatarView(generics.GenericAPIView):
 
 
 class RetrieveOrganization(generics.RetrieveAPIView):
-    serializer_class = OrganizationMinorInfoSerializer
+    serializer_class = OrganizationSerializer
     queryset = Organization.objects.all()
     lookup_field = 'pk'
 
@@ -215,13 +214,3 @@ class AddWalletView(generics.GenericAPIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-
-# class UpdateOrganizationView(generics.UpdateAPIView):
-#     permission_classes = [permissions.IsAuthenticated]
-#     parser_classes=[parsers.MultiPartParser]
-#     queryset = Organization.objects.all()
-#     serializer_class = UpdateOrganizationSerializer
-#     lookup_field = 'pk'
-    
-# class OrgaKyc(generics.UpdateAPIView):
-#     permission_classes = [permissions.IsAuthenticated, isOrgOwner]

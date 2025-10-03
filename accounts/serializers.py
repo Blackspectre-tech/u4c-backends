@@ -189,26 +189,26 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
         return org
 
-class OrganizationMinorInfoSerializer(serializers.ModelSerializer):
-    socials = SocialsSerializer()
-    avatar = serializers.SerializerMethodField()
-    class Meta:
-        model = Organization
-        fields = ['name','website','description','country','address', 'socials', 'avatar',]
+# class OrganizationMinorInfoSerializer(serializers.ModelSerializer):
+#     socials = SocialsSerializer()
+#     avatar = serializers.SerializerMethodField()
+#     class Meta:
+#         model = Organization
+#         fields = ['name','website','description','country','address', 'socials', 'avatar',]
 
 
-    @extend_schema_field(serializers.ImageField())
-    def get_avatar(self, obj):
-        avatar_field = getattr(obj.user, "avatar", None)
-        if not avatar_field:
-            return None
-        try:
-            url = avatar_field.url  # may raise ValueError if no file
-        except ValueError:
-            return None
+#     @extend_schema_field(serializers.ImageField())
+#     def get_avatar(self, obj):
+#         avatar_field = getattr(obj.user, "avatar", None)
+#         if not avatar_field:
+#             return None
+#         try:
+#             url = avatar_field.url  # may raise ValueError if no file
+#         except ValueError:
+#             return None
 
-        request = self.context.get("request")
-        return request.build_absolute_uri(url) if request else url
+#         request = self.context.get("request")
+#         return request.build_absolute_uri(url) if request else url
 
 
 class OrganizationKYCSerializer(serializers.ModelSerializer):

@@ -54,10 +54,14 @@ class listApprovedProjectsView(generics.ListAPIView):
 # lists all approved aprojects owned by an organization for donors to see
 class listOrgProjectsView(generics.ListAPIView):
     serializer_class = ProjectSerializer
-
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['categories__name','status']
+    search_fields = ['title']
+    pagination_class = StandardResultsSetPagination
+    
     def get_queryset(self):
         org = get_object_or_404(Organization,self.kwargs['pk'])
-        org_projects = Project.objects.filter(organization=org,approval_status=Project.APPROVED)
+        org_projects = Project.objects.filter(organization=org,approval_status=Project.APPROVED, deployed = True)
         return org_projects
 
 
@@ -75,7 +79,7 @@ class MyProjectListView(generics.ListAPIView):
         is_org = user.is_organization
         if is_org:
             return Project.objects.filter(organization=user.organization)
-        return Project.objects.filter(donations__user_profile=user)
+        return Project.objects.filter(donations__donor=user)
 
 
 

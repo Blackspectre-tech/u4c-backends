@@ -5,7 +5,8 @@ from django.contrib.auth import get_user_model
 import django.contrib.admin.sites
 from contract.blockchain import vault_bal, platform_wallet_bal
 from contract.blockchain import contract, send_owner_tx
-User = get_user_model()
+from accounts.models import Profile
+
 
 class MyAdminSite(AdminSite):
     site_header = "My Custom Admin"
@@ -14,9 +15,9 @@ class MyAdminSite(AdminSite):
 
     def index(self, request, extra_context=None):
         extra_context = extra_context or {}
-        extra_context["user_count"] = User.objects.count()
-        extra_context["treasury_balance"] = platform_wallet_bal()
-        extra_context["vault_balance"] = vault_bal()
+        extra_context["total_donors"] = Profile.objects.count()
+        extra_context["treasury_usdc"] = platform_wallet_bal()
+        extra_context["vault_usdc"] = vault_bal()
         extra_context["total_campaigns"] = contract.functions.campaignCount().call()
         extra_context["platform_wallet"] = contract.functions.platformWallet().call()
         extra_context["owner"] = contract.functions.owner().call()

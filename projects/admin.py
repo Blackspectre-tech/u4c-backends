@@ -112,8 +112,7 @@ class ProjectAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             fields = (
-                'organization', 'categories', 'title', 'goal', 'total_funds', 'progress', 'country', 'longitude',
-                'latitude', 'approval_status',
+                'organization', 'categories', 'title', 'goal', 'total_funds', 'progress', 'country', 'approval_status',
                 'formatted_description','image','created_at', 'updated_at', 'formatted_summary',
                 'deployed','wallet_address','contract_id','duration_in_days','deadline',
             )
@@ -125,16 +124,14 @@ class ProjectAdmin(admin.ModelAdmin):
 
         else:  # adding new object
             return (
-                'organization', 'categories', 'title', 'goal', 'country', 'longitude',
-                'latitude', 'image', 'description', 'summary', 
+                'organization', 'categories', 'title', 'goal', 'country', 'image', 'description', 'summary', 
                 
             )
 
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             fields = (
-                'organization','categories', 'title', 'goal', 'country', 'longitude',
-                'latitude', 'formatted_description', 'milestones', 'image', 'approval_status', 'formatted_summary',
+                'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image', 'approval_status', 'formatted_summary',
                 'created_at', 'updated_at', 'progress','deployed','wallet_address','contract_id','duration_in_days','deadline',
             )
 

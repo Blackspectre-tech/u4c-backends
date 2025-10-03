@@ -58,9 +58,9 @@ class listOrgProjectsView(generics.ListAPIView):
     filterset_fields = ['categories__name','status']
     search_fields = ['title']
     pagination_class = StandardResultsSetPagination
-    
+
     def get_queryset(self):
-        org = get_object_or_404(Organization,self.kwargs['pk'])
+        org = get_object_or_404(Organization,pk = self.kwargs['pk'])
         org_projects = Project.objects.filter(organization=org,approval_status=Project.APPROVED, deployed = True)
         return org_projects
 

@@ -103,7 +103,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
     inlines = [MilestoneInline]
     list_display = (
-        "title", 'goal', 'approval_status', 'status', 'progress'
+        "title", 'goal', 'approval_status', 'status', 'progress_percenage'
     )
     list_filter = ('approval_status', 'status', 'categories',)
     search_fields = ('title',)
@@ -112,7 +112,7 @@ class ProjectAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             fields = (
-                'organization', 'categories', 'title', 'goal', 'total_funds', 'progress', 'country', 'approval_status',
+                'organization', 'categories', 'title', 'goal', 'total_funds', 'progress_percenage', 'country', 'approval_status',
                 'formatted_description','image','created_at', 'updated_at', 'formatted_summary',
                 'deployed','wallet_address','contract_id','duration_in_days','deadline',
             )
@@ -132,7 +132,7 @@ class ProjectAdmin(admin.ModelAdmin):
         if obj:  # Editing an existing object
             fields = (
                 'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image', 'approval_status', 'formatted_summary',
-                'created_at', 'updated_at', 'progress','deployed','wallet_address','contract_id','duration_in_days','deadline',
+                'created_at', 'updated_at', 'progress_percenage','deployed','wallet_address','contract_id','duration_in_days','deadline','total_funds',
             )
 
             if obj.approval_status != Project.PENDING:
@@ -311,7 +311,7 @@ class MilestoneImagesInline(admin.StackedInline):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'image'
+                'image',
             )
         else:  # adding new object
             return ('image',)
@@ -319,7 +319,7 @@ class MilestoneImagesInline(admin.StackedInline):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'image'
+                'image',
             )
         else:  # Adding a new object
                 return ()

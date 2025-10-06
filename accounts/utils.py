@@ -144,7 +144,7 @@ def project_approval_mail(project, reason=None, approved=True):
         subject = f"“{project.title}” approval"
         message = (
             f"{project.organization.name},"
-            f"Your project campaign “{project.title}” has been approved"
+            f"Your project campaign “{project.title}” has been approved."
             )
         title = 'Project Approved'
     else:   

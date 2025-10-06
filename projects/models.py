@@ -94,10 +94,11 @@ class Project(TimeStamps, models.Model):
     class Meta:
         ordering = ['-progress']
 
-    # @property
-    # @extend_schema_field(str)
-    # def progress(self):
-    #     return f'{(self.total_funds / self.goal) * 100 :.2f}%'
+    @property
+    @extend_schema_field(str)
+    def progress_percenage(self):
+        return f'{self.progress}%'
+        # return f'{(self.total_funds / self.goal) * 100 :.2f}%'
     
 
     @property

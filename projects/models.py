@@ -41,12 +41,6 @@ class Project(TimeStamps, models.Model):
     Cancelled ='Cancelled'
     Completed = 'Completed'
     Failed = 'Failed'
-    # CRYPTO = 'Crypto'
-    # BANK = 'Bank Transfer'
-    # payout_options = [
-    #     (CRYPTO, f'{CRYPTO}'),
-    #     (BANK,f'{BANK}')
-    # ]
 
     approval = [
     (FLAGGED,'FLAGGED'),

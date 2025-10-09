@@ -12,7 +12,14 @@ from accounts.utils import resize_image
 from django import forms
 from django.forms.models import BaseInlineFormSet
 # Register your models here.
+from django.contrib import admin, messages
+from django.utils.html import format_html
+from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse, path
+from django.core.cache import cache
 
+from .models import Project
+from contract.blockchain import contract
 
 
 
@@ -98,9 +105,9 @@ class MilestoneInline(admin.StackedInline):
     # preview.short_description = 'Preview'
 
 
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-
     inlines = [MilestoneInline]
     list_display = (
         "title", 'goal', 'approval_status', 'status', 'progress_percenage'
@@ -108,61 +115,178 @@ class ProjectAdmin(admin.ModelAdmin):
     list_filter = ('approval_status', 'status', 'categories',)
     search_fields = ('title',)
 
+    change_form_template = None  # set in changeform_view
 
-    def get_fields(self, request, obj=None):
-        if obj:  # editing existing object
-            fields = (
-                'organization', 'categories', 'title', 'goal', 'total_funds', 'progress_percenage', 'country', 'approval_status',
-                'formatted_description','image','created_at', 'updated_at', 'formatted_summary',
-                'deployed','wallet_address','contract_id','duration_in_days','deadline',
-            )
+    # -------------------------
+    # Use fieldsets so Jazmin shows collapsible sections
+    # -------------------------
+    def get_fieldsets(self, request, obj=None):
+        """
+        Return fieldsets for add / change pages.
+        When editing and deployed + contract_id present, add a collapsible 'Contract Info' fieldset.
+        """
+        # Base fieldset used on change page (edit)
+        base_fields = [
+            'organization', 'categories', 'title', 'goal', 'total_funds', 'progress_percenage',
+            'country', 'approval_status', 'formatted_description', 'image', 'created_at', 'updated_at',
+            'formatted_summary', 'deployed', 'wallet_address', 'contract_id', 'duration_in_days', 'deadline',
+        ]
 
-            if obj.approval_status != Project.PENDING and obj.approval_status != Project.APPROVED:
-                return fields + ('admin_action_by', 'admin_action_at', 'reason')
-            else:
-                return fields
-
-        else:  # adding new object
+        # If adding a new project, show a simpler layout
+        if obj is None:
             return (
-                'organization', 'categories', 'title', 'goal', 'country', 'image', 'description', 'summary', 
-                
+                (None, {'fields': ('organization', 'categories', 'title', 'goal', 'country', 'image', 'description', 'summary')}),
             )
 
+        # Change page: build main fieldset (readonly fields handled separately)
+        fieldsets = [
+            (None, {'fields': tuple(base_fields)}),
+        ]
+
+        # If deployed and has contract_id, add collapsible Contract Info fieldset
+        if getattr(obj, "deployed", False) and getattr(obj, "contract_id", None) is not None:
+            fieldsets.append(
+                ("Contract Info", {
+                    'fields': ('onchain_info',),
+                    'classes': ('collapse',),   # makes it collapsible in Django admin / Jazmin
+                    'description': "On-chain details pulled from the MilestoneCrowdfund contract (read-only)."
+                })
+            )
+
+        # If project is not in PENDING/APPROVED states we want to show admin action fields in a separate fieldset
+        if obj.approval_status != Project.PENDING and obj.approval_status != Project.APPROVED:
+            fieldsets.append(
+                ("Admin Action", {'fields': ('admin_action_by', 'admin_action_at', 'reason')})
+            )
+
+        return tuple(fieldsets)
+
+    # -------------------------
+    # readonly fields
+    # -------------------------
     def get_readonly_fields(self, request, obj=None):
-        if obj:  # Editing an existing object
-            fields = (
-                'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image', 'approval_status', 'formatted_summary',
-                'created_at', 'updated_at', 'progress_percenage','deployed','wallet_address','contract_id','duration_in_days','deadline','total_funds',
-            )
+        readonly = (
+            'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
+            'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage',
+            'deployed', 'wallet_address', 'contract_id', 'duration_in_days', 'deadline', 'total_funds',
+        )
 
-            if obj.approval_status != Project.PENDING:
-                return fields + ('admin_action_by', 'admin_action_at', 'reason')
-            
-            else:
-                return fields
-            
-        else:  # Adding a new object
-            return ()
+        # Make sure onchain_info is readonly when displayed
+        if obj and getattr(obj, "deployed", False) and getattr(obj, "contract_id", None) is not None:
+            readonly = readonly + ('onchain_info',)
 
-    # def formatted_solution(self, obj):
-    #     return render_markdown_safe(content=obj.solution)
-    
+        if obj and obj.approval_status != Project.PENDING:
+            return readonly + ('admin_action_by', 'admin_action_at', 'reason')
+        return readonly if obj else ()
+
+    # -------------------------
+    # Formatting helpers
+    # -------------------------
     def formatted_summary(self, obj):
          return render_markdown_safe(content=obj.summary)
-    
+
     def formatted_description(self, obj):
         return render_markdown_safe(content=obj.description)
 
-    # def formatted_problem_to_address(self, obj):
-    #     return render_markdown_safe(content=obj.problem_to_address)
-    
-    #formatted_problem_to_address.short_description = "Problem_to_address"   
     formatted_description.short_description = "Description"
-    # formatted_solution.short_description = "Solution"
 
+    # -------------------------
+    # On-chain info (read-only field)
+    # -------------------------
+    def onchain_info(self, obj):
+        """
+        Read-only HTML displaying getCampaignCore and milestones.
+        Only shown when obj.deployed == True and obj.contract_id is not None.
+        Cached for 30 seconds.
+        """
+        if obj is None or not getattr(obj, "deployed", False) or obj.contract_id is None:
+            return format_html("<i>Not deployed on-chain</i>")
 
-    change_form_template = None  # set in changeform_view
+        contract_id = obj.contract_id
+        cache_key = f"onchain_campaign_{contract_id}"
+        core = cache.get(cache_key)
+        if not core:
+            try:
+                core = contract.functions.getCampaignCore(contract_id).call()
+                cache.set(cache_key, core, 30)  # cache for 30s
+            except Exception as e:
+                # Friendly error for admin UI
+                return format_html(
+                    "<div style='color:#b33;'>Could not fetch on-chain info (contract_id: {}). Error: {}</div>",
+                    contract_id,
+                    str(e)
+                )
 
+        try:
+            # Unpack core tuple
+            creator, currencyType, token, goal, pledged, deadline, state, milestoneCount = core
+
+            # Build a small HTML table
+            rows = [
+                ("Contract ID", contract_id),
+                ("Creator", creator),
+                ("CurrencyType (0=ETH,1=ERC20)", int(currencyType)),
+                ("Token", token if token and token != "0x0000000000000000000000000000000000000000" else "ETH"),
+                ("Goal (raw units)", str(goal)),
+                ("Pledged (raw units)", str(pledged)),
+                ("Deadline (timestamp)", str(deadline)),
+                ("Deadline (human)", str(self._timestamp_to_dt(deadline))),
+                ("State (0=Fundraising,1=Succeeded,2=Failed,3=Cancelled)", int(state)),
+                ("Milestone count", int(milestoneCount)),
+            ]
+
+            html = "<table style='border-collapse:collapse;'>"
+            for k, v in rows:
+                html += (
+                    "<tr>"
+                    f"<td style='padding:4px 8px; font-weight:600; vertical-align:top; border-bottom:1px solid #eee'>{k}</td>"
+                    f"<td style='padding:4px 8px; border-bottom:1px solid #eee'>{v}</td>"
+                    "</tr>"
+                )
+            html += "</table>"
+
+            # Optionally show milestones (if any)
+            if int(milestoneCount) > 0:
+                html += "<h4 style='margin-top:8px;margin-bottom:6px'>Milestones</h4>"
+                html += "<table style='border-collapse:collapse;width:100%'>"
+                html += "<tr><th style='text-align:left;padding:4px 8px;'>#</th><th style='text-align:left;padding:4px 8px;'>Name</th><th style='text-align:left;padding:4px 8px;'>Amount</th><th style='text-align:left;padding:4px 8px;'>Approved</th><th style='text-align:left;padding:4px 8px;'>Released</th></tr>"
+                for i in range(int(milestoneCount)):
+                    try:
+                        name, amount, approved, released = contract.functions.getMilestone(contract_id, i).call()
+                        html += (
+                            "<tr>"
+                            f"<td style='padding:4px 8px; vertical-align:top'>{i}</td>"
+                            f"<td style='padding:4px 8px; vertical-align:top'>{name}</td>"
+                            f"<td style='padding:4px 8px; vertical-align:top'>{amount}</td>"
+                            f"<td style='padding:4px 8px; vertical-align:top'>{approved}</td>"
+                            f"<td style='padding:4px 8px; vertical-align:top'>{released}</td>"
+                            "</tr>"
+                        )
+                    except Exception:
+                        html += (
+                            "<tr>"
+                            f"<td style='padding:4px 8px;'>{i}</td>"
+                            f"<td colspan='4' style='padding:4px 8px;color:#888;'>Could not read milestone #{i}</td>"
+                            "</tr>"
+                        )
+                html += "</table>"
+
+            return format_html(html)
+
+        except Exception as exc:
+            return format_html("<div style='color:#b33;'>Error formatting on-chain info: {}</div>", str(exc))
+
+    onchain_info.short_description = "On-chain Campaign (getCampaignCore + milestones preview)"
+
+    def _timestamp_to_dt(self, ts):
+        try:
+            return timezone.datetime.fromtimestamp(int(ts), tz=timezone.get_default_timezone())
+        except Exception:
+            return ts
+
+    # -------------------------
+    # changeform template override (unchanged)
+    # -------------------------
     def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
         if object_id:
             # load your custom template for the *edit* page
@@ -171,6 +295,9 @@ class ProjectAdmin(admin.ModelAdmin):
             self.change_form_template = None
         return super().changeform_view(request, object_id, form_url, extra_context)
 
+    # -------------------------
+    # Custom admin urls + actions (kept from your original class)
+    # -------------------------
     def get_urls(self):
         urls = super().get_urls()
         custom = [
@@ -202,14 +329,13 @@ class ProjectAdmin(admin.ModelAdmin):
             project.admin_action_by = request.user.email
             project.admin_action_at = timezone.now()
             project.save()
-            
 
         try:
             project_approval_mail(project)
             messages.success(request, "✅ Project approved and email sent.")
         except Exception as e:
             messages.error(request, f"project approved but email failed: {e}")
-            
+
         return redirect(reverse('admin:projects_project_changelist'))
 
     def disapprove_project(self, request, pk, flag = False):
@@ -244,11 +370,10 @@ class ProjectAdmin(admin.ModelAdmin):
 
         # go back to change‐list
         return redirect(reverse('admin:projects_project_changelist'))
-    
 
     def flag_project(self, request, pk, flag = True):
         project = get_object_or_404(Project, pk=pk)
-        
+
         if request.method == 'GET':
             # Show a standalone form
             return render(request, 'admin/project/deny_project_form.html', {'project': project, 'flag':flag})
@@ -277,7 +402,6 @@ class ProjectAdmin(admin.ModelAdmin):
 
         # go back to change‐list
         return redirect(reverse('admin:projects_project_changelist'))
-
 
 
 

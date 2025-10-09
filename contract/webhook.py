@@ -118,7 +118,7 @@ def alchemy_webhook(request):
                 event_data = event_object().process_log(web3_log)
                 event_args = event_data['args']
 
-                # --- Your Business Logic Starts Here ---
+                # --- Events ---
                 if event_name == 'CampaignCreated':
                     campaign_id = event_args['id']
                     creator = event_args['creator']
@@ -155,7 +155,7 @@ def alchemy_webhook(request):
                             tip=tip,
                             status=Donation.PENDING
                         ).first()
-                    print(f'donation instance found: {donation}')
+                    #print(f'donation instance found: {donation}')
                     if donation:
                         pledged_project = donation.project
                         active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
@@ -194,7 +194,7 @@ def alchemy_webhook(request):
                         )
 
 
-                if event_name == 'MilestoneAdded':
+                elif event_name == 'MilestoneAdded':
                     campaign_id = event_args['id']
                     milestone_index = event_args['index']
                     amount = Decimal(event_args['amount']) / (Decimal(10) ** 6)
@@ -204,7 +204,62 @@ def alchemy_webhook(request):
                     milestone.save(update_fields=['contract_index'])
 
 
+                elif event_name == 'CampaignStateChanged':
+                        try:
+                            campaign_id = event_args['id']
+                            state = event_args['newState']
+                            project = Project.objects.get(contract_id = campaign_id)
+                            if state == 1:
+                                project.status = Project.Completed
+                            elif state == 2:
+                                project.status = Project.Failed
+                            project.save(update_fields=['status'])
+                            
+                        except Exception as e:
+                        #print(f"{e} traceback: {traceback.format_exc()}")
+                            ContractLog.objects.create(
+                                data=raw_log,
+                                error=str(e),
+                                notes=traceback.format_exc()
+                            )  
+
+                elif event_name == 'MilestoneApproved':
+                        try :
+                            campaign_id = event_args['id']
+                            index = event_args['index']
+                            #amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                            project = Project.objects.get(contract_id = campaign_id)
+                            milestone = project.milestones.get(contract_index=index)
+                            milestone.approved= True
+                            milestone.save(update_fields=['aapproved'])
+                        except:
+                            #print(f"{e} traceback: {traceback.format_exc()}")
+                            ContractLog.objects.create(
+                                data=raw_log,
+                                error=str(e),
+                                notes=traceback.format_exc()
+                            )      
+
+                elif event_name == 'MilestoneWithdrawn':
+                        try :
+                            campaign_id = event_args['id']
+                            index = event_args['index']
+                            # amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                            project = Project.objects.get(contract_id = campaign_id)
+                            milestone = project.milestones.get(contract_index=index)
+                            milestone.withdrawn= True
+                            milestone.save(update_fields=['aapproved'])
+                        except Exception as e:
+                        #print(f"{e} traceback: {traceback.format_exc()}")
+                            ContractLog.objects.create(
+                                data=raw_log,
+                                error=str(e),
+                                notes=traceback.format_exc()
+                            )    
                     
+
+
+
             except Exception as e:
                 print(f"{e} traceback: {traceback.format_exc()}")
                 ContractLog.objects.create(

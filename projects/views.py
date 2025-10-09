@@ -79,7 +79,7 @@ class MyProjectListView(generics.ListAPIView):
         is_org = user.is_organization
         if is_org:
             return Project.objects.filter(organization=user.organization)
-        return Project.objects.filter(donations__donor=user)
+        return Project.objects.filter(donations__donor=user.profile)
 
 
 

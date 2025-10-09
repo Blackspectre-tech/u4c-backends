@@ -40,12 +40,13 @@ class Project(TimeStamps, models.Model):
     Unimplemented ='Under Implementation'
     Cancelled ='Cancelled'
     Completed = 'Completed'
-    CRYPTO = 'Crypto'
-    BANK = 'Bank Transfer'
-    payout_options = [
-        (CRYPTO, f'{CRYPTO}'),
-        (BANK,f'{BANK}')
-    ]
+    Failed = 'Failed'
+    # CRYPTO = 'Crypto'
+    # BANK = 'Bank Transfer'
+    # payout_options = [
+    #     (CRYPTO, f'{CRYPTO}'),
+    #     (BANK,f'{BANK}')
+    # ]
 
     approval = [
     (FLAGGED,'FLAGGED'),
@@ -58,6 +59,7 @@ class Project(TimeStamps, models.Model):
     (Unimplemented,'Under Implementation'),
     (Cancelled,'Cancelled'),
     (Completed,'Completed'),
+    (Failed,'Failed'),
     ]
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='projects')
@@ -140,6 +142,7 @@ class Milestone(TimeStamps, models.Model):
     (COMPLETED,'Completed')
     ]
     
+    
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
     milestone_no = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)],)
     title = models.CharField(max_length=250)
@@ -148,8 +151,8 @@ class Milestone(TimeStamps, models.Model):
     goal=models.DecimalField(decimal_places=2,max_digits=16)
     status = models.CharField(max_length=25, choices=status, default=NOT_STARTED)
     contract_index = models.IntegerField(null=True, blank=True)
+    approved = models.BooleanField(default=False)
     withdrawn = models.BooleanField(default=False)
-
     def save(self, *args, **kwargs):
         self.details = html_cleaner.clean(
             self.details

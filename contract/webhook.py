@@ -14,7 +14,6 @@ import datetime
 # from web3 import Web3 
 import traceback
 
-
 #Webhook
 
 EVENT_TOPIC_MAP = {
@@ -117,7 +116,7 @@ def alchemy_webhook(request):
                 # PASS THE NORMALIZED web3_log TO process_log
                 event_data = event_object().process_log(web3_log)
                 event_args = event_data['args']
-
+                #print(event_args)
                 # --- Events ---
                 if event_name == 'CampaignCreated':
                     campaign_id = event_args['id']
@@ -181,6 +180,8 @@ def alchemy_webhook(request):
                             if next_milestone:
                                 next_milestone.status = Milestone.ACTIVE
                                 next_milestone.save(update_fields=['status'])
+                            else:
+                                send_owner_tx(contract.functions.finalize(campaign_id))
                         
                         donation.status = Donation.SUCCESSFUL
                         donation.tx_hash = logs[0]['transaction'].get('hash')
@@ -208,6 +209,7 @@ def alchemy_webhook(request):
                         try:
                             campaign_id = event_args['id']
                             state = event_args['newState']
+                            #print(f'id:{campaign_id} type:{type(campaign_id)}')
                             project = Project.objects.get(contract_id = campaign_id)
                             if state == 1:
                                 project.status = Project.Completed
@@ -216,9 +218,9 @@ def alchemy_webhook(request):
                             project.save(update_fields=['status'])
                             
                         except Exception as e:
-                        #print(f"{e} traceback: {traceback.format_exc()}")
+                            #print(f"{e} traceback: {traceback.format_exc()}")
                             ContractLog.objects.create(
-                                data=raw_log,
+                                data=data,
                                 error=str(e),
                                 notes=traceback.format_exc()
                             )  
@@ -235,7 +237,7 @@ def alchemy_webhook(request):
                         except:
                             #print(f"{e} traceback: {traceback.format_exc()}")
                             ContractLog.objects.create(
-                                data=raw_log,
+                                data=data,
                                 error=str(e),
                                 notes=traceback.format_exc()
                             )      
@@ -250,9 +252,9 @@ def alchemy_webhook(request):
                             milestone.withdrawn= True
                             milestone.save(update_fields=['aapproved'])
                         except Exception as e:
-                        #print(f"{e} traceback: {traceback.format_exc()}")
+                            #print(f"{e} traceback: {traceback.format_exc()}")
                             ContractLog.objects.create(
-                                data=raw_log,
+                                data=data,
                                 error=str(e),
                                 notes=traceback.format_exc()
                             )    
@@ -263,7 +265,7 @@ def alchemy_webhook(request):
             except Exception as e:
                 print(f"{e} traceback: {traceback.format_exc()}")
                 ContractLog.objects.create(
-                    data=raw_log,
+                    data=data,
                     error=str(e),
                     notes=traceback.format_exc()
                 )
@@ -273,4 +275,4 @@ def alchemy_webhook(request):
     except json.JSONDecodeError:
         return JsonResponse({'status': 'invalid JSON'}, status=400)
     except Exception as e:
-        return JsonResponse({'status': f'an error occurred: {e}'}, status=500)
+        return JsonResponse({'status': f'an error occurred: {e} traceback: {traceback.format_exc()}'}, status=500)

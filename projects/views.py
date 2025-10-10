@@ -69,7 +69,7 @@ class MyProjectListView(generics.ListAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['categories__name','status']
+    filterset_fields = ['categories__name','status','deployed','approval_status']
     search_fields = ['title']
     pagination_class = StandardResultsSetPagination
 

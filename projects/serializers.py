@@ -153,13 +153,13 @@ class ProjectSerializer(serializers.ModelSerializer):
     milestones = MilestoneSerializer(many=True, required=True)
     donations = serializers.SerializerMethodField()
     duration_in_days = serializers.IntegerField(min_value=14, max_value=365)
-
+    comments = CommentSerializer(many=True)
     class Meta:
         model = Project
         fields = [
             'id', 'organization_id', 'contract_id','title', 'categories_display', 'goal', 'country', 'address',
             'description', 'categories', 'image', 'summary', 'duration_in_days','wallet_address',
-            'milestones', 'donations', 'progress','approval_status','created_at','deployed','deadline'
+            'milestones', 'donations', 'progress','approval_status','created_at','deployed','deadline','comments'
         ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -178,6 +178,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             'contract_id': {'read_only': True},
             'deployed': {'read_only': True},
             'deadline': {'read_only': True},
+            'comments': {'read_only': True},
         }
 
     def validate(self, attrs):

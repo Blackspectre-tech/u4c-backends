@@ -237,10 +237,10 @@ class ProjectAdmin(admin.ModelAdmin):
             rows = [
                 ("Contract ID", contract_id),
                 ("Creator", creator),
-                ("CurrencyType (0=ETH,1=ERC20)", curreny_dict[int(currencyType)]),
+                ("CurrencyType (ETH,ERC20)", curreny_dict[int(currencyType)]),
                 ("Token", token if token and token != "0x0000000000000000000000000000000000000000" else "ETH"),
-                ("Goal (raw units)",Decimal(goal) / (Decimal(10) ** 6).quantize(Decimal('0.01'))),    #str(goal)),
-                ("Pledged (raw units)", Decimal(pledged) / (Decimal(10) ** 6).quantize(Decimal('0.01'))), #str(pledged)),
+                ("Goal ($)",Decimal(goal) / (Decimal(10) ** 6).quantize(Decimal('0.01'))),    #str(goal)),
+                ("Pledged ($)", Decimal(pledged) / (Decimal(10) ** 6).quantize(Decimal('0.01'))), #str(pledged)),
                 ("Deadline", str(self._timestamp_to_dt(deadline))),
                 ("State", status_dict[int(state)]),
                 ("Milestone count", int(milestoneCount)),

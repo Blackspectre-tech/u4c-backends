@@ -15,7 +15,7 @@ from .utils import (
     send_account_activation_otp, 
     resize_image,
 )
-from .models import Organization, Profile, Social, User
+from .models import Organization, Profile, Social, User, Transaction
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
@@ -401,4 +401,11 @@ class WalletSerializer(serializers.ModelSerializer):
                 deployed=False
                 ).update(wallet_address=wallet)
         return super().update(instance, validated_data)
+
+class TransactionSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Transaction
+        fields = ['tx_hash','created_at']
+    
 

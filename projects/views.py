@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from drf_nested_multipart.parser import NestedMultipartAndFileParser
 
 from accounts.permissions import Is_Org, Is_Donor,isOrgObjOwner,isDonorObjOwner
-from .models import Project, Update,Expense,Milestone,Organization,Comment, MilestoneImage
+from .models import Project, Update,Expense,Milestone,Organization,Comment, MilestoneImage, Donation
 from .paginations import StandardResultsSetPagination
 from .serializers import (
     ProjectSerializer,
@@ -79,7 +79,7 @@ class MyProjectListView(generics.ListAPIView):
         is_org = user.is_organization
         if is_org:
             return Project.objects.filter(organization=user.organization)
-        return Project.objects.filter(donations__donor=user.profile)
+        return Project.objects.filter(donations__donor=user.profile).distinct()
 
 
 
@@ -182,6 +182,9 @@ class CommentCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         profile=self.request.user.profile
         project = get_object_or_404(Project,pk=self.kwargs['pk'])
+        donated = project.donations.filter(donor=profile, status = Donation.SUCCESSFUL).first()
+        if not donated:
+            raise PermissionDenied('Only donors of a project can make a comment')
         serializer.save(profile=profile, project=project)
 
 

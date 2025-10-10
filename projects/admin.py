@@ -205,6 +205,18 @@ class ProjectAdmin(admin.ModelAdmin):
         contract_id = obj.contract_id
         cache_key = f"onchain_campaign_{contract_id}"
         core = cache.get(cache_key)
+
+        status_dict = {
+            0:'Fundraising',
+            1:'Succeeded',
+            2:'Failed',
+            3:'Cancelled',
+        }
+        curreny_dict = {
+            0:'ETH',
+            1:'ERC20',
+        }
+
         if not core:
             try:
                 core = contract.functions.getCampaignCore(contract_id).call()
@@ -225,13 +237,12 @@ class ProjectAdmin(admin.ModelAdmin):
             rows = [
                 ("Contract ID", contract_id),
                 ("Creator", creator),
-                ("CurrencyType (0=ETH,1=ERC20)", int(currencyType)),
+                ("CurrencyType (0=ETH,1=ERC20)", curreny_dict[int(currencyType)]),
                 ("Token", token if token and token != "0x0000000000000000000000000000000000000000" else "ETH"),
-                ("Goal (raw units)", str(goal)),
-                ("Pledged (raw units)", str(pledged)),
-                ("Deadline (timestamp)", str(deadline)),
-                ("Deadline (human)", str(self._timestamp_to_dt(deadline))),
-                ("State (0=Fundraising,1=Succeeded,2=Failed,3=Cancelled)", int(state)),
+                ("Goal (raw units)",Decimal(goal) / (Decimal(10) ** 6).quantize(Decimal('0.01'))),    #str(goal)),
+                ("Pledged (raw units)", Decimal(pledged) / (Decimal(10) ** 6).quantize(Decimal('0.01'))), #str(pledged)),
+                ("Deadline", str(self._timestamp_to_dt(deadline))),
+                ("State", status_dict[int(state)]),
                 ("Milestone count", int(milestoneCount)),
             ]
 
@@ -257,7 +268,7 @@ class ProjectAdmin(admin.ModelAdmin):
                             "<tr>"
                             f"<td style='padding:4px 8px; vertical-align:top'>{i}</td>"
                             f"<td style='padding:4px 8px; vertical-align:top'>{name}</td>"
-                            f"<td style='padding:4px 8px; vertical-align:top'>{amount}</td>"
+                            f"<td style='padding:4px 8px; vertical-align:top'>{Decimal(amount) / (Decimal(10) ** 6).quantize(Decimal('0.01'))}</td>"
                             f"<td style='padding:4px 8px; vertical-align:top'>{approved}</td>"
                             f"<td style='padding:4px 8px; vertical-align:top'>{released}</td>"
                             "</tr>"

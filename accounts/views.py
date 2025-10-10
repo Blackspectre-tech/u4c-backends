@@ -19,10 +19,11 @@ from .serializers import (
     UploadAvatarSerializer,
     WalletSerializer,
     OrganizationKYCSerializer,
+    TransactionSerializer,
 
     )
 from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp,send_html_mail
-from .models import Organization, Profile
+from .models import Organization, Profile, Transaction
 from .permissions import isOrgOwner, Is_Org,Is_Donor
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -214,3 +215,10 @@ class AddWalletView(generics.GenericAPIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+class TransactionListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TransactionSerializer
+
+    def get_queryset(self):
+        transactions = Transaction.objects.filter(user=self.request.user)
+        return transactions

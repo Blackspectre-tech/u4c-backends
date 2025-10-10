@@ -1,6 +1,7 @@
 from rest_framework.permissions import BasePermission
 
 class Is_Org(BasePermission):
+    message = 'You must be an organization to perform this action.'
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_organization)
         
@@ -23,6 +24,7 @@ class isOrgObjOwner(BasePermission):
 
 
 class Is_Donor(BasePermission):
+    message = 'You must be a donor to perform this action.'
     def has_permission(self, request, view):
         return bool(request.user and not request.user.is_organization)
 

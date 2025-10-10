@@ -17,7 +17,7 @@ from .views import (
     UploadAvatarView,
     RetrieveOrganization,
     AddWalletView,
-    # OrganizationView,
+    TransactionListView,
     ProfileView,
     OrganizationKYC,
 )
@@ -39,5 +39,5 @@ urlpatterns = [
     path('upload-avatar/',UploadAvatarView.as_view()),
     path('add-wallet/',AddWalletView.as_view()),
     path('my-profile/',ProfileView.as_view()),
-    # path('my-organization/',OrganizationView.as_view()),
+    path('transactions/',TransactionListView.as_view()),
 ]

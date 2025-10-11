@@ -134,3 +134,26 @@ def platform_wallet_bal():
     usdc = raw_balance / (10 ** decimals)
 
     return round(usdc, 2)
+
+
+def transaction_details(tx_hash: str):
+
+    try:
+        tx_details = w3.eth.get_transaction(tx_hash)
+        if tx_details:
+            data = dict(tx_details)
+            
+            # Convert hex values to integers and Wei to MATIC for readability
+            # Some fields may be None if the transaction is pending
+            if data['blockNumber'] is not None:
+                data['blockNumber'] = w3.to_int(data['blockNumber'])
+            
+            data['gas'] = w3.to_int(data['gas'])
+            data['value_matic'] = w3.from_wei(data['value'], 'ether')
+            
+            return data
+        else:
+            return None
+    except Exception:
+        return None
+

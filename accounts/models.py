@@ -90,6 +90,10 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.username}"
 
+    class Meta:
+        verbose_name = "Donor"
+
+
 class Organization(models.Model):
 
 

@@ -19,8 +19,7 @@ from django.urls import reverse, path
 from django.core.cache import cache
 
 from .models import Project
-from contract.blockchain import contract
-
+from contract.blockchain import contract, send_owner_tx
 
 
 # class ProjectAdminForm(forms.ModelForm):
@@ -129,7 +128,7 @@ class ProjectAdmin(admin.ModelAdmin):
         base_fields = [
             'organization', 'categories', 'title', 'goal', 'total_funds', 'progress_percenage',
             'country', 'approval_status', 'formatted_description', 'image', 'created_at', 'updated_at',
-            'formatted_summary', 'deployed', 'wallet_address', 'contract_id', 'duration_in_days', 'deadline',
+            'formatted_summary', 'deployed', 'wallet_address', 'duration_in_days', 'deadline',
         ]
 
         # If adding a new project, show a simpler layout
@@ -168,7 +167,7 @@ class ProjectAdmin(admin.ModelAdmin):
         readonly = (
             'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
             'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage',
-            'deployed', 'wallet_address', 'contract_id', 'duration_in_days', 'deadline', 'total_funds',
+            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds',
         )
 
         # Make sure onchain_info is readonly when displayed
@@ -239,8 +238,8 @@ class ProjectAdmin(admin.ModelAdmin):
                 ("Creator", creator),
                 ("CurrencyType (ETH,ERC20)", curreny_dict[int(currencyType)]),
                 ("Token", token if token and token != "0x0000000000000000000000000000000000000000" else "ETH"),
-                ("Goal ($)",Decimal(goal) / (Decimal(10) ** 6).quantize(Decimal('0.01'))),    #str(goal)),
-                ("Pledged ($)", Decimal(pledged) / (Decimal(10) ** 6).quantize(Decimal('0.01'))), #str(pledged)),
+                ("Goal ($)",str(Decimal(goal) / (Decimal(10) ** 6))),   #Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0) #str(goal)),
+                ("Pledged ($)", str(Decimal(pledged) / (Decimal(10) ** 6))), #str(pledged)),
                 ("Deadline", str(self._timestamp_to_dt(deadline))),
                 ("State", status_dict[int(state)]),
                 ("Milestone count", int(milestoneCount)),
@@ -268,7 +267,7 @@ class ProjectAdmin(admin.ModelAdmin):
                             "<tr>"
                             f"<td style='padding:4px 8px; vertical-align:top'>{i}</td>"
                             f"<td style='padding:4px 8px; vertical-align:top'>{name}</td>"
-                            f"<td style='padding:4px 8px; vertical-align:top'>{Decimal(amount) / (Decimal(10) ** 6).quantize(Decimal('0.01'))}</td>"
+                            f"<td style='padding:4px 8px; vertical-align:top'>{str(Decimal(amount) / (Decimal(10) ** 6))}</td>"
                             f"<td style='padding:4px 8px; vertical-align:top'>{approved}</td>"
                             f"<td style='padding:4px 8px; vertical-align:top'>{released}</td>"
                             "</tr>"
@@ -327,6 +326,11 @@ class ProjectAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.flag_project),
                 name='flag_project_url'
             ),
+            path(
+                '<int:pk>/approve_milestone/',
+                self.admin_site.admin_view(self.approve_milestone_onchain),
+                name='approve_milestone_url'
+            ),
         ]
         return custom + urls
 
@@ -334,6 +338,7 @@ class ProjectAdmin(admin.ModelAdmin):
         project = get_object_or_404(Project, pk=pk)
         if project.approval_status == Project.APPROVED:
             messages.warning(request, "Project already approved.")
+            return redirect(reverse('admin:projects_project_change', args=[pk]))
         else:
             project.approval_status = Project.APPROVED
             project.approverd_at = timezone.now()
@@ -414,6 +419,22 @@ class ProjectAdmin(admin.ModelAdmin):
         # go back to change‐list
         return redirect(reverse('admin:projects_project_changelist'))
 
+
+    def approve_milestone_onchain(self, request, pk):
+        project = get_object_or_404(Project, pk=pk)
+        if project.approval_status == Project.APPROVED and project.deployed:
+            active_milestone = project.milestones.filter(status=Milestone.ACTIVE).first()
+            index = active_milestone.milestone_no -1
+            campaign_id = project.contract_id
+            try:
+                send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
+            except Exception as e:  
+                messages.warning(request, f"Error: {e}")
+            return redirect(reverse('admin:projects_project_change', args=[pk]))
+        else:
+            messages.warning(request, f"project not on-chain")
+            return redirect(reverse('admin:projects_project_change', args=[pk]))
+        
 
 
 

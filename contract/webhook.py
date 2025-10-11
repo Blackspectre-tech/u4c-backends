@@ -1,18 +1,13 @@
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
-from django.contrib.admin.views.decorators import staff_member_required
 import json
 from .blockchain import contract, send_owner_tx
 from django.views.decorators.csrf import csrf_exempt
 from projects.models import Project,Milestone,Donation
 from decimal import Decimal
-from django.shortcuts import get_object_or_404
-# from django.db import transaction
 from .models import ContractLog
 from accounts.models import Transaction
 import datetime
-# from django.utils import timezone
-# from web3 import Web3 
 import traceback
 
 #Webhook
@@ -213,22 +208,22 @@ def alchemy_webhook(request):
                                 notes=traceback.format_exc()
                             ) 
 
-                elif event_name == 'MilestoneAdded':
-                    try:
-                        campaign_id = event_args['id']
-                        milestone_index = event_args['index']
-                        amount = Decimal(event_args['amount']) / (Decimal(10) ** 6)
-                        project = Project.objects.get(contract_id = campaign_id)
-                        milestone = project.milestones.get(goal=amount.quantize(Decimal('0.01')))
-                        milestone.contract_index=milestone_index
-                        milestone.save(update_fields=['contract_index'])
-                    except Exception as e:
-                            #print(f"{e} traceback: {traceback.format_exc()}")
-                            ContractLog.objects.create(
-                                data=data,
-                                error=str(e),
-                                notes=traceback.format_exc()
-                            ) 
+                # elif event_name == 'MilestoneAdded':
+                #     try:
+                #         campaign_id = event_args['id']
+                #         milestone_index = event_args['index']
+                #         amount = Decimal(event_args['amount']) / (Decimal(10) ** 6)
+                #         project = Project.objects.get(contract_id = campaign_id)
+                #         milestone = project.milestones.get(goal=amount.quantize(Decimal('0.01')))
+                #         milestone.contract_index=milestone_index
+                #         milestone.save(update_fields=['contract_index'])
+                #     except Exception as e:
+                #             #print(f"{e} traceback: {traceback.format_exc()}")
+                #             ContractLog.objects.create(
+                #                 data=data,
+                #                 error=str(e),
+                #                 notes=traceback.format_exc()
+                #             ) 
 
                 elif event_name == 'CampaignStateChanged':
                         try:
@@ -253,12 +248,12 @@ def alchemy_webhook(request):
                 elif event_name == 'MilestoneApproved':
                         try :
                             campaign_id = event_args['id']
-                            index = event_args['index']
-                            #amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                            #index = event_args['index']
+                            amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
                             project = Project.objects.get(contract_id = campaign_id)
-                            milestone = project.milestones.get(contract_index=index)
+                            milestone = project.milestones.get(goal=amount)
                             milestone.approved= True
-                            milestone.save(update_fields=['aapproved'])
+                            milestone.save(update_fields=['approved'])
                         except:
                             #print(f"{e} traceback: {traceback.format_exc()}")
                             ContractLog.objects.create(
@@ -270,12 +265,12 @@ def alchemy_webhook(request):
                 elif event_name == 'MilestoneWithdrawn':
                         try :
                             campaign_id = event_args['id']
-                            index = event_args['index']
-                            # amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                            #index = event_args['index']
+                            amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
                             project = Project.objects.get(contract_id = campaign_id)
-                            milestone = project.milestones.get(contract_index=index)
+                            milestone = project.milestones.get(goal=amount)
                             milestone.withdrawn= True
-                            milestone.save(update_fields=['aapproved'])
+                            milestone.save(update_fields=['approved'])
                         except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
                             ContractLog.objects.create(

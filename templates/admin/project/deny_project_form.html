@@ -27,7 +27,7 @@
   {% else %}
     <div style="max-width:600px; margin:2rem auto;">
     <h1 style="color:#dc3545;">❌ Disapprove Project: {{ project.title }}</h1>
-    <p>Please tell us why you intend to disapprove this project. This will be emailed to <strong>{{ project.user.email }}</strong>.</p>
+    <p>Please tell us why you intend to disapprove this project. This will be sent to the NGO'S mail: <strong>{{ project.organization.user.email }}</strong>.</p>
 
     <form method="post" action="{% url 'admin:projects_project_deny' project.id %}">
       {% csrf_token %}

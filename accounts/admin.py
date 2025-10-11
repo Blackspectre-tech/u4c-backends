@@ -42,6 +42,13 @@ class UserProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = 'User Profile'
     fk_name = 'user'
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # Editing an existing object
+            return (
+                'username','first_name','last_name','anonymous',
+            )
+        else:  # Adding a new object
+                return ()
 
 class OrganizationProfileInline(admin.StackedInline):
     model = Organization
@@ -64,10 +71,7 @@ class OrganizationProfileInline(admin.StackedInline):
             )
         else:  # Adding a new object
                 return ()
-    # readonly_fields = (
-    # 'approved_at', 'disapproved_at',
-    # 'approved_by', 'disapproved_by', 'disapproval_reason', 'approval_status'
-    # )
+
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
@@ -94,9 +98,9 @@ class CustomUserAdmin(UserAdmin):
     )
 
     def get_readonly_fields(self, request, obj=None):
-            readonly = super().get_readonly_fields(request, obj)
+            readonly = super().get_readonly_fields(request, obj) + ('email','phone_number','last_login',)
             if not request.user.is_superuser:
-                readonly = readonly + ('is_superuser','is_staff','groups', 'user_permissions',)
+                readonly = readonly + ('is_superuser','is_staff','groups', 'user_permissions','groups')
             return readonly
 
 
@@ -296,6 +300,11 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_filter = ('user__is_active',)
     search_fields = ('user__email',)
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # editing existing object
+            return ('first_name', 'last_name', 'username','user','anonymous',)
+        # adding a new object
+        return ()
 
 
 

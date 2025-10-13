@@ -421,17 +421,25 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
     def approve_milestone_onchain(self, request, pk):
+        from contract.models import ContractLog
+        import traceback
+
         project = get_object_or_404(Project, pk=pk)
         if project.approval_status == Project.APPROVED and project.deployed:
-            # active_milestone = project.milestones.filter(status=Milestone.ACTIVE).first()
-            # index = active_milestone.milestone_no -1
-            # campaign_id = project.contract_id
-            # try:
-            #     #send_owner_tx(contract.functions.finalize(campaign_id))
-            #     send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
-            # except Exception as e:  
-            #     messages.warning(request, f"Error: {e}")
-            return redirect(reverse('admin:projects_project_change', args=[pk]))
+            try:
+                active_milestone = project.milestones.filter(status=Milestone.ACTIVE).first()
+                index = active_milestone.milestone_no -1
+                campaign_id = project.contract_id
+
+                send_owner_tx(contract.functions.finalize(campaign_id))
+                send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
+            except Exception as e:
+                ContractLog.objects.create(
+                    data=traceback.format_exc(),
+                    error=str(e),
+                )  
+                messages.warning(request, f"Error: {e}")
+                return redirect(reverse('admin:projects_project_change', args=[pk]))
         else:
             messages.warning(request, f"project not on-chain")
             return redirect(reverse('admin:projects_project_change', args=[pk]))

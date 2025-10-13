@@ -271,6 +271,10 @@ def alchemy_webhook(request):
                             milestone = project.milestones.get(goal=amount)
                             milestone.withdrawn= True
                             milestone.save(update_fields=['withdrawn'])
+                            Transaction.objects.create(
+                                user = project.organization.user,
+                                tx_hash = logs[0]['transaction'].get('hash')
+                            )
                         except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
                             ContractLog.objects.create(

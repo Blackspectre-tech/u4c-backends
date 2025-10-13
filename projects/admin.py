@@ -20,7 +20,8 @@ from django.core.cache import cache
 
 from .models import Project
 from contract.blockchain import contract, send_owner_tx
-
+from contract.models import ContractLog
+import traceback
 
 # class ProjectAdminForm(forms.ModelForm):
 #     upload_image = forms.ImageField(required=False, label='Upload Image')
@@ -421,13 +422,12 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
     def approve_milestone_onchain(self, request, pk):
-        from contract.models import ContractLog
-        import traceback
+
 
         project = get_object_or_404(Project, pk=pk)
         if project.approval_status == Project.APPROVED and project.deployed:
             try:
-                active_milestone = project.milestones.filter(status=Milestone.ACTIVE).first()
+                active_milestone = project.milestones.filter(status=Milestone.COMPLETED,approved=False).first()
                 index = active_milestone.milestone_no -1
                 campaign_id = project.contract_id
 

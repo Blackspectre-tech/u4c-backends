@@ -20,8 +20,8 @@ from django.core.cache import cache
 
 from .models import Project
 from contract.blockchain import contract, send_owner_tx
-from contract.models import ContractLog
-import traceback
+# from contract.models import ContractLog
+# import traceback
 
 # class ProjectAdminForm(forms.ModelForm):
 #     upload_image = forms.ImageField(required=False, label='Upload Image')
@@ -431,13 +431,13 @@ class ProjectAdmin(admin.ModelAdmin):
                 index = active_milestone.milestone_no -1
                 campaign_id = project.contract_id
 
-                send_owner_tx(contract.functions.finalize(campaign_id))
+                # send_owner_tx(contract.functions.finalize(campaign_id))
                 send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
             except Exception as e:
-                ContractLog.objects.create(
-                    data=traceback.format_exc(),
-                    error=str(e),
-                )  
+                # ContractLog.objects.create(
+                #     data=traceback.format_exc(),
+                #     error=str(e),
+                # )  
                 messages.warning(request, f"Error: {e}")
                 return redirect(reverse('admin:projects_project_change', args=[pk]))
         else:

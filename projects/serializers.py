@@ -159,7 +159,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     milestones = MilestoneSerializer(many=True, required=True)
     donations = serializers.SerializerMethodField()
     duration_in_days = serializers.IntegerField(max_value=365)
-    comments = CommentSerializer(many=True)
+    comments = CommentSerializer(many=True, required=False)
     class Meta:
         model = Project
         fields = [
@@ -184,7 +184,6 @@ class ProjectSerializer(serializers.ModelSerializer):
             'contract_id': {'read_only': True},
             'deployed': {'read_only': True},
             'deadline': {'read_only': True},
-            'comments': {'read_only': True, 'required': False},
         }
 
     def validate(self, attrs):

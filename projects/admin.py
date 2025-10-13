@@ -167,7 +167,7 @@ class ProjectAdmin(admin.ModelAdmin):
         readonly = (
             'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
             'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage',
-            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','contract_id',
+            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds',#'contract_id',
         )
 
         # Make sure onchain_info is readonly when displayed
@@ -427,7 +427,7 @@ class ProjectAdmin(admin.ModelAdmin):
             index = active_milestone.milestone_no -1
             campaign_id = project.contract_id
             try:
-                send_owner_tx(contract.functions.finalize(campaign_id))
+                #send_owner_tx(contract.functions.finalize(campaign_id))
                 send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
             except Exception as e:  
                 messages.warning(request, f"Error: {e}")

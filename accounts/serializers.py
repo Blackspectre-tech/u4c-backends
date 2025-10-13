@@ -13,6 +13,7 @@ from .utils import (
     validate_otp, 
     generate_otp, 
     send_account_activation_otp,
+    is_secure
 )
 from .models import Organization, Profile, Social, User, Transaction
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer

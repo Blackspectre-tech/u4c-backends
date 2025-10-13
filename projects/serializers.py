@@ -159,7 +159,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     milestones = MilestoneSerializer(many=True, required=True)
     donations = serializers.SerializerMethodField()
     duration_in_days = serializers.IntegerField(max_value=365)
-    comments = CommentSerializer(many=True, required=False)
+    comments = CommentSerializer(many=True,read_only=True)
     class Meta:
         model = Project
         fields = [

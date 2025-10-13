@@ -12,8 +12,7 @@ from django.contrib.auth.password_validation import validate_password
 from .utils import (
     validate_otp, 
     generate_otp, 
-    send_account_activation_otp, 
-    resize_image,
+    send_account_activation_otp,
 )
 from .models import Organization, Profile, Social, User, Transaction
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -189,27 +188,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
         return org
 
-# class OrganizationMinorInfoSerializer(serializers.ModelSerializer):
-#     socials = SocialsSerializer()
-#     avatar = serializers.SerializerMethodField()
-#     class Meta:
-#         model = Organization
-#         fields = ['name','website','description','country','address', 'socials', 'avatar',]
-
-
-#     @extend_schema_field(serializers.ImageField())
-#     def get_avatar(self, obj):
-#         avatar_field = getattr(obj.user, "avatar", None)
-#         if not avatar_field:
-#             return None
-#         try:
-#             url = avatar_field.url  # may raise ValueError if no file
-#         except ValueError:
-#             return None
-
-#         request = self.context.get("request")
-#         return request.build_absolute_uri(url) if request else url
-
 
 class OrganizationKYCSerializer(serializers.ModelSerializer):
     # reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
@@ -312,13 +290,13 @@ class UploadAvatarSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         image_file = validated_data.pop('image', None)
 
-        if image_file:
-            try:
-                image = resize_image(image_file)
-            except ValidationError as e:
-                raise serializers.ValidationError({'image': e.message})
+        # if image_file:
+        #     try:
+        #         image = resize_image(image_file)
+        #     except ValidationError as e:
+        #         raise serializers.ValidationError({'image': e.message})
 
-        instance.avatar = image
+        instance.avatar = image_file
         instance.save()
         return instance
 

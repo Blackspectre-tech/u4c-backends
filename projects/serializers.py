@@ -29,23 +29,28 @@ class MilestoneImagesSerializer(serializers.ModelSerializer):
         images = validated_data.pop('images', [])
         milestone = self.context.get('milestone')
         instances = []
-
+        existing_images = milestone.images.all()
         if images:
-            for img in images:
-
-                try:
-                    image = resize_image(img)
-                except ValidationError as e:
-                    raise serializers.ValidationError({'image': e.message})
-
-                instances.append(MilestoneImage(
-                    milestone=milestone,
-                    image=image,
-                ))
+            with transaction.atomic():
             
-            MilestoneImage.objects.bulk_create(instances)
+                if existing_images:
+                    existing_images.delete()
 
-        return instances
+                for img in images:
+
+                    try:
+                        image = resize_image(img)
+                    except ValidationError as e:
+                        raise serializers.ValidationError({'image': e.message})
+
+                    instances.append(MilestoneImage(
+                        milestone=milestone,
+                        image=image,
+                    ))
+                
+                MilestoneImage.objects.bulk_create(instances)
+
+        return milestone
     
 
 
@@ -79,7 +84,8 @@ class MilestoneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Milestone
-        fields = ['id','milestone_no','percentage','title','details','goal','images','expenses','status']
+        fields = ['id','milestone_no','percentage','title','details','goal','images',
+          'expenses','status', 'contract_id','approved','withdrawn']
         extra_kwargs = {
         'id': {'read_only': True},
         }

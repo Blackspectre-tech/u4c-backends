@@ -153,8 +153,10 @@ class PostMilestoneImages(generics.GenericAPIView):
             raise PermissionDenied('only project creators can update images')
         serializer = self.get_serializer(data = request.data, context={'milestone':milestone})
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({'message':'images uploaded successfully'},status=status.HTTP_201_CREATED)
+        saved_milestone = serializer.save()  # this will be the milestone instance
+        out = MilestoneSerializer(saved_milestone)
+        return Response(out.data, status=status.HTTP_201_CREATED)
+        #return Response(serializer.data,status=status.HTTP_201_CREATED)
 
         
 class MilestoneRetrieveView(generics.RetrieveAPIView):

@@ -184,8 +184,8 @@ def alchemy_webhook(request):
                                 if next_milestone:
                                     next_milestone.status = Milestone.ACTIVE
                                     next_milestone.save(update_fields=['status'])
-                                else:
-                                    send_owner_tx(contract.functions.finalize(campaign_id))
+                                # else:
+                                #     send_owner_tx(contract.functions.finalize(campaign_id))
                             
                             donation.status = Donation.SUCCESSFUL
                             donation.tx_hash = logs[0]['transaction'].get('hash')
@@ -270,7 +270,7 @@ def alchemy_webhook(request):
                             project = Project.objects.get(contract_id = campaign_id)
                             milestone = project.milestones.get(goal=amount)
                             milestone.withdrawn= True
-                            milestone.save(update_fields=['approved'])
+                            milestone.save(update_fields=['withdrawn'])
                         except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
                             ContractLog.objects.create(

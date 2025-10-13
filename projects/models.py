@@ -89,6 +89,7 @@ class Project(TimeStamps, models.Model):
 
     class Meta:
         ordering = ['-progress']
+        verbose_name = "Campaign"
 
     @property
     @extend_schema_field(str)
@@ -164,11 +165,15 @@ class Milestone(TimeStamps, models.Model):
     @property
     def progress(self):
         return f'{(self.funds / self.goal) * 100:.2f}%'
+    
+    @property
+    def contract_id(self):
+        return self.project.contract_id
 
 
 def milestone_image_path(instance, filename):
     milestone =instance.milestone
-    return f'milestone images/{milestone.project.title}/{milestone.milestone_no}/'
+    return f'milestone images/{milestone.project.title}/{milestone.milestone_no}'
 
 
 class MilestoneImage(models.Model):

@@ -184,7 +184,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             'contract_id': {'read_only': True},
             'deployed': {'read_only': True},
             'deadline': {'read_only': True},
-            'comments': {'read_only': True},
+            'comments': {'read_only': True, 'required': False},
         }
 
     def validate(self, attrs):

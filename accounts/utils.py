@@ -27,22 +27,18 @@ resend.api_key = settings.RESEND_API_KEY
 
 
 
-def is_secure(password):
-    """
-    Validates a password for security requirements.
-    Returns True if the password meets the criteria, False otherwise.
-    """
+def validate_password(password):
     if len(password) < 8:
         return False, "Password must be at least 8 characters long."
     if not re.search(r"[A-Z]", password):
         return False, "Password must contain at least one uppercase letter."
-    if not re.search(r"[a-z]", password):
-        return False, "Password must contain at least one lowercase letter."
-    if not re.search(r"\d", password):
-        return False, "Password must contain at least one digit."
+    # if not re.search(r"[a-z]", password):
+    #     return False, "Password must contain at least one lowercase letter."
+    # if not re.search(r"\d", password):
+    #     return False, "Password must contain at least one digit."
     if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?`~]", password):
         return False, "Password must contain at least one special character."
-    return True
+    return True, 'success!'
 
 
 

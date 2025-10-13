@@ -8,29 +8,29 @@ from phonenumber_field.serializerfields import PhoneNumberField
 from django.db.models import Q
 from projects.models import Project
 from django.core.exceptions import ValidationError
-from django.contrib.auth.password_validation import validate_password
+# from django.contrib.auth.password_validation import validate_password
 from .utils import (
     validate_otp, 
     generate_otp, 
     send_account_activation_otp,
-    is_secure
+    validate_password
 )
 from .models import Organization, Profile, Social, User, Transaction
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
-
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.validators import UniqueValidator
+from rest_framework import serializers
+from django.utils import timezone
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class UserRegistionUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
 
 
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework.validators import UniqueValidator
-from rest_framework import serializers
-from django.utils import timezone
-from rest_framework_simplejwt.tokens import RefreshToken
+
 
 class UserRegistionUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
@@ -103,8 +103,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
         password2=attrs['password2']
         if password != password2:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
-        if len(password)<8:
-            raise serializers.ValidationError({"password": "Password should be eight or more characters."})
+        secure, message = validate_password(password)
+
+        if not secure:
+            raise serializers.ValidationError({"password": message})
+        
         return attrs
 
     def create(self, validated_data):

@@ -431,7 +431,7 @@ class ProjectAdmin(admin.ModelAdmin):
                 index = active_milestone.milestone_no -1
                 campaign_id = project.contract_id
 
-                # send_owner_tx(contract.functions.finalize(campaign_id))
+                send_owner_tx(contract.functions.finalize(campaign_id))
                 send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
             except Exception as e:
                 # ContractLog.objects.create(

@@ -152,15 +152,16 @@ def alchemy_webhook(request):
                         net_amount = Decimal(event_args['netAmount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
                         tipAmount = Decimal(event_args['tipAmount'])/ (Decimal(10) ** 6)
                         tip = Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0)
+                        pledged_project = Project.objects.get(contract_id=campaign_id)
                         donation = Donation.objects.filter(
                                 wallet__iexact = backer,
                                 amount=net_amount,
                                 tip=tip,
-                                status=Donation.PENDING
+                                project = pledged_project,
+                                status=Donation.PENDING,
                             ).first()
                         
-                        if donation:
-                            pledged_project = donation.project
+                        if pledged_project:                            
                             active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
 
                             # Update the project's total funds.
@@ -197,7 +198,7 @@ def alchemy_webhook(request):
                         else: 
                             ContractLog.objects.create(
                                 data=data,
-                                error="could not find donation record",
+                                error="could not find project",
                                 notes=event_args
                             )
                     except Exception as e:

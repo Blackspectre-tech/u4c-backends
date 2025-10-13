@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from decimal import Decimal
 from django.forms import ValidationError as FormValidationError
 from accounts.utils import project_approval_mail
-from .models import Category, Project, Milestone, MilestoneImage
+from .models import Category, Project, Milestone, MilestoneImage, Donation
 from accounts.utils import resize_image
 from django import forms
 from django.forms.models import BaseInlineFormSet
@@ -18,7 +18,6 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, path
 from django.core.cache import cache
 
-from .models import Project
 from contract.blockchain import contract, send_owner_tx
 # from contract.models import ContractLog
 # import traceback
@@ -29,7 +28,13 @@ from contract.blockchain import contract, send_owner_tx
 #     class Meta:
 #         model = Project
 #         fields = ['upload_image']
-    
+
+
+
+admin.site.register(Donation)
+
+
+
 
 # enabling markup formating for readonly textfields for the admin panel
 def render_markdown_safe(content):
@@ -168,7 +173,7 @@ class ProjectAdmin(admin.ModelAdmin):
         readonly = (
             'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
             'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage',
-            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds',#'contract_id',
+            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','contract_id',
         )
 
         # Make sure onchain_info is readonly when displayed

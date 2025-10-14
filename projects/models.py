@@ -35,7 +35,7 @@ class Project(TimeStamps, models.Model):
     PENDING ='PENDING'
     APPROVED='APPROVED'
     DISAPPROVED ='DISAPPROVED'
-    FLAGGED='FLAGGED'
+
     Funding ='Funding'
     Unimplemented ='Under Implementation'
     Cancelled ='Cancelled'
@@ -43,7 +43,6 @@ class Project(TimeStamps, models.Model):
     Failed = 'Failed'
 
     approval = [
-    (FLAGGED,'FLAGGED'),
     (PENDING,'PENDING'),
     (APPROVED,'APPROVED'),
     (DISAPPROVED,'DISAPPROVED')]

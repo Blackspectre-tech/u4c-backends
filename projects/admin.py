@@ -7,20 +7,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from decimal import Decimal
 from django.forms import ValidationError as FormValidationError
 from accounts.utils import project_approval_mail
-from .models import Category, Project, Milestone, MilestoneImage, Donation
-from accounts.utils import resize_image
+from .models import Project, Milestone, MilestoneImage, Donation
 from django import forms
 from django.forms.models import BaseInlineFormSet
-# Register your models here.
-from django.contrib import admin, messages
 from django.utils.html import format_html
-from django.shortcuts import redirect, render, get_object_or_404
-from django.urls import reverse, path
 from django.core.cache import cache
-
 from contract.blockchain import contract, send_owner_tx
-# from contract.models import ContractLog
-# import traceback
+
 
 # class ProjectAdminForm(forms.ModelForm):
 #     upload_image = forms.ImageField(required=False, label='Upload Image')
@@ -101,13 +94,6 @@ class MilestoneInline(admin.StackedInline):
     def formatted_details(self, obj):
             return render_markdown_safe(content=obj.details)
     formatted_details.short_description = "Details"
-
-    # def preview(self, obj):
-    #     if obj.image:
-    #         return format_html('<img src="{}" width="100" height="auto" />', obj.image.url)
-    #     return "No Image"
-
-    # preview.short_description = 'Preview'
 
 
 
@@ -301,7 +287,7 @@ class ProjectAdmin(admin.ModelAdmin):
             return ts
 
     # -------------------------
-    # changeform template override (unchanged)
+    # changeform template override 
     # -------------------------
     def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
         if object_id:
@@ -312,7 +298,7 @@ class ProjectAdmin(admin.ModelAdmin):
         return super().changeform_view(request, object_id, form_url, extra_context)
 
     # -------------------------
-    # Custom admin urls + actions (kept from your original class)
+    # Custom admin urls + actions 
     # -------------------------
     def get_urls(self):
         urls = super().get_urls()
@@ -328,9 +314,9 @@ class ProjectAdmin(admin.ModelAdmin):
                 name='projects_project_deny'
             ),
             path(
-                '<int:pk>/flag/',
-                self.admin_site.admin_view(self.flag_project),
-                name='flag_project_url'
+                '<int:pk>/finalize/',
+                self.admin_site.admin_view(self.finalize_project_onchain),
+                name='finalize_project_url'
             ),
             path(
                 '<int:pk>/approve_milestone/',
@@ -344,6 +330,9 @@ class ProjectAdmin(admin.ModelAdmin):
         project = get_object_or_404(Project, pk=pk)
         if project.approval_status == Project.APPROVED:
             messages.warning(request, "Project already approved.")
+            return redirect(reverse('admin:projects_project_change', args=[pk]))
+        if project.deployed:
+            messages.warning(request, "can't alter state of deployed project.")
             return redirect(reverse('admin:projects_project_change', args=[pk]))
         else:
             project.approval_status = Project.APPROVED
@@ -363,6 +352,10 @@ class ProjectAdmin(admin.ModelAdmin):
     def disapprove_project(self, request, pk, flag = False):
         project = get_object_or_404(Project, pk=pk)
 
+        if project.deployed:
+            messages.warning(request, "cant alter state of deployed project.")
+            return redirect(reverse('admin:projects_project_change', args=[pk]))
+
         if request.method == 'GET':
             # Show a standalone form
             return render(request, 'admin/project/deny_project_form.html', {'project': project, 'flag':flag})
@@ -376,7 +369,7 @@ class ProjectAdmin(admin.ModelAdmin):
         if project.approval_status == Project.DISAPPROVED:
             messages.warning(request, "Project already disapproved.")
             return redirect(reverse('admin:projects_project_change', args=[pk]))
-
+        
         project.approval_status = Project.DISAPPROVED
         project.reason = reason
         project.admin_action_by = request.user.email
@@ -389,55 +382,45 @@ class ProjectAdmin(admin.ModelAdmin):
             messages.error(request, f"Disapproved but email failed: {e}")
         else:
             messages.success(request, "Project disapproved and email sent.")
-
-        # go back to change‐list
         return redirect(reverse('admin:projects_project_changelist'))
 
-    def flag_project(self, request, pk, flag = True):
+    def finalize_project_onchain(self, request, pk):
         project = get_object_or_404(Project, pk=pk)
 
-        if request.method == 'GET':
-            # Show a standalone form
-            return render(request, 'admin/project/deny_project_form.html', {'project': project, 'flag':flag})
-
-        reason = request.POST.get('reason', '').strip()
-        if not reason:
-            messages.error(request, "you must provide a reason for flagging the project.")
-            return redirect(reverse('admin:flag_project_url', args=[pk]))
-
-        if project.approval_status == project.FLAGGED:
-            messages.warning(request, "Project already flagged.")
-            return redirect(reverse('admin:flag_project_url', args=[pk]))
-
-        project.approval_status = project.FLAGGED
-        project.reason = reason
-        project.admin_action_by = request.user.email
-        project.admin_action_at = timezone.now()
-        project.save()
-
-        try:
-            project_approval_mail(project, reason, approved=False)
+        if project.status != Project.Funding:
+                messages.warning(request, f"Project State Already changed")
+                return redirect(reverse('admin:projects_project_change', args=[pk]))
+        try:   
+            if project.deployed:
+            
+                campaign_id = project.contract_id
+                send_owner_tx(contract.functions.finalize(campaign_id))
+            else:
+                messages.warning(request, f"project not on-chain")
+                return redirect(reverse('admin:projects_project_change', args=[pk]))
+            
         except Exception as e:
-            messages.error(request, f"Flagged but email failed: {e}")
-        else:
-            messages.success(request, "Project Flagged and email sent.")
-
-        # go back to change‐list
-        return redirect(reverse('admin:projects_project_changelist'))
+            # ContractLog.objects.create(
+            #     data=traceback.format_exc(),
+            #     error=str(e),
+            # )  
+            messages.warning(request, f"Error: {e}")
+            return redirect(reverse('admin:projects_project_change', args=[pk]))
+        
 
 
     def approve_milestone_onchain(self, request, pk):
-
-
         project = get_object_or_404(Project, pk=pk)
-        if project.approval_status == Project.APPROVED and project.deployed:
+        if project.deployed:
             try:
                 active_milestone = project.milestones.filter(status=Milestone.COMPLETED,approved=False).first()
-                index = active_milestone.milestone_no -1
-                campaign_id = project.contract_id
-
-                send_owner_tx(contract.functions.finalize(campaign_id))
-                send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
+                if active_milestone:
+                    index = active_milestone.milestone_no -1
+                    campaign_id = project.contract_id
+                    send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
+                else:
+                    messages.warning(request, f"project has no unapproved completed milestone")
+                    return redirect(reverse('admin:projects_project_change', args=[pk]))
             except Exception as e:
                 # ContractLog.objects.create(
                 #     data=traceback.format_exc(),
@@ -448,30 +431,6 @@ class ProjectAdmin(admin.ModelAdmin):
         else:
             messages.warning(request, f"project not on-chain")
             return redirect(reverse('admin:projects_project_change', args=[pk]))
-        
-
-
-
-# class MilestoneimagesAdminForm(forms.ModelForm):
-#     upload_image = forms.ImageField(required=False, label='Upload Image')
-
-#     class Meta:
-#         model = MilestoneImage
-#         fields = ['upload_image']
-    
-    # def save(self, commit=True):
-    #     instance = super().save(commit=False)
-    #     image_file = self.cleaned_data.get('upload_image')
-
-    #     if image_file:
-            
-    #         image_url = resize_image(image_file, IMG['milestones'] + instance.milestone.title)
-    #         instance.image = image_url
-
-    #     if commit:
-    #         instance.save()
-    #     return instance
-
 
 
 class MilestoneImagesInline(admin.StackedInline):

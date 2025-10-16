@@ -222,3 +222,13 @@ class TransactionListView(generics.ListAPIView):
     def get_queryset(self):
         transactions = Transaction.objects.filter(user=self.request.user)
         return transactions
+    
+
+class TransactionCreateView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TransactionSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    

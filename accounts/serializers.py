@@ -145,7 +145,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
         model = Organization
         fields = [
             'id','user','name','country','address','description','socials',
-            'website','approved_projects','total_projects','approval_status',
+            'website','approved_projects','onchain_projects','total_projects','approval_status',
         ]
         extra_kwargs = {
         'id': {'read_only': True},
@@ -389,5 +389,8 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['tx_hash','created_at']
+        extra_kwargs = {
+            'created_at': {'read_only': True},
+        }
     
 

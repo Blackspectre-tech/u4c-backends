@@ -133,6 +133,11 @@ class Organization(models.Model):
     def approved_projects(self):
         return self.projects.filter(approval_status = self.APPROVED).count()
 
+    @property
+    def onchain_projects(self):
+        return self.projects.filter(deployed = True).count()
+
+
     def save(self, *args, **kwargs):
         self.name = self.name.title()
         self.country = self.country.title()

@@ -127,7 +127,7 @@ class MilestoneInline(admin.StackedInline):
 class ProjectAdmin(admin.ModelAdmin):
     inlines = [MilestoneInline]
     list_display = (
-        "title", 'goal', 'approval_status', 'status', 'progress_percenage','duration_in_days',
+        "title", 'goal', 'approval_status', 'status', 'progress_percenage','deadline',
     )
     list_filter = ('approval_status', 'status', 'categories',)
     search_fields = ('title',)

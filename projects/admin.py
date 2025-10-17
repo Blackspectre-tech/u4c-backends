@@ -412,11 +412,11 @@ class ProjectAdmin(admin.ModelAdmin):
 
     def finalize_project_onchain(self, request, pk):
         project = get_object_or_404(Project, pk=pk)
-
-        if project.status != Project.Funding:
+        try:
+            if project.status != Project.Funding:
                 messages.warning(request, f"Project State Already changed")
                 return redirect(reverse('admin:projects_project_change', args=[pk]))
-        try:   
+           
             if project.deployed:
             
                 campaign_id = project.contract_id

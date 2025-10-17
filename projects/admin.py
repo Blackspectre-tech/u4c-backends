@@ -127,7 +127,7 @@ class MilestoneInline(admin.StackedInline):
 class ProjectAdmin(admin.ModelAdmin):
     inlines = [MilestoneInline]
     list_display = (
-        "title", 'goal', 'approval_status', 'status', 'progress_percenage'
+        "title", 'goal', 'approval_status', 'status', 'progress_percenage','duration_in_days',
     )
     list_filter = ('approval_status', 'status', 'categories',)
     search_fields = ('title',)
@@ -146,7 +146,7 @@ class ProjectAdmin(admin.ModelAdmin):
         base_fields = [
             'organization', 'categories', 'title', 'goal', 'total_funds', 'progress_percenage',
             'country', 'approval_status', 'formatted_description', 'image', 'created_at', 'updated_at',
-            'formatted_summary', 'deployed', 'wallet_address', 'duration_in_days', 'deadline','contract_id',
+            'formatted_summary', 'deployed', 'wallet_address', 'duration_in_days', 'deadline','contract_id','status',
         ]
 
         # If adding a new project, show a simpler layout
@@ -185,7 +185,7 @@ class ProjectAdmin(admin.ModelAdmin):
         readonly = (
             'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
             'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage',
-            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','contract_id',
+            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','contract_id','status',
         )
 
         # Make sure onchain_info is readonly when displayed

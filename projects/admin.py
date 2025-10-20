@@ -420,7 +420,10 @@ class ProjectAdmin(admin.ModelAdmin):
             if project.deployed:
             
                 campaign_id = project.contract_id
-                send_owner_tx(contract.functions.finalize(campaign_id))
+                tx_hash = send_owner_tx(contract.functions.finalize(campaign_id))
+
+                messages.success(request, f"Project finalized, tx_hash: {tx_hash}")
+                return redirect(reverse('admin:projects_project_change', args=[pk]))
             else:
                 messages.warning(request, f"project not on-chain")
                 return redirect(reverse('admin:projects_project_change', args=[pk]))
@@ -443,7 +446,10 @@ class ProjectAdmin(admin.ModelAdmin):
                 if active_milestone:
                     index = active_milestone.milestone_no -1
                     campaign_id = project.contract_id
-                    send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
+                    tx_hash = send_owner_tx(contract.functions.approveMilestone(campaign_id, index))
+                    
+                    messages.success(request, f"milestone approved, tx_hash: {tx_hash}")
+                    return redirect(reverse('admin:projects_project_change', args=[pk]))
                 else:
                     messages.warning(request, f"project has no unapproved completed milestone")
                     return redirect(reverse('admin:projects_project_change', args=[pk]))

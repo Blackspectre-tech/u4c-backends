@@ -13,7 +13,8 @@ from .utils import (
     validate_otp, 
     generate_otp, 
     send_account_activation_otp,
-    validate_password
+    validate_password,
+    resize_image
 )
 from .models import Organization, Profile, Social, User, Transaction
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -294,13 +295,13 @@ class UploadAvatarSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         image_file = validated_data.pop('image', None)
 
-        # if image_file:
-        #     try:
-        #         image = resize_image(image_file)
-        #     except ValidationError as e:
-        #         raise serializers.ValidationError({'image': e.message})
+        if image_file:
+            try:
+                image = resize_image(image_file)
+            except ValidationError as e:
+                raise serializers.ValidationError({'image': e.message})
 
-        instance.avatar = image_file
+        instance.avatar = image
         instance.save()
         return instance
 
@@ -388,7 +389,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Transaction
-        fields = ['tx_hash','created_at']
+        fields = ['tx_hash','created_at','event']
         extra_kwargs = {
             'created_at': {'read_only': True},
         }

@@ -162,9 +162,9 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'id', 'organization_id', 'contract_id','title', 'categories_display', 'goal', 'country', 'address',
+            'id', 'organization_id','contract_id','title', 'categories_display', 'goal', 'country', 'address',
             'description', 'categories', 'image', 'summary', 'duration_in_days','wallet_address',
-            'milestones', 'donations', 'progress','approval_status','created_at','deployed','deadline','comments'
+            'milestones', 'donations', 'progress','approval_status','status','created_at','deployed','deadline','comments'
         ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -177,6 +177,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             'image': {'required': True},
             'duration_in_days': {'required': True},
             'approval_status': {'read_only': True},
+            'status': {'read_only': True},
             'progress': {'read_only': True},
             'created_at': {'read_only': True},
             'wallet_address': {'required': False},

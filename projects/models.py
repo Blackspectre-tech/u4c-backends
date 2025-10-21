@@ -72,7 +72,7 @@ class Project(TimeStamps, models.Model):
     status = models.CharField(max_length=20, choices=status, default=Funding)
     ended_at = models.DateTimeField(null=True)
     total_funds = models.DecimalField(decimal_places=2,max_digits=14,default=0)
-    duration_in_days = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(14), MaxValueValidator(365)])
+    duration_in_days = models.DecimalField(null=True, blank=True,decimal_places=2,max_digits=5)
     wallet_address = models.CharField(max_length=255,null=True, blank=True)
     contract_id = models.IntegerField(null=True, blank=True)
     progress = models.DecimalField(decimal_places=2,max_digits=5,default=0.00)

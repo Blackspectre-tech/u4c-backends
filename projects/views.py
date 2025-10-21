@@ -99,7 +99,7 @@ class RetrieveProjectsView(generics.RetrieveUpdateDestroyAPIView):
                 organization=user.organization
             )
 
-        return MilestoneImage.objects.none()
+        return Project.objects.none()
 
     def get_permissions(self):
         if self.request.method == "GET":

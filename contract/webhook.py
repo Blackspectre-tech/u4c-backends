@@ -136,7 +136,8 @@ def alchemy_webhook(request):
                         project.save(update_fields=['contract_id', 'deployed', 'deadline'])
                         Transaction.objects.create(
                             user = project.organization.user,
-                            tx_hash = logs[0]['transaction'].get('hash')
+                            tx_hash = logs[0]['transaction'].get('hash'),
+                            event = f'Deployed Campaign: {project.title} '
                         )
                     except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
@@ -193,7 +194,8 @@ def alchemy_webhook(request):
                             donation.save(update_fields=['status', 'tx_hash'])
                             Transaction.objects.create(
                                 user = donation.donor.user,
-                                tx_hash = logs[0]['transaction'].get('hash')
+                                tx_hash = logs[0]['transaction'].get('hash'),
+                                event = f'Donated to Campaign: {pledged_project.title}'
                             )
                         else: 
                             ContractLog.objects.create(
@@ -274,7 +276,8 @@ def alchemy_webhook(request):
                             milestone.save(update_fields=['withdrawn'])
                             Transaction.objects.create(
                                 user = project.organization.user,
-                                tx_hash = logs[0]['transaction'].get('hash')
+                                tx_hash = logs[0]['transaction'].get('hash'),
+                                event = 'Milestone Withdrawal'
                             )
                         except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")

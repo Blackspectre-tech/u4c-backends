@@ -177,5 +177,6 @@ class Transaction(models.Model):
     tx_hash = models.CharField(max_length=250)
     created_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User,on_delete=models.CASCADE, related_name='transactions')
+    event = models.CharField(max_length=50, null=True, blank=True)
     class Meta:
         ordering = ['-created_at']

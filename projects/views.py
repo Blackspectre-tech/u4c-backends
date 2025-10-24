@@ -18,7 +18,7 @@ from .serializers import (
     ExpensesSerializer,
     CommentSerializer,
     ProjectListSerializer,
-    #DonationTransactionSerializer,
+    DonationTransactionSerializer,
     )
 from accounts.serializers import TransactionSerializer
 from accounts.models import Transaction, Wallet

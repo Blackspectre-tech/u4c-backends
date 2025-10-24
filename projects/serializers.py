@@ -132,22 +132,22 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 
-# class DonationSerializer(serializers.ModelSerializer):
+class DonationSerializer(serializers.ModelSerializer):
 
-#     class Meta:
-#         model = Donation
-#         fields = [ 'id','username', 'amount', 'wallet_address', 'refundable','refunded']
-#         extra_kwargs = {
-#             'id': {'read_only': True},
-#             'username': {'read_only': True},
-#             'refunded': {'read_only': True},
-#             'refundable': {'read_only': True},
-#             'tip': {'required': False},
-#             'wallet_address': {'required': True},
-#         }
-#     # @extend_schema_field(serializers.CharField)
-#     # def get_username(self,obj):
-#     #     return obj.username
+    class Meta:
+        model = Donation
+        fields = [ 'id','username', 'amount', 'wallet_address', 'refundable','refunded']
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'username': {'read_only': True},
+            'refunded': {'read_only': True},
+            'refundable': {'read_only': True},
+            'tip': {'required': False},
+            'wallet_address': {'required': True},
+        }
+    # @extend_schema_field(serializers.CharField)
+    # def get_username(self,obj):
+    #     return obj.username
 
 
 
@@ -159,14 +159,14 @@ class ProjectSerializer(serializers.ModelSerializer):
     )
     categories_display = serializers.SerializerMethodField(read_only=True)
     milestones = MilestoneSerializer(many=True, required=True)
-    #donations = serializers.SerializerMethodField()
+    donations = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True,read_only=True)
     class Meta:
         model = Project
         fields = [
             'id', 'organization_id','contract_id','title', 'categories_display', 'goal', 'country', 'address',
             'description', 'categories', 'image', 'summary', 'duration_in_days','wallet_address',
-            'milestones', 'progress','approval_status','status','created_at','deployed','deadline','comments'
+            'milestones', 'donations', 'progress','approval_status','status','created_at','deployed','deadline','comments'
         ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -248,13 +248,13 @@ class ProjectSerializer(serializers.ModelSerializer):
     
 
 
-    # @extend_schema_field(serializers.ListField(child=DonationSerializer()))
-    # def get_donations(self, obj):
+    @extend_schema_field(serializers.ListField(child=DonationSerializer()))
+    def get_donations(self, obj):
 
 
-    #     donations = obj.donations.filter(refunded=False)
+        donations = obj.donations.filter(refunded=False)
 
-    #     return DonationSerializer(donations, many=True).data
+        return DonationSerializer(donations, many=True).data
 
 
 
@@ -331,29 +331,29 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
 
 
-# class DonationTransactionSerializer(serializers.ModelSerializer):
-#     wallet = serializers.CharField()
-#     class Meta:
-#         model = Transaction
-#         fields = ['tx_hash','created_at','status','event','tip','amount','wallet',]
-#         extra_kwargs = {
-#             'created_at': {'read_only': True},
-#             'tip': {'required': True},
-#             'amount': {'required': True},
-#             'wallet': {'required': True},
-#             'event': {'read_only': True},
-#             'tx_hash': {'read_only': True},
-#             'status': {'read_only': True},
-#         }
+class DonationTransactionSerializer(serializers.ModelSerializer):
+    wallet = serializers.CharField()
+    class Meta:
+        model = Transaction
+        fields = ['tx_hash','created_at','status','event','tip','amount','wallet',]
+        extra_kwargs = {
+            'created_at': {'read_only': True},
+            'tip': {'required': True},
+            'amount': {'required': True},
+            'wallet': {'required': True},
+            'event': {'read_only': True},
+            'tx_hash': {'read_only': True},
+            'status': {'read_only': True},
+        }
         
-#     def create(self, validated_data):
-#         transaction_wallet= validated_data.pop('wallet',None)
-#         wallet = Wallet.objects.filter(address__iexact=transaction_wallet).first()
-#         if not wallet:
-#             raise serializers.ValidationError(
-#                 {"wallet": "No user with the given wallet."}
-#             )
+    def create(self, validated_data):
+        transaction_wallet= validated_data.pop('wallet',None)
+        wallet = Wallet.objects.filter(address__iexact=transaction_wallet).first()
+        if not wallet:
+            raise serializers.ValidationError(
+                {"wallet": "No user with the given wallet."}
+            )
 
-#         return super().create(validated_data,wallet=wallet)
+        return super().create(validated_data,wallet=wallet)
     
 

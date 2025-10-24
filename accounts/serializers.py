@@ -378,18 +378,22 @@ class UserConfirmPasswordResetSerializer(serializers.Serializer):
 
 
 class WalletSerializer(serializers.ModelSerializer):
-    
+    wallet_address = serializers.CharField(write_only=True, required=True, allow_blank=False)
     class Meta:
         model = User
-        fields = ['wallets']
+        fields = ['all_wallets','wallet_address']
+        extra_kwargs = {
+            'all_wallets': {'read_only': True},
+        }
     
     def update(self, instance, validated_data):
-        new_wallet = validated_data.get('wallets', None)
+        new_wallet = validated_data.pop('wallet_address', None)
         wallet,created = Wallet.objects.get_or_create(address=new_wallet)
-        if not created:
-            wallet.users.clear()
-            
-        instance.wallets.add(wallet)
+        # if not created:
+        #     #wallet.users.clear()
+        #     wallet.users.set([instance])
+        wallet.users.set([instance])
+        # instance.wallets.add(wallet)
 
         if instance.is_organization:
             Project.objects.filter(
@@ -398,6 +402,39 @@ class WalletSerializer(serializers.ModelSerializer):
                 ).update(wallet_address=new_wallet)
                 
         return instance
+
+
+
+# class WalletSerializer(serializers.ModelSerializer):
+#     wallet_address = serializers.CharField(write_only=True, required=True, allow_blank=False)
+#     class Meta:
+#         model = Wallet
+#         fields = ['address','wallet_address']
+#         extra_kwargs = {
+#             'address': {'read_only': True},
+#         }
+    
+#     def update(self, instance, validated_data):
+#         new_wallet = validated_data.pop('wallet_address', None)
+#         wallet,created = Wallet.objects.get_or_create(address=new_wallet)
+#         # if not created:
+#             #wallet.users.clear()
+#         wallet.users.set([instance])
+            
+#         # instance.wallets.add(wallet)
+
+#         if instance.users.filter().first().is_organization:
+#             Project.objects.filter(
+#                 organization = instance.organization,
+#                 deployed=False,
+#                 ).update(wallet_address=new_wallet)
+                
+#         return instance
+
+
+
+
+
 
 class TransactionSerializer(serializers.ModelSerializer):
     wallet = serializers.CharField()

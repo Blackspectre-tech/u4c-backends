@@ -68,6 +68,13 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+    
+    @property
+    @extend_schema_field(str)
+    def all_wallets(self):
+        return [w.address for w in self.wallets.all()]
+    
+
 
 
     

@@ -230,7 +230,7 @@ class Donation(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='donations')
     #donor = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='donations')
     amount = models.DecimalField(decimal_places=2,max_digits=14, blank=False)
-    wallet = models.ForeignKey(Wallet,related_name='donations', blank=True, null=True, on_delete=models.CASCADE)
+    #wallet = models.ForeignKey(Wallet,related_name='donations', blank=True, null=True, on_delete=models.CASCADE)
     refundable = models.BooleanField(default=False)
     refunded = models.BooleanField(default=False)
 
@@ -241,20 +241,20 @@ class Donation(models.Model):
     def __str__(self):
         return f"{self.wallet} | amount: {self.amount} | project{self.project.title}"
     
-    @property
-    @extend_schema_field(str)
-    def username(self):
-        if not self.wallet:
-            return "No Wallet"
-        user = self.wallet.users.first()
-        if not user or not hasattr(user, "profile") or user.profile.anonymous:
-            return "Anonymous"
-        return user.profile.username or "Anonymous"
+    # @property
+    # @extend_schema_field(str)
+    # def username(self):
+    #     if not self.wallet:
+    #         return "No Wallet"
+    #     user = self.wallet.users.first()
+    #     if not user or not hasattr(user, "profile") or user.profile.anonymous:
+    #         return "Anonymous"
+    #     return user.profile.username or "Anonymous"
 
-    @property
-    @extend_schema_field(str)
-    def wallet_address(self):
-        return self.wallet.address
+    # @property
+    # @extend_schema_field(str)
+    # def wallet_address(self):
+    #     return self.wallet.address
 
 
 

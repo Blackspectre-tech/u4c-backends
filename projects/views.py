@@ -18,7 +18,7 @@ from .serializers import (
     ExpensesSerializer,
     CommentSerializer,
     ProjectListSerializer,
-    DonationTransactionSerializer,
+    #DonationTransactionSerializer,
     )
 from accounts.serializers import TransactionSerializer
 from accounts.models import Transaction, Wallet
@@ -241,7 +241,7 @@ class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
 
 class MakeDonationsAPIView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated, Is_Donor]
-    serializer_class = DonationTransactionSerializer
+    serializer_class = TransactionSerializer
     
     def perform_create(self, serializer):
         project = get_object_or_404(Project,pk=self.kwargs['pk'])

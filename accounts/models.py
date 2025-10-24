@@ -56,7 +56,7 @@ class User(AbstractUser):
     otp_expiry = models.DateTimeField(null=True, blank=True)
     is_organization = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
-    wallets = models.ManyToManyField(Wallet,related_name='users', blank=True, null=True)
+    wallets = models.ManyToManyField(Wallet,related_name='users', blank=True)
 
 
     USERNAME_FIELD = "email"
@@ -203,7 +203,7 @@ class Transaction(models.Model):
     amount = models.DecimalField(decimal_places=2,max_digits=14, null=True, blank=True)
     tip = models.DecimalField(decimal_places=2,max_digits=14, default=0)
     status = models.CharField(max_length=25, choices=status, default=PENDING)
-    wallet = models.ForeignKey(Wallet,related_name='transactions', blank=True, on_delete=models.CASCADE)
+    wallet = models.ForeignKey(Wallet,related_name='transactions', blank=True,null=True, on_delete=models.CASCADE)
     #other
     tx_hash = models.CharField(max_length=250,null=True, blank=True)
     created_at = models.DateTimeField(auto_now=True)

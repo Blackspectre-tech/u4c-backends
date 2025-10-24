@@ -116,7 +116,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_wallets(self, obj):
-        return [wallet.address for wallet in obj.wallet.all()]
+        return [wallet.address for wallet in obj.wallets.all()]
 
     def create(self, validated_data):
         user = User.objects.create(

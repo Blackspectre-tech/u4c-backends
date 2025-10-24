@@ -82,7 +82,7 @@ class CustomUserAdmin(UserAdmin):
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_('Personal info'), {'fields': ('phone_number',)}),
+        (_('Personal info'), {'fields': ('phone_number','wallets')}),
         (_('Permissions'), {
             'fields': ('is_active', 'is_organization', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
         }),
@@ -161,7 +161,7 @@ class OrganizationAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             fields = (
-                'name', 'website', 'country', 'user', 'user__wallet_address',
+                'name', 'website', 'country', 'user', 'user__wallets',
                 'address', 'description', 'approval_status','reg_no','cac_document',
             )
 

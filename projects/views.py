@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from drf_nested_multipart.parser import NestedMultipartAndFileParser
 
 from accounts.permissions import Is_Org, Is_Donor,isOrgObjOwner,isDonorObjOwner
-from .models import Project, Update,Expense,Milestone,Organization,Comment, MilestoneImage, Donation
+from .models import Project, Update,Expense, Milestone,Organization,Comment, MilestoneImage, Donation
 from .paginations import StandardResultsSetPagination
 from .serializers import (
     ProjectSerializer,
@@ -18,8 +18,10 @@ from .serializers import (
     ExpensesSerializer,
     CommentSerializer,
     ProjectListSerializer,
-    DonationSerializer,
+    DonationTransactionSerializer,
     )
+from accounts.serializers import TransactionSerializer
+from accounts.models import Transaction, Wallet
 
 # Create your views here.
 
@@ -79,7 +81,11 @@ class MyProjectListView(generics.ListAPIView):
         is_org = user.is_organization
         if is_org:
             return Project.objects.filter(organization=user.organization)
-        return Project.objects.filter(donations__donor=user.profile).distinct()
+        
+        wallets= user.wallets.all()
+
+        return Project.objects.filter(donations__wallet__in=wallets).distinct()
+        #return Project.objects.filter(donations__donor=user.profile).distinct()
 
 
 
@@ -235,11 +241,11 @@ class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
 
 class MakeDonationsAPIView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated, Is_Donor]
-    serializer_class = DonationSerializer
+    serializer_class = DonationTransactionSerializer
     
     def perform_create(self, serializer):
-        profile=self.request.user.profile
         project = get_object_or_404(Project,pk=self.kwargs['pk'])
         if not project.deployed:
             raise ValidationError('campaign is not deployed')
-        serializer.save(donor=profile, project=project)
+        event = Transaction.PLEDGE
+        serializer.save(user=self.request.user, project=project, event = event)

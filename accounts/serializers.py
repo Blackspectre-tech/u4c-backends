@@ -16,7 +16,7 @@ from .utils import (
     validate_password,
     resize_image
 )
-from .models import Organization, Profile, Social, User, Transaction
+from .models import Organization, Profile, Social, User, Transaction, Wallet
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
@@ -27,14 +27,14 @@ from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
-class UserRegistionUniqueValidator(UniqueValidator):
+class UserEmailUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
 
 
 
 
-class UserRegistionUniqueValidator(UniqueValidator):
-    message = "User with the provided email already exists"
+class UsernameValidator(UniqueValidator):
+    message = "Username already taken"
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -85,7 +85,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         required = True
     )
     email = serializers.EmailField(
-        validators=[UserRegistionUniqueValidator(queryset=User.objects.all())]
+        validators=[UserEmailUniqueValidator(queryset=User.objects.all())]
     )
     password = serializers.CharField(write_only=True,required=True)
 
@@ -93,11 +93,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     wallet_address = serializers.CharField(read_only=True)
 
+    wallets = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = User
-        fields = ['email', 'phone_number', 'password', 'password2', 'is_organization', 'wallet_address', 'avatar']
+        fields = ['email', 'phone_number', 'password', 'password2', 'is_organization', 'wallet_address', 'avatar','wallets']
         extra_kwargs = {
             'avatar': {'read_only': True},
+            'wallets': {'read_only': True},
         }
     def validate(self, attrs):
         password = attrs['password']
@@ -110,6 +113,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"password": message})
         
         return attrs
+
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
+    def get_wallets(self, obj):
+        return [wallet.address for wallet in obj.wallet.all()]
 
     def create(self, validated_data):
         user = User.objects.create(
@@ -213,7 +220,7 @@ class OrganizationKYCSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
     username = serializers.CharField(
-        validators=[UniqueValidator(queryset=Profile.objects.all())],
+        validators=[UsernameValidator(queryset=Profile.objects.all())],
         required=True)
     
     
@@ -374,24 +381,45 @@ class WalletSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['wallet_address']
+        fields = ['wallets']
     
     def update(self, instance, validated_data):
+        new_wallet = validated_data.get('wallets', None)
+        wallet,created = Wallet.objects.get_or_create(address=new_wallet)
+        if not created:
+            wallet.users.clear()
+            
+        instance.wallets.add(wallet)
+
         if instance.is_organization:
-            wallet = validated_data.get('wallet_address', None)
             Project.objects.filter(
                 organization = instance.organization,
-                deployed=False
-                ).update(wallet_address=wallet)
-        return super().update(instance, validated_data)
+                deployed=False,
+                ).update(wallet_address=new_wallet)
+                
+        return instance
 
 class TransactionSerializer(serializers.ModelSerializer):
-    
+    wallet = serializers.CharField()
     class Meta:
         model = Transaction
-        fields = ['tx_hash','created_at','event']
+        fields = ['tx_hash','created_at','status','event','wallet',]
         extra_kwargs = {
             'created_at': {'read_only': True},
+            'wallet': {'required': True},
+            'event': {'required': True},
+            'tx_hash': {'required': False},
+            'status': {'read_only': True},
         }
+        
+    def create(self, validated_data):
+        transaction_wallet= validated_data.pop('wallet',None)
+        wallet = Wallet.objects.filter(address__iexact=transaction_wallet).first()
+        if not wallet:
+            raise serializers.ValidationError(
+                {"wallet": "No user with the given wallet."}
+            )
+
+        return super().create(validated_data,wallet=wallet)
     
 

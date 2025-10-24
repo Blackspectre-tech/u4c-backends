@@ -27,17 +27,16 @@ from contract.blockchain import contract, send_owner_tx
 # admin.site.register(Donation)
 @admin.register(Donation)
 class DonationAdmin(admin.ModelAdmin):
-    # inlines = [MilestoneImagesInline]
     list_display = (
-        "donor", 'project', 'amount' , 'tip', 'status', 'date',
+        'project', 'amount' ,
     )
-    list_filter = ('status',)
-    search_fields = ['donor__username','project__title',]
+    list_filter = ('project',)
+    search_fields = ['project__title',]
 
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'project', 'donor', 'amount', 'date', 'tip', 'status','wallet','tx_hash'
+                'project', 'amount','wallet' ,'refundable',
             )
         else:  # adding new object
             return (
@@ -48,7 +47,7 @@ class DonationAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'project', 'donor', 'amount', 'date', 'tip', 'status','wallet','tx_hash'
+                'project', 'amount','wallet' ,'refundable',
             )
         else:  # Adding a new object
             return ()

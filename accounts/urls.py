@@ -20,7 +20,7 @@ from .views import (
     TransactionListView,
     ProfileView,
     OrganizationKYC,
-    TransactionCreateView,
+    TipTreasuryCreateView,
 )
 
 urlpatterns = [
@@ -41,5 +41,5 @@ urlpatterns = [
     path('add-wallet/',AddWalletView.as_view()),
     path('my-profile/',ProfileView.as_view()),
     path('transactions/',TransactionListView.as_view()),
-    path('transactions/add/',TransactionCreateView.as_view()),
+    path('transactions/add/',TipTreasuryCreateView.as_view()),
 ]

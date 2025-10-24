@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from projects.models import Project,Milestone,Donation
 from decimal import Decimal
 from .models import ContractLog
-from accounts.models import Transaction
+from accounts.models import Transaction,Wallet
 import datetime
 import traceback
 
@@ -14,7 +14,7 @@ import traceback
 
 EVENT_TOPIC_MAP = {
 '0x54225ce5de7dc72a6f5cf898ef7283ada08aadfba3372fc87dfd0bf689261e45' : 'CampaignCreated',
-'0xc67423104bf96f5ca8826913ae711e8c2254e1b2c04af907b2312853ed4cbed2' : 'MilestoneAdded',
+# '0xc67423104bf96f5ca8826913ae711e8c2254e1b2c04af907b2312853ed4cbed2' : 'MilestoneAdded',
 '0xf36ffe7645287fddf6deab03a17f4f024a0551da54638685d25cac0dbdf5b6be' : 'Pledged',
 '0xfcd29b1632c6748a9a4bb9b4cd5c6486c3c84a8550dce2368f83fef3969d9685' : 'Unpledged',
 '0x7c387a42b7678e1b26d65927d4a0176444d9c6509a72583dee248753b768db41' : 'CampaignStateChanged',
@@ -134,10 +134,13 @@ def alchemy_webhook(request):
                         project.deadline = dt_utc
                         project.milestones.filter(milestone_no=1).update(status=Milestone.ACTIVE)
                         project.save(update_fields=['contract_id', 'deployed', 'deadline'])
+                        wallet = Wallet.objects.get(address=backer)
                         Transaction.objects.create(
                             user = project.organization.user,
                             tx_hash = logs[0]['transaction'].get('hash'),
-                            event = f'Deployed Campaign: {project.title} '
+                            event = Transaction.C_DEPLOYMENT,
+                            status = Transaction.SUCCESSFUL,
+                            wallet = wallet,
                         )
                     except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
@@ -154,12 +157,12 @@ def alchemy_webhook(request):
                         tipAmount = Decimal(event_args['tipAmount'])/ (Decimal(10) ** 6)
                         tip = Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0)
                         pledged_project = Project.objects.get(contract_id=campaign_id)
-                        donation = Donation.objects.filter(
-                                wallet__iexact = backer,
+                        transaction = Transaction.objects.filter(
+                                wallet__address__iexact = backer,
                                 amount=net_amount,
                                 tip=tip,
                                 project = pledged_project,
-                                status=Donation.PENDING,
+                                status=Transaction.PENDING,
                             ).first()
                         
                         if pledged_project:                            
@@ -189,14 +192,24 @@ def alchemy_webhook(request):
                                 # else:
                                 #     send_owner_tx(contract.functions.finalize(campaign_id))
                             
-                            donation.status = Donation.SUCCESSFUL
-                            donation.tx_hash = logs[0]['transaction'].get('hash')
-                            donation.save(update_fields=['status', 'tx_hash'])
-                            Transaction.objects.create(
-                                user = donation.donor.user,
-                                tx_hash = logs[0]['transaction'].get('hash'),
-                                event = f'Donated to Campaign: {pledged_project.title}'
-                            )
+                            transaction.status = Transaction.SUCCESSFUL
+                            transaction.tx_hash = logs[0]['transaction'].get('hash')
+                            transaction.save(update_fields=['status', 'tx_hash'])
+
+                            user_donations = Donation.objects.filter(
+                                wallet__address__iexact=backer, 
+                                project = pledged_project
+                                ).first()
+                            
+                            if user_donations:
+                                user_donations.amount = user_donations.amount + net_amount
+                                user_donations.save(update_fields=['amount'])
+                            else:
+                                Donation.objects.create(
+                                    project=pledged_project,
+                                    amount=net_amount,
+                                    wallet=transaction.wallet,
+                                )
                         else: 
                             ContractLog.objects.create(
                                 data=data,
@@ -238,8 +251,9 @@ def alchemy_webhook(request):
                                 project.status = Project.Completed
                             elif state == 2:
                                 project.status = Project.Failed
+                                project.donations.update(refundable=True)
                             project.save(update_fields=['status'])
-                            
+                
                         except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
                             ContractLog.objects.create(
@@ -274,10 +288,13 @@ def alchemy_webhook(request):
                             milestone = project.milestones.get(goal=amount)
                             milestone.withdrawn= True
                             milestone.save(update_fields=['withdrawn'])
+                            wallet = Wallet.objects.get(address=logs[0]['transaction']['to'].get('address'))
                             Transaction.objects.create(
+                                wallet=wallet,
                                 user = project.organization.user,
                                 tx_hash = logs[0]['transaction'].get('hash'),
-                                event = 'Milestone Withdrawal'
+                                event = Transaction.M_WITHDRAWAL,
+                                status = Transaction.SUCCESSFUL,
                             )
                         except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
@@ -286,7 +303,29 @@ def alchemy_webhook(request):
                                 error=str(e),
                                 notes=traceback.format_exc()
                             )    
-                    
+
+
+
+                elif event_name == 'Refunded':
+                        try :
+                            campaign_id = event_args['id']
+                            backer = event_args['backer']
+                            amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                            project = Project.objects.get(contract_id = campaign_id)
+                            donation = project.donations.filter(wallet__address=backer).first().update(refundable=False,refunded=True)
+                            Transaction.objects.create(
+                                wallet = donation.wallet,
+                                tx_hash = logs[0]['transaction'].get('hash'),
+                                event = Transaction.REFUND,
+                                status = Transaction.SUCCESSFUL,
+                            )
+                        except Exception as e:
+                            #print(f"{e} traceback: {traceback.format_exc()}")
+                            ContractLog.objects.create(
+                                data=data,
+                                error=str(e),
+                                notes=traceback.format_exc()
+                            )    
 
 
 

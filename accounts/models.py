@@ -4,11 +4,13 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from phonenumber_field.modelfields import PhoneNumberField
 from django.core.validators import MinLengthValidator,MaxLengthValidator
-#from projects.models import Project
+from drf_spectacular.utils import extend_schema_field
 # Create your models here.
 
 
-
+class Wallet(models.Model):
+    address = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class TimeStamps(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -54,7 +56,7 @@ class User(AbstractUser):
     otp_expiry = models.DateTimeField(null=True, blank=True)
     is_organization = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
-    wallet_address = models.CharField(max_length=255,null=True, blank=True)
+    wallets = models.ManyToManyField(Wallet,related_name='users', blank=True, null=True)
 
 
     USERNAME_FIELD = "email"
@@ -174,9 +176,45 @@ class Social(models.Model):
 
 
 class Transaction(models.Model):
-    tx_hash = models.CharField(max_length=250)
+    PENDING = 'PENDING'
+    SUCCESSFUL ='SUCCESSFUL'
+    FAILED = 'FAILED'
+    PLEDGE = 'Pledge'
+    REFUND = 'Pledge Refund'
+    TIP = 'Tipped Treasury'
+    M_WITHDRAWAL = 'Milestone Withdrawal'
+    C_DEPLOYMENT = 'Campaign Deployment'
+
+    status = [
+    (PENDING,'PENDING'),
+    (SUCCESSFUL,'SUCCESSFUL'),
+    (FAILED,'FAILED')
+    ]
+
+    events = [
+    (PLEDGE,'Pledge'),
+    (REFUND,'Pledge Refund'),
+    (TIP,'Tipped Treasury'),
+    (M_WITHDRAWAL,'Milestone Withdrawal'),
+    ]
+
+    #For Donations
+    project = models.ForeignKey("projects.Project",on_delete=models.SET_NULL,null=True,blank=True,related_name='transactions')
+    amount = models.DecimalField(decimal_places=2,max_digits=14, null=True, blank=True)
+    tip = models.DecimalField(decimal_places=2,max_digits=14, default=0)
+    status = models.CharField(max_length=25, choices=status, default=PENDING)
+    wallet = models.ForeignKey(Wallet,related_name='transactions', blank=True, on_delete=models.CASCADE)
+    #other
+    tx_hash = models.CharField(max_length=250,null=True, blank=True)
     created_at = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(User,on_delete=models.CASCADE, related_name='transactions')
+    user = models.ForeignKey(User,on_delete=models.SET_NULL, related_name='transactions', blank=True, null=True)
     event = models.CharField(max_length=50, null=True, blank=True)
+    
+    @property
+    @extend_schema_field(str)
+    def wallet_address(self):
+        return self.wallet.address
+    
     class Meta:
         ordering = ['-created_at']
+    

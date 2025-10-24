@@ -224,11 +224,15 @@ class TransactionListView(generics.ListAPIView):
         return transactions
     
 
-class TransactionCreateView(generics.CreateAPIView):
+class TipTreasuryCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = TransactionSerializer
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(
+            user=self.request.user,
+            status=Transaction.SUCCESSFUL,
+            event='Tiped U4c Tressury'
+            )
 
     

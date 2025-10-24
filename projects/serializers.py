@@ -4,6 +4,7 @@ from .models import (
     MilestoneImage, Expense, Update,
     Comment,Donation,
     )
+from accounts.models import Transaction, Wallet
 from accounts.utils import resize_image
 from django.core.exceptions import ValidationError
 from decimal import Decimal
@@ -135,13 +136,14 @@ class DonationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Donation
-        fields = [ 'id','username', 'amount', 'tip', 'wallet', 'status']
+        fields = [ 'id','username', 'amount', 'wallet_address', 'refundable','refunded']
         extra_kwargs = {
             'id': {'read_only': True},
             'username': {'read_only': True},
+            'refunded': {'read_only': True},
+            'refundable': {'read_only': True},
             'tip': {'required': False},
-            'wallet': {'required': True},
-            'status': {'read_only': True},
+            'wallet_address': {'required': True},
         }
     # @extend_schema_field(serializers.CharField)
     # def get_username(self,obj):
@@ -239,14 +241,23 @@ class ProjectSerializer(serializers.ModelSerializer):
 
         return attrs
 
+
     @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_categories_display(self, obj):
         return [cat.name for cat in obj.categories.all()]
     
+
+
     @extend_schema_field(serializers.ListField(child=DonationSerializer()))
     def get_donations(self, obj):
-        donations = obj.donations.filter(status='SUCCESSFUL')
+
+
+        donations = obj.donations.filter(refunded=False)
+
         return DonationSerializer(donations, many=True).data
+
+
+
 
     def create(self, validated_data, **kwargs):
         categories_data = validated_data.pop('categories', None)
@@ -307,15 +318,42 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 
-        
-    
 
 class ProjectListSerializer(serializers.ModelSerializer):
     organization = serializers.StringRelatedField(read_only=True)
     progress = serializers.ReadOnlyField()
     class Meta:
         model = Project
-        fields = ['id','title','image','goal','progress','description','summary','status','organization','created_at',]
+        fields = ['id','title','image','goal','progress','description','summary','status','organization','created_at','deadline',]
         extra_kwargs = {
             'created_at': {'read_only': True},
         }
+
+
+
+class DonationTransactionSerializer(serializers.ModelSerializer):
+    wallet = serializers.CharField()
+    class Meta:
+        model = Transaction
+        fields = ['tx_hash','created_at','status','event','tip','amount','wallet',]
+        extra_kwargs = {
+            'created_at': {'read_only': True},
+            'tip': {'required': True},
+            'amount': {'required': True},
+            'wallet': {'required': True},
+            'event': {'read_only': True},
+            'tx_hash': {'read_only': True},
+            'status': {'read_only': True},
+        }
+        
+    def create(self, validated_data):
+        transaction_wallet= validated_data.pop('wallet',None)
+        wallet = Wallet.objects.filter(address__iexact=transaction_wallet).first()
+        if not wallet:
+            raise serializers.ValidationError(
+                {"wallet": "No user with the given wallet."}
+            )
+
+        return super().create(validated_data,wallet=wallet)
+    
+

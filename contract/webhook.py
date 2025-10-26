@@ -288,7 +288,7 @@ def alchemy_webhook(request):
                             milestone = project.milestones.get(goal=amount)
                             milestone.withdrawn= True
                             milestone.save(update_fields=['withdrawn'])
-                            wallet = Wallet.objects.get(address=logs[0]['transaction']['to'].get('address'))
+                            wallet = Wallet.objects.get(address=logs[0]['transaction']['from'].get('address'))
                             Transaction.objects.create(
                                 wallet=wallet,
                                 user = project.organization.user,

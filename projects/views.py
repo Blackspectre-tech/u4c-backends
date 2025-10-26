@@ -239,7 +239,7 @@ class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroy
 
 class MakeDonationsAPIView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated, Is_Donor]
-    serializer_class = TransactionSerializer
+    serializer_class = DonationTransactionSerializer
     
     def perform_create(self, serializer):
         project = get_object_or_404(Project,pk=self.kwargs['pk'])

@@ -437,25 +437,22 @@ class WalletSerializer(serializers.ModelSerializer):
 
 
 class TransactionSerializer(serializers.ModelSerializer):
-    wallet = serializers.CharField()
+    wallet_address = serializers.CharField()
     class Meta:
         model = Transaction
-        fields = ['tx_hash','created_at','status','event','wallet',]
+        fields = ['tx_hash','wallet_address']
         extra_kwargs = {
-            'created_at': {'read_only': True},
-            'wallet': {'required': True},
-            'tx_hash': {'required': False},
-            'status': {'read_only': True},
+            'tx_hash': {'required': True},
         }
         
     def create(self, validated_data):
-        transaction_wallet= validated_data.pop('wallet',None)
+        transaction_wallet= validated_data.pop('wallet_address',None)
         wallet = Wallet.objects.filter(address__iexact=transaction_wallet).first()
         if not wallet:
             raise serializers.ValidationError(
-                {"wallet": "No user with the given wallet."}
+                {"wallet_address": "No user with the given wallet."}
             )
-
-        return super().create(validated_data,wallet=wallet)
+        validated_data['wallet']=wallet
+        return super().create(validated_data)
     
 

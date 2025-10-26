@@ -353,7 +353,8 @@ class DonationTransactionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"wallet": "No user with the given wallet."}
             )
+        validated_data['wallet']=wallet
 
-        return super().create(validated_data,wallet=wallet)
+        return super().create(validated_data)
     
 

@@ -444,7 +444,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'created_at': {'read_only': True},
             'wallet': {'required': True},
-            'event': {'required': True},
             'tx_hash': {'required': False},
             'status': {'read_only': True},
         }

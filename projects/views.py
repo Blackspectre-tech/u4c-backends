@@ -32,15 +32,13 @@ class ProjectCreateView(generics.GenericAPIView):
 
     def post(self, request):
         org = request.user.organization
-        wallet = request.user.wallet_address
         if org.approval_status != Organization.APPROVED:
             raise ValidationError({'Organization':'Organization is not approved to post projects'})
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if wallet:
-            serializer.save(organization=org,wallet_address=wallet)
-        else:
-            serializer.save(organization=org)
+        # if wallet:
+        #     serializer.save(organization=org)
+        serializer.save(organization=org)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

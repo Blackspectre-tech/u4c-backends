@@ -220,8 +220,10 @@ class TransactionListView(generics.ListAPIView):
     serializer_class = TransactionSerializer
 
     def get_queryset(self):
-        transactions = Transaction.objects.filter(user=self.request.user)
-        return transactions
+        wallets= self.request.user.wallets.all()
+
+        return Transaction.objects.filter(wallet__in=wallets).distinct()
+
     
 
 class TipTreasuryCreateView(generics.CreateAPIView):

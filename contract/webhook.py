@@ -94,7 +94,7 @@ def alchemy_webhook(request):
             # get topic safely (may be missing)
             topics = web3_log.get("topics") or []
             if not topics:
-                ContractLog.objects.create(data=data, error="no topics in log",notes=raw_log)
+                #ContractLog.objects.create(data=data, error="no topics in log",notes=raw_log)
                 continue
 
             event_topic = topics[0]
@@ -103,7 +103,7 @@ def alchemy_webhook(request):
                 # Use the event topic to get the event object from the contract ABI.
                 event_name = EVENT_TOPIC_MAP.get(event_topic, None)
                 if not event_name:
-                    ContractLog.objects.create(data=data, error="⚠️ Unknown event topic received",notes=raw_log)
+                    # ContractLog.objects.create(data=data, error="⚠️ Unknown event topic received",notes=raw_log)
                     continue
 
                 # Access the event object directly via the contract instance

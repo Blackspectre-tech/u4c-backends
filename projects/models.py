@@ -246,9 +246,11 @@ class Donation(models.Model):
     def username(self):
         if not self.wallet:
             return "No Wallet"
-        user = self.wallet.users.first()
-        if not user or not hasattr(user, "profile") or user.profile.anonymous:
+        user = self.wallet.users.filter(is_organization=False).first()
+        if not user or not hasattr(user, "profile"):
             return "Anonymous"
+        # if user.is_organization:
+        #     return "Anonymous"
         return user.profile.username or "Anonymous"
 
     @property

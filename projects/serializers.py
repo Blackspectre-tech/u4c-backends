@@ -250,9 +250,15 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.ListField(child=DonationSerializer()))
     def get_donations(self, obj):
-
-
-        donations = obj.donations.filter(refunded=False, wallet__isnull=False)
+        donor_wallets = Wallet.objects.filter(
+            users__is_organization=False
+            )
+        # donations__wallet__users__is_organization=False
+        #donations = obj.donations.filter(refunded=False, wallet__isnull=False,wallet__users__is_organization=False)
+        donations = obj.donations.filter(
+            refunded=False,
+            wallet__users__is_organization=False
+        ).distinct()
         if donations:
             return DonationSerializer(donations, many=True).data
         else:

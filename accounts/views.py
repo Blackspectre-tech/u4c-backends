@@ -234,7 +234,7 @@ class TipTreasuryCreateView(generics.CreateAPIView):
         serializer.save(
             user=self.request.user,
             status=Transaction.SUCCESSFUL,
-            event='Tiped U4c Tressury'
+            event=Transaction.TIP
             )
 
     

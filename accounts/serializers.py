@@ -390,7 +390,7 @@ class WalletSerializer(serializers.ModelSerializer):
         # if not created:
         #     #wallet.users.clear()
         #     wallet.users.set([instance])
-        wallet.users.set([instance])
+        
         # instance.wallets.add(wallet)
 
         if instance.is_organization:
@@ -398,6 +398,9 @@ class WalletSerializer(serializers.ModelSerializer):
                 organization = instance.organization,
                 deployed=False,
                 ).update(wallet_address=new_wallet)
+            instance.wallets.add(wallet)
+        else:
+            wallet.users.set([instance])
                 
         return instance
 
@@ -438,9 +441,10 @@ class TransactionSerializer(serializers.ModelSerializer):
     wallet_address = serializers.CharField()
     class Meta:
         model = Transaction
-        fields = ['tx_hash','wallet_address','created_at']
+        fields = ['tx_hash','wallet_address','created_at','event',]
         extra_kwargs = {
             'tx_hash': {'required': True},
+            'event': {'read_only': True},
         }
         
     def create(self, validated_data):

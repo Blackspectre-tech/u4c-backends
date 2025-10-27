@@ -190,7 +190,7 @@ class Transaction(models.Model):
     FAILED = 'FAILED'
     PLEDGE = 'Pledge'
     REFUND = 'Pledge Refund'
-    TIP = 'Tipped Treasury'
+    TIP = 'Tiped U4c Tressury'
     M_WITHDRAWAL = 'Milestone Withdrawal'
     C_DEPLOYMENT = 'Campaign Deployment'
 

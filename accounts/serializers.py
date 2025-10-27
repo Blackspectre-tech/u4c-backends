@@ -91,16 +91,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     password2 = serializers.CharField(write_only=True, required=True)
 
-    wallet_address = serializers.CharField(read_only=True)
-
-    wallets = serializers.SerializerMethodField(read_only=True)
+    # wallets = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ['email', 'phone_number', 'password', 'password2', 'is_organization', 'wallet_address', 'avatar','wallets']
+        fields = ['email', 'phone_number', 'password', 'password2', 'is_organization', 'avatar','all_wallets']
         extra_kwargs = {
             'avatar': {'read_only': True},
-            'wallets': {'read_only': True},
+            'all_wallets': {'read_only': True},
         }
     def validate(self, attrs):
         password = attrs['password']
@@ -114,9 +112,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
         
         return attrs
 
-    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
-    def get_wallets(self, obj):
-        return [wallet.address for wallet in obj.wallets.all()]
+    # @extend_schema_field(serializers.ListField(child=serializers.CharField()))
+    # def get_wallets(self, obj):
+    #     return [wallet.address for wallet in obj.wallets.all()]
 
     def create(self, validated_data):
         user = User.objects.create(
@@ -440,7 +438,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     wallet_address = serializers.CharField()
     class Meta:
         model = Transaction
-        fields = ['tx_hash','wallet_address']
+        fields = ['tx_hash','wallet_address','created_at']
         extra_kwargs = {
             'tx_hash': {'required': True},
         }

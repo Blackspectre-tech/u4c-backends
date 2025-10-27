@@ -98,7 +98,7 @@ class CustomUserAdmin(UserAdmin):
     )
 
     def get_readonly_fields(self, request, obj=None):
-            readonly = super().get_readonly_fields(request, obj) + ('email','phone_number','last_login',)
+            readonly = super().get_readonly_fields(request, obj) + ('email','phone_number','last_login','wallets',)
             if not request.user.is_superuser:
                 readonly = readonly + ('is_superuser','is_staff','groups', 'user_permissions','groups')
             return readonly
@@ -161,7 +161,7 @@ class OrganizationAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             fields = (
-                'name', 'website', 'country', 'user', 'user__wallets',
+                'name', 'website', 'country', 'user',
                 'address', 'description', 'approval_status','reg_no','cac_document',
             )
 
@@ -184,7 +184,7 @@ class OrganizationAdmin(admin.ModelAdmin):
 
         if obj:  # Editing an existing 
             read_only = (
-                'name', 'website', 'country', 'reg_no','user__wallet_address',
+                'name', 'website', 'country', 'reg_no',
                 'address', 'description', 'approval_status', 'user','cac_document',
             )
 

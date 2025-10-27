@@ -134,7 +134,7 @@ def alchemy_webhook(request):
                         project.deadline = dt_utc
                         project.milestones.filter(milestone_no=1).update(status=Milestone.ACTIVE)
                         project.save(update_fields=['contract_id', 'deployed', 'deadline'])
-                        wallet = Wallet.objects.get(address=backer)
+                        wallet = Wallet.objects.get(address=creator)
                         Transaction.objects.create(
                             user = project.organization.user,
                             tx_hash = logs[0]['transaction'].get('hash'),

@@ -254,6 +254,8 @@ class Donation(models.Model):
     @property
     @extend_schema_field(str)
     def wallet_address(self):
+        if not self.wallet:
+            return None
         return self.wallet.address
 
 

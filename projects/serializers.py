@@ -252,10 +252,11 @@ class ProjectSerializer(serializers.ModelSerializer):
     def get_donations(self, obj):
 
 
-        donations = obj.donations.filter(refunded=False)
-
-        return DonationSerializer(donations, many=True).data
-
+        donations = obj.donations.filter(refunded=False, wallet__isnull=False)
+        if donations:
+            return DonationSerializer(donations, many=True).data
+        else:
+            return []
 
 
 

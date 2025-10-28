@@ -143,7 +143,6 @@ class DonationSerializer(serializers.ModelSerializer):
             'refunded': {'read_only': True},
             'refundable': {'read_only': True},
             'tip': {'required': False},
-            'wallet_address': {'required': True},
         }
     # @extend_schema_field(serializers.CharField)
     # def get_username(self,obj):
@@ -250,13 +249,11 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.ListField(child=DonationSerializer()))
     def get_donations(self, obj):
-        donor_wallets = Wallet.objects.filter(
-            users__is_organization=False
-            )
         # donations__wallet__users__is_organization=False
         #donations = obj.donations.filter(refunded=False, wallet__isnull=False,wallet__users__is_organization=False)
         donations = obj.donations.filter(
             refunded=False,
+            wallet__isnull=False,
             wallet__users__is_organization=False
         ).distinct()
         if donations:

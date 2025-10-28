@@ -126,7 +126,7 @@ class MilestoneInline(admin.StackedInline):
 class ProjectAdmin(admin.ModelAdmin):
     inlines = [MilestoneInline]
     list_display = (
-        "title", 'goal', 'approval_status', 'status', 'progress_percenage','deadline',
+        "title",'organization__name', 'goal', 'approval_status', 'status', 'progress_percenage','deadline',
     )
     list_filter = ('approval_status', 'status', 'categories',)
     search_fields = ('title',)
@@ -353,11 +353,15 @@ class ProjectAdmin(admin.ModelAdmin):
 
     def approve_project(self, request, pk):
         project = get_object_or_404(Project, pk=pk)
+        org = project.organization
         if project.approval_status == Project.APPROVED:
             messages.warning(request, "Project already approved.")
             return redirect(reverse('admin:projects_project_change', args=[pk]))
-        if project.deployed:
+        elif project.deployed:
             messages.warning(request, "can't alter state of deployed project.")
+            return redirect(reverse('admin:projects_project_change', args=[pk]))
+        elif org.projects.filter(approval_status=Project.APPROVED,deployed=False).count() > 0:
+            messages.warning(request, "organization has an approved project that hasn't been deployed.")
             return redirect(reverse('admin:projects_project_change', args=[pk]))
         else:
             project.approval_status = Project.APPROVED

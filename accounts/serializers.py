@@ -25,7 +25,7 @@ from rest_framework.validators import UniqueValidator
 from rest_framework import serializers
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from django.db import transaction
 
 class UserEmailUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
@@ -393,15 +393,58 @@ class WalletSerializer(serializers.ModelSerializer):
         
         # instance.wallets.add(wallet)
 
+        # if instance.is_organization:
+        #     all_projects= Project.objects.all()
+        #     linked_orgs = wallet.users.filter(is_organization=True)
+        #     if linked_orgs.first() != instance or linked_orgs.count() > 1:
+        #         all_projects.filter(wallet_address=new_wallet,deployed=False,).update(wallet_address=None)
+        #     all_projects.filter(
+        #         organization = instance.organization,
+        #         deployed=False,
+        #         ).update(wallet_address=new_wallet)
+        #     instance.wallets.add(wallet)
+        # else:
+        #     wallet.users.set([instance])
+        
+        
+
+
+
         if instance.is_organization:
-            Project.objects.filter(
-                organization = instance.organization,
-                deployed=False,
+            org_pks = list(
+                wallet.users
+                    .filter(is_organization=True)
+                    .values_list('pk', flat=True)[:2]
+            )  
+            needs_clearing = False
+            if not org_pks:
+                needs_clearing = True
+            elif org_pks[0] != instance.pk:
+                needs_clearing = True
+            elif len(org_pks) > 1:
+                needs_clearing = True
+
+            with transaction.atomic():
+                if needs_clearing:
+                    Project.objects.filter(
+                        wallet_address=new_wallet,
+                        deployed=False
+                    ).update(wallet_address=None)
+
+                Project.objects.filter(
+                    organization=instance.organization,
+                    deployed=False
                 ).update(wallet_address=new_wallet)
-            instance.wallets.add(wallet)
+                instance.wallets.add(wallet)
+
         else:
             wallet.users.set([instance])
-                
+
+
+
+
+
+
         return instance
 
 

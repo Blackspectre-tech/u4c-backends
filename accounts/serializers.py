@@ -406,10 +406,6 @@ class WalletSerializer(serializers.ModelSerializer):
         # else:
         #     wallet.users.set([instance])
         
-        
-
-
-
         if instance.is_organization:
             org_pks = list(
                 wallet.users
@@ -439,12 +435,7 @@ class WalletSerializer(serializers.ModelSerializer):
 
         else:
             wallet.users.set([instance])
-
-
-
-
-
-
+            
         return instance
 
 

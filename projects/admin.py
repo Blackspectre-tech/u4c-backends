@@ -28,7 +28,7 @@ from contract.blockchain import contract, send_owner_tx
 @admin.register(Donation)
 class DonationAdmin(admin.ModelAdmin):
     list_display = (
-        'project', 'amount' ,
+        'project', 'amount' ,'username', 'wallet_address',
     )
     list_filter = ('project',)
     search_fields = ['project__title',]
@@ -36,7 +36,7 @@ class DonationAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'project', 'amount','wallet' ,'refundable',
+                'project', 'amount','wallet' ,'username', 'refundable', 'refunded',
             )
         else:  # adding new object
             return (
@@ -47,7 +47,7 @@ class DonationAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'project', 'amount','wallet' ,'refundable',
+                'project', 'amount','wallet' ,'username', 'refundable', 'refunded',
             )
         else:  # Adding a new object
             return ()
@@ -126,7 +126,8 @@ class MilestoneInline(admin.StackedInline):
 class ProjectAdmin(admin.ModelAdmin):
     inlines = [MilestoneInline]
     list_display = (
-        "title",'organization__name', 'goal', 'approval_status', 'status', 'progress_percenage','deadline',
+        "title",'organization__name', 'goal', 'approval_status', 
+        'status', 'progress_percenage','deadline','contract_id',
     )
     list_filter = ('approval_status', 'status', 'categories',)
     search_fields = ('title',)

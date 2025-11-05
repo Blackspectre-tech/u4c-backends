@@ -216,7 +216,7 @@ class Transaction(models.Model):
     #other
     tx_hash = models.CharField(max_length=250,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User,on_delete=models.SET_NULL, related_name='transactions', blank=True, null=True)
+    #user = models.ForeignKey(User,on_delete=models.SET_NULL, related_name='transactions', blank=True, null=True)
     event = models.CharField(max_length=50, null=True, blank=True)
     
     @property

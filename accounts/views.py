@@ -222,7 +222,7 @@ class TransactionListView(generics.ListAPIView):
     def get_queryset(self):
         wallets= self.request.user.wallets.all()
 
-        return Transaction.objects.filter(wallet__in=wallets).distinct()
+        return Transaction.objects.filter(wallet__in=wallets,status=Transaction.SUCCESSFUL).distinct()
 
     
 
@@ -232,7 +232,6 @@ class TipTreasuryCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(
-            user=self.request.user,
             status=Transaction.SUCCESSFUL,
             event=Transaction.TIP
             )

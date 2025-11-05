@@ -386,7 +386,7 @@ class WalletSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         new_wallet = validated_data.pop('wallet_address', None)
-        wallet,created = Wallet.objects.get_or_create(address=new_wallet)
+        wallet,created = Wallet.objects.get_or_create(address__iexact=new_wallet)
         # if not created:
         #     #wallet.users.clear()
         #     wallet.users.set([instance])
@@ -394,10 +394,10 @@ class WalletSerializer(serializers.ModelSerializer):
         # instance.wallets.add(wallet)
 
         if instance.is_organization:
-            all_projects= Project.objects.all()
+            all_projects= Project.objects.filter(deployed=False,)
             linked_orgs = wallet.users.filter(is_organization=True)
             if linked_orgs.first() != instance or linked_orgs.count() > 1:
-                all_projects.filter(wallet_address=new_wallet,deployed=False,).update(wallet_address=None)
+                all_projects.filter(wallet_address__iexact=new_wallet).update(wallet_address=None)
             all_projects.filter(
                 organization = instance.organization,
                 deployed=False,

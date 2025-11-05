@@ -7,6 +7,8 @@ from django.core.validators import MinLengthValidator,MaxLengthValidator
 from django.core.validators import MinValueValidator, MaxValueValidator
 from drf_spectacular.utils import extend_schema_field
 from accounts.models import Wallet
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFit
 
 # Create your models here.
 
@@ -62,7 +64,14 @@ class Project(TimeStamps, models.Model):
     country = models.CharField(max_length=30, blank=False)
     address = models.CharField(max_length=150, blank=False)
     categories = models.ManyToManyField(Category, related_name='projects', blank=False)
-    image = models.ImageField(upload_to='projects/',blank=False, null=False)
+    image = ProcessedImageField(
+        upload_to='projects/',
+        processors=[ResizeToFit(1024, 1024)],
+        format='JPEG',
+        options={'quality': 75},
+        blank=True,null=True
+    )
+    #image = models.ImageField(upload_to='projects/',blank=False, null=False)
     description = HTMLField(blank=False, null=True)
     summary = HTMLField(blank=False, null=True)
     approval_status = models.CharField(max_length=20, choices=approval, default=PENDING)
@@ -178,8 +187,14 @@ def milestone_image_path(instance, filename):
 
 class MilestoneImage(models.Model):
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, related_name= 'images')
-    image = models.ImageField(upload_to=milestone_image_path,blank=False, null=False)
-    
+    #image = models.ImageField(upload_to=milestone_image_path,blank=False, null=False)
+    image = ProcessedImageField(
+        upload_to=milestone_image_path,
+        processors=[ResizeToFit(1024, 1024)],
+        format='JPEG',
+        options={'quality': 70},
+        blank=False, null=False
+    )
 
     def __str__(self):
         return self.image
@@ -213,7 +228,14 @@ class Update(models.Model):
     Project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='updates')
     title = models.CharField(max_length=255)
     details = models.TextField()
-    image = models.ImageField(upload_to='updates/',blank=False, null=False)
+    # image = models.ImageField(upload_to='updates/',blank=False, null=False)
+    image = ProcessedImageField(
+        upload_to='updates/',
+        processors=[ResizeToFit(1024, 1024)],
+        format='JPEG',
+        options={'quality': 75},
+        blank=True,null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
    
 

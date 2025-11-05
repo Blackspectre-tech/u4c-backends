@@ -39,14 +39,14 @@ class MilestoneImagesSerializer(serializers.ModelSerializer):
 
                 for img in images:
 
-                    try:
-                        image = resize_image(img)
-                    except ValidationError as e:
-                        raise serializers.ValidationError({'image': e.message})
+                    # try:
+                    #     image = resize_image(img)
+                    # except ValidationError as e:
+                    #     raise serializers.ValidationError({'image': e.message})
 
                     instances.append(MilestoneImage(
                         milestone=milestone,
-                        image=image,
+                        image=img,
                     ))
                 
                 MilestoneImage.objects.bulk_create(instances)
@@ -104,16 +104,16 @@ class PostUpdateSerializer(serializers.ModelSerializer):
             'created_at': {'read_only': True},
         }
 
-    def create(self, validated_data):
-        image = validated_data.pop('image', None)
-        try:
-            validated_data['image'] = resize_image(image)
+    # def create(self, validated_data):
+    #     image = validated_data.pop('image', None)
+    #     try:
+    #         validated_data['image'] = resize_image(image)
     
-        except ValidationError as e:
-            raise serializers.ValidationError({'image': e.message})
+    #     except ValidationError as e:
+    #         raise serializers.ValidationError({'image': e.message})
         
 
-        return Update.objects.create(**validated_data) 
+    #     return Update.objects.create(**validated_data) 
 
 
 
@@ -266,7 +266,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     def create(self, validated_data, **kwargs):
         categories_data = validated_data.pop('categories', None)
         milestones_data = validated_data.pop('milestones', None)
-        image = validated_data.pop('image', None)
+        # image = validated_data.pop('image', None)
 
         with transaction.atomic():
             project = Project.objects.create(**validated_data)
@@ -283,26 +283,26 @@ class ProjectSerializer(serializers.ModelSerializer):
                     "milestones": f"Invalid milestone data: {str(e)}"
                 })
 
-            if image:
-                try:
-                    image = resize_image(image)
-                    project.image = image
-                except ValidationError as e:
-                    raise serializers.ValidationError({'image': e.message})
+            # if image:
+            #     try:
+            #         image = resize_image(image)
+            #         project.image = image
+            #     except ValidationError as e:
+            #         raise serializers.ValidationError({'image': e.message})
 
             project.save()
         return project
 
     def update(self, instance, validated_data):
-        new_image = validated_data.get('image')
+        # new_image = validated_data.get('image')
         milestones_data = validated_data.pop('milestones', None)
         categories = validated_data.pop('categories', [])
 
-        if new_image:
-            try:
-                validated_data['image'] = resize_image(new_image)
-            except ValidationError as e:
-                raise serializers.ValidationError({'image': e.message})
+        # if new_image:
+        #     try:
+        #         validated_data['image'] = resize_image(new_image)
+        #     except ValidationError as e:
+        #         raise serializers.ValidationError({'image': e.message})
 
         with transaction.atomic():
             if milestones_data is not None:

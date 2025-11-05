@@ -5,6 +5,8 @@ from django.contrib.auth import get_user_model
 from phonenumber_field.modelfields import PhoneNumberField
 from django.core.validators import MinLengthValidator,MaxLengthValidator
 from drf_spectacular.utils import extend_schema_field
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFit
 # Create your models here.
 
 
@@ -51,7 +53,14 @@ class User(AbstractUser):
     last_name = None
     email = models.EmailField(unique=True)
     phone_number = PhoneNumberField(unique=True, blank=True, null=True)
-    avatar = models.ImageField(upload_to='avatars/',blank=True, null=True)
+    #avatar = models.ImageField(upload_to='avatars/',blank=True, null=True)
+    avatar = ProcessedImageField(
+        upload_to='avatars/',
+        processors=[ResizeToFit(1024, 1024)],
+        format='JPEG',
+        options={'quality': 80},
+        blank=True,null=True
+    )
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     otp = models.CharField(max_length=6,null=True,blank=True)

@@ -302,12 +302,11 @@ class UploadAvatarSerializer(serializers.Serializer):
 
         if image_file:
             try:
-                image = resize_image(image_file)
+                instance.avatar = image_file
+                instance.save()
             except ValidationError as e:
                 raise serializers.ValidationError({'image': e.message})
-
-        instance.avatar = image
-        instance.save()
+        
         return instance
 
 

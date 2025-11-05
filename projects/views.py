@@ -246,4 +246,4 @@ class MakeDonationsAPIView(generics.CreateAPIView):
         if not project.deployed:
             raise ValidationError('campaign is not deployed')
         event = Transaction.PLEDGE
-        serializer.save(user=self.request.user, project=project, event = event)
+        serializer.save(project=project, event = event)

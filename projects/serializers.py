@@ -10,6 +10,8 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.db import transaction
 from drf_spectacular.utils import extend_schema_field
+from contract.models import ContractLog
+import traceback
 
 
 
@@ -188,55 +190,63 @@ class ProjectSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        instance = getattr(self, "instance", None)
+        try:
+            instance = getattr(self, "instance", None)
 
-        # ---------- Categories ----------
-        incoming_category_names = attrs.get('categories')
-        if incoming_category_names:
-            processed_category_names = [name.title() for name in incoming_category_names]
-            found_category_objects = list(Category.objects.filter(name__in=processed_category_names))
-            found_names_set = {cat.name for cat in found_category_objects}
-            desired_names_set = set(processed_category_names)
-            missing_names = desired_names_set - found_names_set
+            # ---------- Categories ----------
+            incoming_category_names = attrs.get('categories')
+            if incoming_category_names:
+                processed_category_names = [name.title() for name in incoming_category_names]
+                found_category_objects = list(Category.objects.filter(name__in=processed_category_names))
+                found_names_set = {cat.name for cat in found_category_objects}
+                desired_names_set = set(processed_category_names)
+                missing_names = desired_names_set - found_names_set
 
-            if missing_names:
-                raise serializers.ValidationError({"categories":f"The following categories do not exist: {missing_names}"})
+                if missing_names:
+                    raise serializers.ValidationError({"categories":f"The following categories do not exist: {missing_names}"})
 
-            attrs['categories'] = found_category_objects
+                attrs['categories'] = found_category_objects
 
-        # ---------- Milestones ----------
-        milestones = attrs.get("milestones", None)
-        new_goal = attrs.get("goal", getattr(instance, "goal", None))
+            # ---------- Milestones ----------
+            milestones = attrs.get("milestones", None)
+            new_goal = attrs.get("goal", getattr(instance, "goal", None))
 
-        if milestones is not None:
-            if len(milestones) > 3:
-                raise serializers.ValidationError({"milesontes":"You can only have a maximum of 3 milestones."})
+            if milestones is not None:
+                if len(milestones) > 3:
+                    raise serializers.ValidationError({"milesontes":"You can only have a maximum of 3 milestones."})
 
-            count = 0
-            previous_percentage = 0
-            for item in milestones:
-                current_percentage = item['percentage']
-                if current_percentage <= previous_percentage:
+                count = 0
+                previous_percentage = 0
+                for item in milestones:
+                    current_percentage = item['percentage']
+                    if current_percentage <= previous_percentage:
+                        raise serializers.ValidationError({
+                            'milestones.percentage': "Milestone percentages must be in increasing order."
+                        })
+                    count += 1
+                    item['goal'] = (new_goal / 100) * Decimal(current_percentage)
+                    item['milestone_no'] = count
+                    previous_percentage = current_percentage
+
+                if milestones[-1]['percentage'] != 100:
                     raise serializers.ValidationError({
-                        'milestones.percentage': "Milestone percentages must be in increasing order."
+                        'milestones.percentage': "The final milestone must be set to 100%."
                     })
-                count += 1
-                item['goal'] = (new_goal / 100) * Decimal(current_percentage)
-                item['milestone_no'] = count
-                previous_percentage = current_percentage
 
-            if milestones[-1]['percentage'] != 100:
-                raise serializers.ValidationError({
-                    'milestones.percentage': "The final milestone must be set to 100%."
-                })
+                attrs['milestones'] = milestones
 
-            attrs['milestones'] = milestones
-
-        # If ONLY goal changes (PATCH goal), recalc existing milestones
-        elif "goal" in attrs and instance:
-            for milestone in instance.milestones.all():
-                milestone.goal = (Decimal(new_goal) / 100) * Decimal(milestone.percentage)
-                milestone.save()
+            # If ONLY goal changes (PATCH goal), recalc existing milestones
+            elif "goal" in attrs and instance:
+                for milestone in instance.milestones.all():
+                    milestone.goal = (Decimal(new_goal) / 100) * Decimal(milestone.percentage)
+                    milestone.save()
+        except Exception as e:
+            ContractLog.objects.create(
+                data=attrs,
+                error=f'LOGICAL ERROR: {str(e)}',
+                notes=traceback.format_exc()
+            )
+            raise serializers.ValidationError({'error': str(e)})
 
         return attrs
 
@@ -264,34 +274,45 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
     def create(self, validated_data, **kwargs):
-        categories_data = validated_data.pop('categories', None)
-        milestones_data = validated_data.pop('milestones', None)
-        # image = validated_data.pop('image', None)
+        try:
+            categories_data = validated_data.pop('categories', None)
+            milestones_data = validated_data.pop('milestones', None)
+            # image = validated_data.pop('image', None)
 
-        with transaction.atomic():
-            project = Project.objects.create(**validated_data)
-            project.categories.set(categories_data)
+            with transaction.atomic():
+                project = Project.objects.create(**validated_data)
+                project.categories.set(categories_data)
 
-            try:
-                milestone_instances = [
-                    Milestone(project=project, **data)
-                    for data in milestones_data
-                ]
-                Milestone.objects.bulk_create(milestone_instances)
-            except Exception as e:
-                raise serializers.ValidationError({
-                    "milestones": f"Invalid milestone data: {str(e)}"
-                })
+                try:
+                    milestone_instances = [
+                        Milestone(project=project, **data)
+                        for data in milestones_data
+                    ]
+                    Milestone.objects.bulk_create(milestone_instances)
+                except Exception as e:
+                    raise serializers.ValidationError({
+                        "milestones": f"Invalid milestone data: {str(e)}"
+                    })
 
-            # if image:
-            #     try:
-            #         image = resize_image(image)
-            #         project.image = image
-            #     except ValidationError as e:
-            #         raise serializers.ValidationError({'image': e.message})
+                # if image:
+                #     try:
+                #         image = resize_image(image)
+                #         project.image = image
+                #     except ValidationError as e:
+                #         raise serializers.ValidationError({'image': e.message})
 
-            project.save()
-        return project
+                project.save()
+            return project
+        
+        except Exception as e:
+            ContractLog.objects.create(
+                data=validated_data,
+                error=f'LOGICAL ERROR: {str(e)}',
+                notes=traceback.format_exc()
+            )
+            raise serializers.ValidationError({'error': str(e)})
+
+
 
     def update(self, instance, validated_data):
         # new_image = validated_data.get('image')

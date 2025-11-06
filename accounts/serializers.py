@@ -26,6 +26,9 @@ from rest_framework import serializers
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
+from contract.models import ContractLog 
+import traceback
+
 
 class UserEmailUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
@@ -384,58 +387,102 @@ class WalletSerializer(serializers.ModelSerializer):
         }
     
     def update(self, instance, validated_data):
-        new_wallet = validated_data.pop('wallet_address', None)
-        wallet,created = Wallet.objects.get_or_create(address__iexact=new_wallet)
-        # if not created:
-        #     #wallet.users.clear()
-        #     wallet.users.set([instance])
-        
-        # instance.wallets.add(wallet)
+        try:
+            with transaction.atomic():  # ensures data integrity
+                new_wallet = validated_data.pop('wallet_address', None)
+                if not new_wallet:
+                    raise serializers.ValidationError({'wallet_address': 'Wallet address is required.'})
 
-        if instance.is_organization:
-            all_projects= Project.objects.filter(deployed=False,)
-            linked_orgs = wallet.users.filter(is_organization=True)
-            if linked_orgs.first() != instance or linked_orgs.count() > 1:
-                all_projects.filter(wallet_address__iexact=new_wallet).update(wallet_address=None)
-            all_projects.filter(
-                organization = instance.organization,
-                deployed=False,
-                ).update(wallet_address=new_wallet)
-            instance.wallets.add(wallet)
-        else:
-            wallet.users.set([instance])
-        
-        # if instance.is_organization:
-        #     org_pks = list(
-        #         wallet.users
-        #             .filter(is_organization=True)
-        #             .values_list('pk', flat=True)[:2]
-        #     )  
-        #     needs_clearing = False
-        #     if not org_pks:
-        #         needs_clearing = True
-        #     elif org_pks[0] != instance.pk:
-        #         needs_clearing = True
-        #     elif len(org_pks) > 1:
-        #         needs_clearing = True
+                wallet, created = Wallet.objects.get_or_create(address__iexact=new_wallet)
 
-        #     with transaction.atomic():
-        #         if needs_clearing:
-        #             Project.objects.filter(
-        #                 wallet_address=new_wallet,
-        #                 deployed=False
-        #             ).update(wallet_address=None)
+                if instance.is_organization:
+                    all_projects = Project.objects.filter(deployed=False)
+                    linked_orgs = wallet.users.filter(is_organization=True)
+                    
+                    if linked_orgs.first() != instance or linked_orgs.count() > 1:
+                        all_projects.filter(wallet_address__iexact=new_wallet).update(wallet_address=None)
 
-        #         Project.objects.filter(
-        #             organization=instance.organization,
-        #             deployed=False
-        #         ).update(wallet_address=new_wallet)
-        #         instance.wallets.add(wallet)
+                    all_projects.filter(
+                        organization=instance.organization,
+                        deployed=False,
+                    ).update(wallet_address=new_wallet)
 
-        # else:
-        #     wallet.users.set([instance])
+                    instance.wallets.add(wallet)
+                else:
+                    wallet.users.set([instance])
+
+            return instance
+
+        except serializers.ValidationError:
+            serializers.ValidationError({'wallet_address': e.message})
+            raise
+
+        except Exception as e:
+            ContractLog.objects.create(
+                data=validated_data,
+                error=f'LOGICAL ERROR: {str(e)}',
+                notes=traceback.format_exc()
+            )
+            raise serializers.ValidationError({'error': str(e)})
+
+
+
+    # def update(self, instance, validated_data):
+    #     try: 
+    #         new_wallet = validated_data.pop('wallet_address', None)
+    #         wallet,created = Wallet.objects.get_or_create(address__iexact=new_wallet)
+    #         # if not created:
+    #         #     #wallet.users.clear()
+    #         #     wallet.users.set([instance])
             
-        return instance
+    #         # instance.wallets.add(wallet)
+
+    #         if instance.is_organization:
+    #             all_projects= Project.objects.filter(deployed=False,)
+    #             linked_orgs = wallet.users.filter(is_organization=True)
+    #             if linked_orgs.first() != instance or linked_orgs.count() > 1:
+    #                 all_projects.filter(wallet_address__iexact=new_wallet).update(wallet_address=None)
+    #             all_projects.filter(
+    #                 organization = instance.organization,
+    #                 deployed=False,
+    #                 ).update(wallet_address=new_wallet)
+    #             instance.wallets.add(wallet)
+    #         else:
+    #             wallet.users.set([instance])
+    #     except ValidationError as e:
+    #             raise serializers.ValidationError({'wallet_address': e.message})  
+        
+    #         # if instance.is_organization:
+    #         #     org_pks = list(
+    #         #         wallet.users
+    #         #             .filter(is_organization=True)
+    #         #             .values_list('pk', flat=True)[:2]
+    #         #     )  
+    #         #     needs_clearing = False
+    #         #     if not org_pks:
+    #         #         needs_clearing = True
+    #         #     elif org_pks[0] != instance.pk:
+    #         #         needs_clearing = True
+    #         #     elif len(org_pks) > 1:
+    #         #         needs_clearing = True
+
+    #         #     with transaction.atomic():
+    #         #         if needs_clearing:
+    #         #             Project.objects.filter(
+    #         #                 wallet_address=new_wallet,
+    #         #                 deployed=False
+    #         #             ).update(wallet_address=None)
+
+    #         #         Project.objects.filter(
+    #         #             organization=instance.organization,
+    #         #             deployed=False
+    #         #         ).update(wallet_address=new_wallet)
+    #         #         instance.wallets.add(wallet)
+
+    #         # else:
+    #         #     wallet.users.set([instance])
+                
+    #     return instance
 
 
 

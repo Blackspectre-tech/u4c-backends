@@ -136,7 +136,6 @@ def alchemy_webhook(request):
                         project.save(update_fields=['contract_id', 'deployed', 'deadline'])
                         wallet = Wallet.objects.get(address__iexact=creator)
                         Transaction.objects.create(
-                            user = project.organization.user,
                             tx_hash = logs[0]['transaction'].get('hash'),
                             event = Transaction.C_DEPLOYMENT,
                             status = Transaction.SUCCESSFUL,
@@ -291,7 +290,6 @@ def alchemy_webhook(request):
                             wallet = Wallet.objects.get(address__iexact=logs[0]['transaction']['from'].get('address'))
                             Transaction.objects.create(
                                 wallet=wallet,
-                                user = project.organization.user,
                                 tx_hash = logs[0]['transaction'].get('hash'),
                                 event = Transaction.M_WITHDRAWAL,
                                 status = Transaction.SUCCESSFUL,

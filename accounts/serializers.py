@@ -419,7 +419,7 @@ class WalletSerializer(serializers.ModelSerializer):
 
         except Exception as e:
             ContractLog.objects.create(
-                data=validated_data,
+                data=new_wallet,
                 error=f'LOGICAL ERROR: {str(e)}',
                 notes=traceback.format_exc()
             )

@@ -376,57 +376,79 @@ class UserConfirmPasswordResetSerializer(serializers.Serializer):
     #     return attrs
 
 
-
 class WalletSerializer(serializers.ModelSerializer):
     wallet_address = serializers.CharField(write_only=True, required=True, allow_blank=False)
+
     class Meta:
         model = User
-        fields = ['all_wallets','wallet_address']
-        extra_kwargs = {
-            'all_wallets': {'read_only': True},
-        }
-    
+        fields = ['all_wallets', 'wallet_address']
+        extra_kwargs = {'all_wallets': {'read_only': True}}
+
+    def _normalize_address(self, addr: str) -> str:
+        # normalize: trim and lower-case — adjust if you need checksum-case for ETH
+        return addr.strip()
+
     def update(self, instance, validated_data):
+        new_wallet = validated_data.pop('wallet_address', None)
+
+        if not new_wallet:
+            raise serializers.ValidationError({'wallet_address': 'Wallet address is required.'})
+
+        new_wallet = self._normalize_address(new_wallet)
+
         try:
-            with transaction.atomic():  # ensures data integrity
-                new_wallet = validated_data.pop('wallet_address', None)
-                if not new_wallet:
-                    raise serializers.ValidationError({'wallet_address': 'Wallet address is required.'})
+            with transaction.atomic():
+                # Try to get_or_create while giving create the actual address value
+                wallet, created = Wallet.objects.get_or_create(
+                    address__iexact=new_wallet,
+                    defaults={'address': new_wallet}
+                )
 
-                wallet, created = Wallet.objects.get_or_create(address__iexact=new_wallet)
-
-                if instance.is_organization:
-                    all_projects = Project.objects.filter(deployed=False)
-                    linked_orgs = wallet.users.filter(is_organization=True)
-                    
-                    if linked_orgs.first() != instance or linked_orgs.count() > 1:
-                        all_projects.filter(wallet_address__iexact=new_wallet).update(wallet_address=None)
-
-                    all_projects.filter(
-                        organization=instance.organization,
-                        deployed=False,
-                    ).update(wallet_address=new_wallet)
-
-                    instance.wallets.add(wallet)
-                else:
-                    wallet.users.set([instance])
-
-            return instance
-
-        except serializers.ValidationError:
-            serializers.ValidationError({'wallet_address': e.message})
-            raise
-
+                # If race condition caused duplicate, handle IntegrityError by retrying fetch
+        
         except Exception as e:
+            # Log and surface a friendly validation error
             ContractLog.objects.create(
                 data=new_wallet,
                 error=f'LOGICAL ERROR: {str(e)}',
                 notes=traceback.format_exc()
             )
             raise serializers.ValidationError({'error': str(e)})
+        
+        else:
+            # success path (no DB error)
+            try:
+                with transaction.atomic():
+                    if instance.is_organization:
+                        all_projects = Project.objects.filter(deployed=False)
+                        linked_orgs = wallet.users.filter(is_organization=True)
 
+                        # If the wallet is linked to a different org OR linked to multiple orgs,
+                        # clear that wallet_address on unrelated undeployed projects
+                        if linked_orgs.first() != instance or linked_orgs.count() > 1:
+                            all_projects.filter(wallet_address__iexact=new_wallet).update(wallet_address=None)
 
+                        all_projects.filter(
+                            organization=instance.organization,
+                            deployed=False,
+                        ).update(wallet_address=new_wallet)
 
+                        # add relation (do not clear other users)
+                        instance.wallets.add(wallet)
+                    else:
+                        # For non-org users, add user to wallet (do not wipe existing users)
+                        wallet.users.add(instance)
+
+                return instance
+
+            except Exception as e:
+                ContractLog.objects.create(
+                    data=new_wallet,
+                    error=f'LOGICAL ERROR (post-create): {str(e)}',
+                    notes=traceback.format_exc()
+                )
+                raise serializers.ValidationError({'error': str(e)})
+            
     # def update(self, instance, validated_data):
     #     try: 
     #         new_wallet = validated_data.pop('wallet_address', None)

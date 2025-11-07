@@ -58,7 +58,7 @@ class User(AbstractUser):
         upload_to='avatars/',
         processors=[ResizeToFit(1024, 1024)],
         format='JPEG',
-        options={'quality': 80},
+        options={'quality': 75},
         blank=True,null=True
     )
     is_active = models.BooleanField(default=False)

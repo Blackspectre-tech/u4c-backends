@@ -9,6 +9,7 @@ from .models import ContractLog
 from accounts.models import Transaction,Wallet
 import datetime
 import traceback
+from django.utils import timezone
 
 #Webhook
 
@@ -112,7 +113,7 @@ def alchemy_webhook(request):
                 # PASS THE NORMALIZED web3_log TO process_log
                 event_data = event_object().process_log(web3_log)
                 event_args = event_data['args']
-                #print(event_args)
+                print(event_args)
                 # --- Events ---
                 if event_name == 'CampaignCreated':
                     try:
@@ -132,8 +133,9 @@ def alchemy_webhook(request):
                         project.contract_id = campaign_id
                         project.deployed = True
                         project.deadline = dt_utc
+                        project.deployed_at = timezone.now()
                         project.milestones.filter(milestone_no=1).update(status=Milestone.ACTIVE)
-                        project.save(update_fields=['contract_id', 'deployed', 'deadline'])
+                        project.save(update_fields=['contract_id', 'deployed', 'deadline','deployed_at'])
                         wallet = Wallet.objects.get(address__iexact=creator)
                         Transaction.objects.create(
                             tx_hash = logs[0]['transaction'].get('hash'),
@@ -328,7 +330,7 @@ def alchemy_webhook(request):
 
 
             except Exception as e:
-                print(f"{e} traceback: {traceback.format_exc()}")
+                #print(f"{e} traceback: {traceback.format_exc()}")
                 ContractLog.objects.create(
                     data=data,
                     error=str(e),

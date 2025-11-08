@@ -71,7 +71,6 @@ class Project(TimeStamps, models.Model):
         options={'quality': 75},
         blank=True,null=True
     )
-    #image = models.ImageField(upload_to='projects/',blank=False, null=False)
     description = HTMLField(blank=False, null=True)
     summary = HTMLField(blank=False, null=True)
     approval_status = models.CharField(max_length=20, choices=approval, default=PENDING)
@@ -88,6 +87,7 @@ class Project(TimeStamps, models.Model):
     progress = models.DecimalField(decimal_places=2,max_digits=5,default=0.00)
     deployed = models.BooleanField(default=False)
     deadline = models.DateTimeField(null=True, blank=True)
+    deployed_at = models.DateTimeField(null=True, blank=True)
     
 #before deploying check if the user has an active fiat/crypto account 
     #payout = models.CharField(max_length=20, choices=payout_options, default=CRYPTO)

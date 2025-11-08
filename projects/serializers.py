@@ -167,7 +167,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'organization_id','contract_id','title', 'categories_display', 'goal', 'country', 'address',
             'description', 'categories', 'image', 'summary', 'duration_in_days','wallet_address',
-            'milestones', 'donations', 'progress','approval_status','status','created_at','deployed','deadline','comments'
+            'milestones', 'donations', 'progress','approval_status','status','created_at','deployed_at','deployed','deadline','comments'
         ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -187,6 +187,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             'contract_id': {'read_only': True},
             'deployed': {'read_only': True},
             'deadline': {'read_only': True},
+            'deployed_at': {'read_only': True},
         }
 
     def validate(self, attrs):

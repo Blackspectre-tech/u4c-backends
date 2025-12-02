@@ -19,6 +19,8 @@ from .serializers import (
     CommentSerializer,
     ProjectListSerializer,
     DonationTransactionSerializer,
+    DonationSerializer,
+    CommentSerializer,
     )
 from accounts.serializers import TransactionSerializer
 from accounts.models import Transaction, Wallet
@@ -186,21 +188,25 @@ class CommentCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated, Is_Donor]
     serializer_class = CommentSerializer
     def perform_create(self, serializer):
-        profile=self.request.user.profile
+        user = self.request.user
+        wallets = user.wallets.all()
         project = get_object_or_404(Project,pk=self.kwargs['pk'])
-        donated = project.donations.filter(donor=profile, status = Donation.SUCCESSFUL).first()
-        if not donated:
-            raise PermissionDenied('Only donors of a project can make a comment')
-        serializer.save(profile=profile, project=project)
+        # donated = project.donations.filter(donor=profile).first()
+        donations = project.donations.filter(wallet__in=wallets)
+        if not donations:
+            raise PermissionDenied('No active wallet with donations to this project, Only donors of a project can make a comment')
+        serializer.save(profile=user.profile, project=project)
 
 
 
 class listCommentsByProjectsView(generics.ListAPIView):
     serializer_class = CommentSerializer
+    pagination_class = StandardResultsSetPagination
+
 
     def get_queryset(self):
         project = get_object_or_404(Project,pk=self.kwargs['pk'])
-        comments = Comment.objects.filter(Project=project)
+        comments = Comment.objects.filter(project=project)
         return comments
 
 
@@ -247,3 +253,23 @@ class MakeDonationsAPIView(generics.CreateAPIView):
             raise ValidationError('campaign is not deployed')
         event = Transaction.PLEDGE
         serializer.save(project=project, event = event)
+
+
+class ListDonationsView(generics.ListAPIView):
+    serializer_class = DonationSerializer
+
+    def get_queryset(self):
+        project = get_object_or_404(Project,pk=self.kwargs['pk'])
+        donations = project.donations.filter(
+            refunded=False,
+            wallet__isnull=False,
+            wallet__users__is_organization=False
+        ).distinct()
+        return donations
+
+# class ListCommentsView(generics.ListAPIView):
+#     serializer_class = CommentSerializer
+
+#     def get_queryset(self):
+#         project = get_object_or_404(Project,pk=self.kwargs['pk'])
+#         return project.comments

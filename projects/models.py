@@ -225,7 +225,7 @@ class Expense(models.Model):
 
 
 class Update(models.Model):
-    Project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='updates')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='updates')
     title = models.CharField(max_length=255)
     details = models.TextField()
     # image = models.ImageField(upload_to='updates/',blank=False, null=False)
@@ -268,12 +268,11 @@ class Donation(models.Model):
     def username(self):
         if not self.wallet:
             return "No Wallet"
-        user = self.wallet.users.filter(is_organization=False).first()
-        if not user or not hasattr(user, "profile"):
-            return "Anonymous"
-        # if user.is_organization:
-        #     return "Anonymous"
-        return user.profile.username or "Anonymous"
+        
+        return self.wallet.username
+    
+    def get_profile(self):
+        return self.wallet.users.filter(is_organization=False).first().profile()
 
     @property
     @extend_schema_field(str)

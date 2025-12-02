@@ -14,6 +14,7 @@ from .views import (
     listCommentsByProjectsView,
     MyProjectListView,
     MakeDonationsAPIView,
+    ListDonationsView,
 )
 
 urlpatterns = [
@@ -22,6 +23,7 @@ urlpatterns = [
     path('my-projects/', MyProjectListView.as_view()),
     path('<int:pk>/', RetrieveProjectsView.as_view()),
     path('organization/<int:pk>/', listOrgProjectsView.as_view()),
+    path('<int:pk>/donations/', ListDonationsView.as_view()),
     path('<int:pk>/comments/', listCommentsByProjectsView.as_view()),
     path('<int:pk>/comments/add/', CommentCreateView.as_view()),
     path('<int:pk>/post-update/', PostUpdateView.as_view()),

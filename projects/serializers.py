@@ -104,6 +104,7 @@ class PostUpdateSerializer(serializers.ModelSerializer):
         fields = ['title', 'details','image','created_at']
         extra_kwargs = {
             'created_at': {'read_only': True},
+            'image': {'required': True},
         }
 
     # def create(self, validated_data):
@@ -160,14 +161,14 @@ class ProjectSerializer(serializers.ModelSerializer):
     )
     categories_display = serializers.SerializerMethodField(read_only=True)
     milestones = MilestoneSerializer(many=True, required=True)
-    donations = serializers.SerializerMethodField()
-    comments = CommentSerializer(many=True,read_only=True)
+    # donations = serializers.SerializerMethodField()
+    # comments = CommentSerializer(many=True,read_only=True)
     class Meta:
         model = Project
         fields = [
             'id', 'organization_id','contract_id','title', 'categories_display', 'goal', 'country', 'address',
             'description', 'categories', 'image', 'summary', 'duration_in_days','wallet_address',
-            'milestones', 'donations', 'progress','approval_status','status','created_at','deployed_at','deployed','deadline','comments'
+            'milestones','progress','approval_status','status','created_at','deployed_at','deployed','deadline',
         ]
         extra_kwargs = {
             'id': {'read_only': True},
@@ -257,20 +258,20 @@ class ProjectSerializer(serializers.ModelSerializer):
         return [cat.name for cat in obj.categories.all()]
     
 
-
-    @extend_schema_field(serializers.ListField(child=DonationSerializer()))
-    def get_donations(self, obj):
-        # donations__wallet__users__is_organization=False
-        #donations = obj.donations.filter(refunded=False, wallet__isnull=False,wallet__users__is_organization=False)
-        donations = obj.donations.filter(
-            refunded=False,
-            wallet__isnull=False,
-            wallet__users__is_organization=False
-        ).distinct()
-        if donations:
-            return DonationSerializer(donations, many=True).data
-        else:
-            return []
+    # #to get donations per wallet, and ensure only donation instances with wallet address get passed
+    # @extend_schema_field(serializers.ListField(child=DonationSerializer()))
+    # def get_donations(self, obj):
+    #     # donations__wallet__users__is_organization=False
+    #     #donations = obj.donations.filter(refunded=False, wallet__isnull=False,wallet__users__is_organization=False)
+    #     donations = obj.donations.filter(
+    #         refunded=False,
+    #         wallet__isnull=False,
+    #         wallet__users__is_organization=False
+    #     ).distinct()
+    #     if donations:
+    #         return DonationSerializer(donations, many=True).data
+    #     else:
+    #         return []
 
 
 

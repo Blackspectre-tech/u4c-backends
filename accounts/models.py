@@ -16,6 +16,23 @@ class Wallet(models.Model):
     def __str__(self):
         return self.address
 
+    @property
+    @extend_schema_field(str)
+    def username(self):
+        user = self.users.filter(is_organization=False).first()
+
+        # If no user connected
+        if not user:
+            return "Anonymous"
+
+        # If profile doesn’t exist or user is anonymous
+        if not hasattr(user, "profile") or user.profile.anonymous:
+            return "Anonymous"
+
+        # Otherwise return the user's username
+        return user.profile.username
+
+
 class TimeStamps(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -235,4 +252,8 @@ class Transaction(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+    
+    def save(self, *args, **kwargs):
+        Transaction.objects.filter(wallet=self.wallet,status=Transaction.PENDING).update(status=Transaction.FAILED)
+        super().save(*args, **kwargs)
     

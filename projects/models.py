@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import Organization, Profile,TimeStamps
+from accounts.models import Organization, Donor
 from tinymce.models import HTMLField
 from accounts.utils import html_cleaner
 from django.utils.html import format_html
@@ -9,7 +9,7 @@ from drf_spectacular.utils import extend_schema_field
 from accounts.models import Wallet
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
-
+import uuid
 # Create your models here.
 
 
@@ -58,6 +58,7 @@ class Project(TimeStamps, models.Model):
     (Failed,'Failed'),
     ]
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='projects')
     title = models.CharField(max_length=255, blank=False)
     goal=models.DecimalField(decimal_places=2,max_digits=14, blank=False)
@@ -146,7 +147,8 @@ class Milestone(TimeStamps, models.Model):
     (COMPLETED,'Completed')
     ]
     
-    
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)    
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
     milestone_no = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)],)
     title = models.CharField(max_length=250)
@@ -186,6 +188,8 @@ def milestone_image_path(instance, filename):
 
 
 class MilestoneImage(models.Model):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, related_name= 'images')
     #image = models.ImageField(upload_to=milestone_image_path,blank=False, null=False)
     image = ProcessedImageField(
@@ -211,6 +215,8 @@ class MilestoneImage(models.Model):
 
 
 class Expense(models.Model):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     amount_spent = models.DecimalField(decimal_places=2,max_digits=14)
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, related_name= 'expenses')
     description = models.TextField()
@@ -225,6 +231,8 @@ class Expense(models.Model):
 
 
 class Update(models.Model):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='updates')
     title = models.CharField(max_length=255)
     details = models.TextField()
@@ -249,6 +257,7 @@ class Update(models.Model):
 
 class Donation(models.Model):
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='donations')
     #donor = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='donations')
     amount = models.DecimalField(decimal_places=2,max_digits=14, blank=False)
@@ -284,17 +293,19 @@ class Donation(models.Model):
 
 
 class Comment(TimeStamps,models.Model):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='comments')
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='comments')
+    donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='comments')
     details = models.TextField()
 
     class Meta:
         ordering = ["-updated_at"]
 
     def __str__(self):
-        return self.profile.username
+        return self.donor.username
     
     @property
     @extend_schema_field(str)
     def username(self):
-        return self.profile.username
+        return self.donor.username

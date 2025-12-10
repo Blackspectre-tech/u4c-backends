@@ -5,7 +5,7 @@ from .blockchain import contract, send_owner_tx
 from django.views.decorators.csrf import csrf_exempt
 from projects.models import Project,Milestone,Donation
 from decimal import Decimal
-from .models import ContractLog
+from website.models import ErrorLog
 from accounts.models import Transaction,Wallet
 import datetime
 import traceback
@@ -82,7 +82,7 @@ def alchemy_webhook(request):
         logs = data['event']['data']['block'].get('logs',[])
 
         if not logs:
-            ContractLog.objects.create(data=data, error="no log recieved")
+            ErrorLog.objects.create(data=data, error="no log recieved")
             return JsonResponse({'status': 'no logs received'})
 
         # capture block object for normalization (if present)
@@ -145,7 +145,7 @@ def alchemy_webhook(request):
                         )
                     except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
-                            ContractLog.objects.create(
+                            ErrorLog.objects.create(
                                 data=data,
                                 error=str(e),
                                 notes=traceback.format_exc()
@@ -212,14 +212,14 @@ def alchemy_webhook(request):
                                     wallet=transaction.wallet,
                                 )
                         else: 
-                            ContractLog.objects.create(
+                            ErrorLog.objects.create(
                                 data=data,
                                 error="could not find project",
                                 notes=event_args
                             )
                     except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
-                            ContractLog.objects.create(
+                            ErrorLog.objects.create(
                                 data=data,
                                 error=str(e),
                                 notes=traceback.format_exc()
@@ -257,7 +257,7 @@ def alchemy_webhook(request):
                 
                         except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
-                            ContractLog.objects.create(
+                            ErrorLog.objects.create(
                                 data=data,
                                 error=str(e),
                                 notes=traceback.format_exc()
@@ -274,7 +274,7 @@ def alchemy_webhook(request):
                             milestone.save(update_fields=['approved'])
                         except:
                             #print(f"{e} traceback: {traceback.format_exc()}")
-                            ContractLog.objects.create(
+                            ErrorLog.objects.create(
                                 data=data,
                                 error=str(e),
                                 notes=traceback.format_exc()
@@ -298,7 +298,7 @@ def alchemy_webhook(request):
                             )
                         except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
-                            ContractLog.objects.create(
+                            ErrorLog.objects.create(
                                 data=data,
                                 error=str(e),
                                 notes=traceback.format_exc()
@@ -321,7 +321,7 @@ def alchemy_webhook(request):
                             )
                         except Exception as e:
                             #print(f"{e} traceback: {traceback.format_exc()}")
-                            ContractLog.objects.create(
+                            ErrorLog.objects.create(
                                 data=data,
                                 error=str(e),
                                 notes=traceback.format_exc()
@@ -331,7 +331,7 @@ def alchemy_webhook(request):
 
             except Exception as e:
                 #print(f"{e} traceback: {traceback.format_exc()}")
-                ContractLog.objects.create(
+                ErrorLog.objects.create(
                     data=data,
                     error=str(e),
                     notes=traceback.format_exc()

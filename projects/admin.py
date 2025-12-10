@@ -330,22 +330,22 @@ class ProjectAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom = [
             path(
-                '<int:pk>/approve/',
+                '<uuid:pk>/approve/',
                 self.admin_site.admin_view(self.approve_project),
                 name='projects_project_approve'
             ),
             path(
-                '<int:pk>/deny/',
+                '<uuid:pk>/deny/',
                 self.admin_site.admin_view(self.disapprove_project),
                 name='projects_project_deny'
             ),
             path(
-                '<int:pk>/finalize/',
+                '<uuid:pk>/finalize/',
                 self.admin_site.admin_view(self.finalize_project_onchain),
                 name='finalize_project_url'
             ),
             path(
-                '<int:pk>/approve_milestone/',
+                '<uuid:pk>/approve_milestone/',
                 self.admin_site.admin_view(self.approve_milestone_onchain),
                 name='approve_milestone_url'
             ),

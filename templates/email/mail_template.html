@@ -31,19 +31,19 @@
                     </h1>
 
                     <!-- Message -->
-                    <p style="font-size: 22px; margin: 20px 0 30px 0; color: #333;">
-                      {{message|linebreaks}}
-                    </p>
-                    {% if reason %}
-                      <p style="font-size: 18px; margin: 20px 0 30px 0; color: #333;">{{reason}}</p>
+                    <div style="font-size: 16px; color: #333;">
+                      {{message|linebreaks}} 
+                    </div>
+                    {% if link %}
+                      <p style="font-size: 16px; color: #333;"> click <a href={{link}}>here<a/> to make your campaign live</p>
                     {% endif %}
                       {% if support %}
                         <!-- Support -->
-                        <p style="font-size: 16px; color: #333;">
-                          If you have any questions or need help with your account, reach out to our support team
-                          <!-- <a href="https://u4c-cyan.vercel.app/" style="color: #007bff; text-decoration: underline;">
+                        <p style="font-size: 14px; color: #333;">
+                          If you have any questions or need help with your account, 
+                          <a href="https://united-4-change.org/contact-us" style="color: #007bff; text-decoration: underline;">
                             reach out to our support team
-                          </a>. -->
+                          </a>.
                         </p>
                       {% endif %}
 

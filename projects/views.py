@@ -195,7 +195,7 @@ class CommentCreateView(generics.CreateAPIView):
         donations = project.donations.filter(wallet__in=wallets)
         if not donations:
             raise PermissionDenied('No active wallet with donations to this project, Only donors of a project can make a comment')
-        serializer.save(profile=user.profile, project=project)
+        serializer.save(donor=user.donor, project=project)
 
 
 

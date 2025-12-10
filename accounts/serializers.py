@@ -16,7 +16,7 @@ from .utils import (
     validate_password,
     resize_image
 )
-from .models import Organization, Profile, Social, User, Transaction, Wallet
+from .models import Organization, Donor, Social, User, Transaction, Wallet
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
@@ -26,7 +26,7 @@ from rest_framework import serializers
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
-from contract.models import ContractLog 
+from website.models import ErrorLog 
 import traceback
 
 
@@ -221,12 +221,12 @@ class OrganizationKYCSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
     username = serializers.CharField(
-        validators=[UsernameValidator(queryset=Profile.objects.all())],
+        validators=[UsernameValidator(queryset=Donor.objects.all())],
         required=True)
     
     
     class Meta:
-        model = Profile
+        model = Donor
         fields = [
             "id",
             "user",
@@ -249,7 +249,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         user = user_serializer.save()
 
         # Create UserProfile
-        profile = Profile.objects.create(
+        profile = Donor.objects.create(
             user=user,
             **validated_data
         )
@@ -260,11 +260,11 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
-        validators=[UniqueValidator(queryset=Profile.objects.all())],
+        validators=[UniqueValidator(queryset=Donor.objects.all())],
         )
     
     class Meta:
-        model = Profile
+        model = Donor
         fields = ['username', 'first_name', 'last_name', 'anonymous']
 
 
@@ -408,7 +408,7 @@ class WalletSerializer(serializers.ModelSerializer):
         
         except Exception as e:
             # Log and surface a friendly validation error
-            ContractLog.objects.create(
+            ErrorLog.objects.create(
                 data=new_wallet,
                 error=f'LOGICAL ERROR: {str(e)}',
                 notes=traceback.format_exc()
@@ -442,7 +442,7 @@ class WalletSerializer(serializers.ModelSerializer):
                 return instance
 
             except Exception as e:
-                ContractLog.objects.create(
+                ErrorLog.objects.create(
                     data=new_wallet,
                     error=f'LOGICAL ERROR (post-create): {str(e)}',
                     notes=traceback.format_exc()

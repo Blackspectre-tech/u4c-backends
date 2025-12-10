@@ -157,20 +157,24 @@ def send_html_mail(email,subject,message, support=True):
 def project_approval_mail(project, reason=None, approved=True):
     if approved:
         subject = f"“{project.title}” approval"
-        message = (
-            f"{project.organization.name},"
-            f"Your project campaign “{project.title}” has been approved."
-            )
-        title = 'Project Approved'
+
+        message = f"""
+            {project.organization.name},
+            Your campaign “{project.title}” has been approved. """
+        link = f"https://united-4-change.org/initialize-campaign?id={project.id}"
+        title = 'Campaign Approved'
+        context={'title':title,'message': message,'link': link ,'year': datetime.now().year}
     else:   
-        subject = f"Your project “{project.title}” was disapproved"
-        message = (
-            f"{project.organization.name},"
-            f"Your project campaign “{project.title}” was disapproved for this reason:"
-            f"{reason}")
-        title = 'Project Disapproved'
+        subject = f"Your campaign “{project.title}” was disapproved"
+        message = f"""
+            {project.organization.name},"
+            Your campaign “{project.title}” was disapproved for this reason:"
+
+            {reason}"""
+        title = 'Campaign Disapproved'
+        context={'title':title,'message': message,'year': datetime.now().year}
     recipient_list = [project.organization.user.email]
-    context={'title':title,'message': message,'year': datetime.now().year}
+    
     html_template_path="email/mail_template.html",
     send_email_in_thread(subject,context,html_template_path,recipient_list)
 

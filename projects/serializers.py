@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.db import transaction
 from drf_spectacular.utils import extend_schema_field
-from contract.models import ContractLog
+from website.models import ErrorLog
 import traceback
 
 
@@ -243,7 +243,7 @@ class ProjectSerializer(serializers.ModelSerializer):
                     milestone.goal = (Decimal(new_goal) / 100) * Decimal(milestone.percentage)
                     milestone.save()
         except Exception as e:
-            ContractLog.objects.create(
+            ErrorLog.objects.create(
                 data=attrs,
                 error=f'LOGICAL ERROR: {str(e)}',
                 notes=traceback.format_exc()
@@ -307,7 +307,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             return project
         
         except Exception as e:
-            ContractLog.objects.create(
+            ErrorLog.objects.create(
                 data=validated_data,
                 error=f'LOGICAL ERROR: {str(e)}',
                 notes=traceback.format_exc()

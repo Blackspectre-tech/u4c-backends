@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from.models import User,Organization,Profile,Social
+from.models import User,Organization,Donor,Social
 from django.utils.translation import gettext_lazy as _
 from django.contrib import admin, messages
 from django.shortcuts import redirect
@@ -38,7 +38,7 @@ class LogEntryAdmin(admin.ModelAdmin):
 
 
 class UserProfileInline(admin.StackedInline):
-    model = Profile
+    model = Donor
     can_delete = False
     verbose_name_plural = 'User Profile'
     fk_name = 'user'
@@ -213,12 +213,12 @@ class OrganizationAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom = [
             path(
-                '<int:pk>/approve/',
+                '<uuid:pk>/approve/',
                 self.admin_site.admin_view(self.approve_organization),
                 name='approve_organization'
             ),
             path(
-                '<int:pk>/disapprove/',
+                '<uuid:pk>/disapprove/',
                 self.admin_site.admin_view(self.disapprove_organization),
                 name='disapprove_organization'
             ),
@@ -294,7 +294,7 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 
 
-@admin.register(Profile)
+@admin.register(Donor)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user__email','username', 'user__is_active',)
     list_filter = ('user__is_active',)

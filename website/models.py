@@ -11,6 +11,14 @@ class Faq(models.Model):
         return self.question
 
 
-# class TermsAndConditions(models.Model):
-#     tag = 
-#     content = 
+class ErrorLog(models.Model):
+    data = models.TextField()
+    error = models.TextField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    time = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
+    def __str__(self):
+        return self.error
+    
+    class Meta:
+        ordering = ['-time']

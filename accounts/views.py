@@ -23,7 +23,7 @@ from .serializers import (
 
     )
 from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp,send_html_mail
-from .models import Organization, Profile, Transaction
+from .models import Organization, Donor, Transaction
 from .permissions import isOrgOwner, Is_Org,Is_Donor
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -145,7 +145,7 @@ class UpdateProfileView(generics.GenericAPIView):
     serializer_class = UpdateProfileSerializer
 
     def patch(self, request):
-        profile = get_object_or_404(Profile, user=request.user)
+        profile = get_object_or_404(Donor, user=request.user)
         serializer = self.get_serializer(instance=profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

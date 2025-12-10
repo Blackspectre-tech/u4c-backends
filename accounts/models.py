@@ -7,10 +7,13 @@ from django.core.validators import MinLengthValidator,MaxLengthValidator
 from drf_spectacular.utils import extend_schema_field
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
+import uuid
 # Create your models here.
 
 
 class Wallet(models.Model):
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     address = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
@@ -65,6 +68,8 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username=None
     first_name = None
     last_name = None
@@ -106,9 +111,11 @@ class User(AbstractUser):
     
     
 
-class Profile(models.Model):
+class Donor(models.Model):
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=25, blank=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='donor')
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     anonymous = models.BooleanField(default=False)
@@ -127,8 +134,6 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.username}"
 
-    class Meta:
-        verbose_name = "Donor"
 
 
 class Organization(models.Model):
@@ -144,6 +149,7 @@ class Organization(models.Model):
     (DISAPPROVED,'DISAPPROVED')]
 
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='organization')
     website = models.URLField(null=True, blank=True)
@@ -199,6 +205,8 @@ class Organization(models.Model):
 #     wallet_address = 
 
 class Social(models.Model):
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='socials')
     instagram = models.URLField(null=True, blank=True)
     facebook = models.URLField(null=True, blank=True)
@@ -234,6 +242,8 @@ class Transaction(models.Model):
     ]
 
     #For Donations
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey("projects.Project",on_delete=models.SET_NULL,null=True,blank=True,related_name='transactions')
     amount = models.DecimalField(decimal_places=2,max_digits=14, null=True, blank=True)
     tip = models.DecimalField(decimal_places=2,max_digits=14, default=0)

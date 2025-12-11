@@ -6,6 +6,7 @@ import django.contrib.admin.sites
 from contract.blockchain import vault_bal, platform_wallet_bal
 from contract.blockchain import contract, send_owner_tx
 from accounts.models import Donor
+from projects.models import Project
 
 class MyAdminSite(AdminSite):
     site_header = "My Custom Admin"
@@ -15,7 +16,7 @@ class MyAdminSite(AdminSite):
     def index(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context["total_donors"] = Donor.objects.count()
-
+        extra_context["total_campaigns"] = Project.objects.filter(deployed=True).count()
         # Safe blockchain calls
         try:
             extra_context["treasury_balance"] = platform_wallet_bal()
@@ -34,7 +35,7 @@ class MyAdminSite(AdminSite):
             except Exception:
                 return default
 
-        extra_context["total_campaigns"] = safe_call(lambda: contract.functions.campaignCount().call())
+        
         extra_context["platform_wallet"] = safe_call(lambda: contract.functions.platformWallet().call())
         extra_context["owner"] = safe_call(lambda: contract.functions.owner().call())
         extra_context["paused"] = safe_call(lambda: contract.functions.paused().call())

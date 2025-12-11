@@ -218,7 +218,7 @@ class OrganizationKYCSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("File size cannot exceed 2MB.")
         return value
 
-class ProfileSerializer(serializers.ModelSerializer):
+class DonorSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
     username = serializers.CharField(
         validators=[UsernameValidator(queryset=Donor.objects.all())],
@@ -248,17 +248,17 @@ class ProfileSerializer(serializers.ModelSerializer):
         user_serializer.is_valid(raise_exception=True)
         user = user_serializer.save()
 
-        # Create UserProfile
-        profile = Donor.objects.create(
+        # Create donor
+        donor = Donor.objects.create(
             user=user,
             **validated_data
         )
 
-        return profile
+        return donor
 
 
 
-class UpdateProfileSerializer(serializers.ModelSerializer):
+class UpdateDonorSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         validators=[UniqueValidator(queryset=Donor.objects.all())],
         )

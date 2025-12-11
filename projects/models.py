@@ -280,8 +280,8 @@ class Donation(models.Model):
         
         return self.wallet.username
     
-    def get_profile(self):
-        return self.wallet.users.filter(is_organization=False).first().profile()
+    def get_donor(self):
+        return self.wallet.users.filter(is_organization=False).first().donor()
 
     @property
     @extend_schema_field(str)

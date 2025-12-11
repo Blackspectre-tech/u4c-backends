@@ -16,7 +16,7 @@ db.sqlite3
 
 # Media files
 /media/
-
+/venv/
 # Environment variables
 .env
 .code-workspace

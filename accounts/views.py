@@ -8,8 +8,8 @@ from rest_framework import permissions, parsers
 from django.shortcuts import get_object_or_404
 from drf_nested_multipart.parser import NestedMultipartAndFileParser
 from .serializers import (
-    ProfileSerializer,
-    UpdateProfileSerializer,
+    DonorSerializer,
+    UpdateDonorSerializer,
     AccountActivationSerializer, 
     ResendAccountActivationSerializer,
     UserPasswordResetSerializer,
@@ -39,7 +39,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 class RegisterUserView(generics.GenericAPIView):
-    serializer_class = ProfileSerializer
+    serializer_class = DonorSerializer
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -142,11 +142,11 @@ class UserConfirmPasswordResetView(generics.GenericAPIView):
 class UpdateProfileView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated,Is_Donor]
     parser_classes=[parsers.MultiPartParser]
-    serializer_class = UpdateProfileSerializer
+    serializer_class = UpdateDonorSerializer
 
     def patch(self, request):
-        profile = get_object_or_404(Donor, user=request.user)
-        serializer = self.get_serializer(instance=profile, data=request.data, partial=True)
+        donor = get_object_or_404(Donor, user=request.user)
+        serializer = self.get_serializer(instance=donor, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -195,13 +195,13 @@ class ProfileView(generics.RetrieveAPIView):
         user = self.request.user
         if user.is_authenticated and getattr(user, 'is_organization', False):
             return OrganizationSerializer
-        return ProfileSerializer
+        return DonorSerializer
 
     def get_object(self):
         user = self.request.user
         if user.is_authenticated and getattr(user, 'is_organization', False):
             return user.organization
-        return user.profile
+        return user.donor
 
 
 

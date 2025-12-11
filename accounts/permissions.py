@@ -15,7 +15,7 @@ class isOrgOwner(BasePermission):
 class isDonorObjOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
-        return obj.profile == request.user.profile
+        return obj.donor == request.user.donor
 
 class isOrgObjOwner(BasePermission):
 

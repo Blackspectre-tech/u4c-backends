@@ -28,12 +28,12 @@ class Wallet(models.Model):
         if not user:
             return "Anonymous"
 
-        # If profile doesn’t exist or user is anonymous
-        if not hasattr(user, "profile") or user.profile.anonymous:
+        # If not a donor or user is anonymous
+        if not hasattr(user, "donor") or user.donor.anonymous:
             return "Anonymous"
 
         # Otherwise return the user's username
-        return user.profile.username
+        return user.donor.username
 
 
 class TimeStamps(models.Model):

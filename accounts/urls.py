@@ -36,7 +36,7 @@ urlpatterns = [
     path('confirm-password-reset/', UserConfirmPasswordResetView.as_view()),
     path('update-userprofile/', UpdateProfileView.as_view()),
     path('update-organization/', UpdateOrganizationView.as_view()),
-    path('organization/<str:pk>/', RetrieveOrganization.as_view()),
+    path('organization/<uuid:pk>/', RetrieveOrganization.as_view()),
     path('upload-avatar/',UploadAvatarView.as_view()),
     path('add-wallet/',AddWalletView.as_view()),
     path('my-profile/',ProfileView.as_view()),

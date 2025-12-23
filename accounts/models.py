@@ -114,7 +114,7 @@ class User(AbstractUser):
 class Donor(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    username = models.CharField(max_length=25, blank=True)
+    username = models.CharField(max_length=25, blank=True, null=True, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='donor')
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)

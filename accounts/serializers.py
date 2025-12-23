@@ -20,11 +20,9 @@ from .models import Organization, Donor, Social, User, Transaction, Wallet
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.validators import UniqueValidator
 from rest_framework import serializers
 from django.utils import timezone
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
 from website.models import ErrorLog 
 import traceback
@@ -35,9 +33,6 @@ class UserEmailUniqueValidator(UniqueValidator):
 
 
 
-
-class UsernameValidator(UniqueValidator):
-    message = "Username already taken"
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -220,9 +215,7 @@ class OrganizationKYCSerializer(serializers.ModelSerializer):
 
 class DonorSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
-    username = serializers.CharField(
-        validators=[UsernameValidator(queryset=Donor.objects.all())],
-        required=True)
+    username = serializers.CharField(required=True)
     
     
     class Meta:
@@ -240,6 +233,21 @@ class DonorSerializer(serializers.ModelSerializer):
         }
 
     
+    def validate_username(self, value):
+        username = value.lower()
+        
+        # 2. Check if a Donor with this lowercased username already exists
+        # We use .exclude(pk=self.instance.pk) to allow updates to the same object
+        queryset = Donor.objects.filter(username=username)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+            
+        if queryset.exists():
+            raise serializers.ValidationError("Username already taken")
+        
+        return username
+
+
     def create(self, validated_data):
         user_data = validated_data.pop('user')
 
@@ -259,13 +267,25 @@ class DonorSerializer(serializers.ModelSerializer):
 
 
 class UpdateDonorSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        validators=[UniqueValidator(queryset=Donor.objects.all())],
-        )
+    username = serializers.CharField()
     
     class Meta:
         model = Donor
         fields = ['username', 'first_name', 'last_name', 'anonymous']
+
+    def validate_username(self, value):
+        username = value.lower()
+        
+        # 2. Check if a Donor with this lowercased username already exists
+        # We use .exclude(pk=self.instance.pk) to allow updates to the same object
+        queryset = Donor.objects.filter(username=username)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+            
+        if queryset.exists():
+            raise serializers.ValidationError("Username already taken")
+        
+        return username
 
 
 

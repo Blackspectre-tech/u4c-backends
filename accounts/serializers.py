@@ -1,28 +1,20 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.utils import timezone
-from rest_framework import exceptions
-from rest_framework_simplejwt.tokens import Token
 from rest_framework.validators import UniqueValidator
 from phonenumber_field.serializerfields import PhoneNumberField
-from django.db.models import Q
 from projects.models import Project
 from django.core.exceptions import ValidationError
-# from django.contrib.auth.password_validation import validate_password
 from .utils import (
     validate_otp, 
     generate_otp, 
     send_account_activation_otp,
     validate_password,
-    resize_image
 )
-from .models import Organization, Donor, Social, User, Transaction, Wallet
+from .models import Organization, Donor, Social, User, Transaction, Wallet, Kyc
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
-from rest_framework.validators import UniqueValidator
-from rest_framework import serializers
-from django.utils import timezone
 from django.db import transaction
 from website.models import ErrorLog 
 import traceback
@@ -31,9 +23,8 @@ import traceback
 class UserEmailUniqueValidator(UniqueValidator):
     message = "User with the provided email already exists"
 
-
-
-
+class PhoneUniqueValidator(UniqueValidator):
+    message = "User with the provided phone number already exists"
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
@@ -79,7 +70,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     phone_number = PhoneNumberField(
-        validators=[UniqueValidator(queryset=User.objects.all())],
+        validators=[PhoneUniqueValidator(queryset=User.objects.all())],
         required = True
     )
     email = serializers.EmailField(
@@ -198,20 +189,21 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 
 class OrganizationKYCSerializer(serializers.ModelSerializer):
-    # reg_no = serializers.CharField(min_length=7, max_length=8, required=True)
-    cac_document=serializers.FileField(required=True)
-
 
     class Meta:
-        model = Organization
-        fields = ['cac_document',]
+        model = Kyc
+        fields = ['cac_document', 'rep_idcard', 'rep_phone', 'rep_email', 'reg_no', ]
 
-    def validate_cac_document(self, value):
-        if not value.name.endswith('.pdf'):
-            raise serializers.ValidationError("Only PDF files are allowed.")
-        if value.size > 2*(1024*1024):
-            raise serializers.ValidationError("File size cannot exceed 2MB.")
-        return value
+    # def validate(self, attrs):
+    #     cac_doc = attrs['cac_document']
+    #     if not cac_doc.name.endswith('.pdf'):
+    #         raise serializers.ValidationError("Only PDF files are allowed.")
+    #     if cac_doc.size > 2*(1024*1024):
+    #         raise serializers.ValidationError("File size cannot exceed 2MB.")
+    #     return attrs
+
+
+
 
 class DonorSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()

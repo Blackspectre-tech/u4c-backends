@@ -8,6 +8,8 @@ from drf_spectacular.utils import extend_schema_field
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 import uuid
+from django.utils.html import format_html
+
 # Create your models here.
 
 
@@ -158,14 +160,7 @@ class Organization(models.Model):
     description=models.TextField()
 
     #kyc
-    cac_document = models.FileField(null=True,blank=True)
-    reg_no = models.CharField(max_length=8, blank = True,null=True)
     approval_status = models.CharField(max_length=20, choices=approval, default=PENDING)
-    approverd_at = models.DateTimeField(null=True,blank=True)
-    disapproverd_at = models.DateTimeField(null=True,blank=True)
-    approved_by = models.CharField(max_length=30, null=True)
-    disapproved_by = models.CharField(max_length=30, null=True)
-    disapproval_reason= models.TextField(null=True)    
 
 
     @property
@@ -191,6 +186,35 @@ class Organization(models.Model):
     def __str__(self):
         return f"{self.name}"
     
+
+
+class Kyc(models.Model):
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='kyc')
+    cac_document = models.ImageField(upload_to='cac/',null=True,blank=True)
+    rep_idcard = models.ImageField(upload_to='id/',null=True,blank=True)
+    rep_phone = PhoneNumberField(null=True,blank=True)
+    rep_email = models.EmailField(null=True,blank=True)
+    reg_no = models.CharField(max_length=25, blank = True,null=True)
+    approval_details = models.CharField(max_length=150, blank = True,null=True)   
+
+    def __str__(self):
+        return f"{self.organization.name}"
+    
+    def id_preview(self):
+        if self.rep_idcard:
+            return format_html('<img src="{}" style="max-height: 300px;" />', self.rep_idcard.url)
+        return "No rep_idcard Image"
+    
+    def cac_preview(self):
+        if self.cac_document:
+            return format_html('<img src="{}" style="max-height: 300px;" />', self.cac_document.url)
+        return "No cac_document Image"
+
+
+
+
+
+
 
 # class Bank(models.Model):
 #     org = models.ForeignKey(Organization, on_delete=models.CASCADE)

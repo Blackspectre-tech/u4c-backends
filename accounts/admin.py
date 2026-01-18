@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from.models import User,Organization,Donor,Social
+from.models import User,Organization,Donor,Social,Kyc
 from django.utils.translation import gettext_lazy as _
 from django.contrib import admin, messages
 from django.shortcuts import redirect
@@ -59,7 +59,7 @@ class OrganizationProfileInline(admin.StackedInline):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'name','website','country','address','description','cac_document',
+                'name','website','country','address','description',
             )
         else:  # adding new object
             return ()
@@ -67,10 +67,38 @@ class OrganizationProfileInline(admin.StackedInline):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'name','website','country','address','description','cac_document',
+                'name','website','country','address','description',
             )
         else:  # Adding a new object
                 return ()
+
+
+
+
+
+class KycInline(admin.StackedInline):
+    model = Kyc
+    can_delete = False
+    verbose_name_plural = 'KYC'
+    # fk_name = 'user'
+
+    def get_fields(self, request, obj=None):
+        if obj:  # editing existing object
+            return (
+                'cac_document','cac_preview','rep_idcard','id_preview','rep_phone','reg_no','approval_details',
+            )
+        else:  # adding new object
+            return ()
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # Editing an existing object
+            return (
+                'cac_document','cac_preview','rep_idcard','id_preview','rep_phone','reg_no','approval_details',
+            )
+        else:  # Adding a new object
+                return ()
+
+
 
 
 @admin.register(User)
@@ -135,6 +163,7 @@ class CustomUserAdmin(UserAdmin):
 class SocialsInline(admin.StackedInline):
     model = Social
     extra = 1
+    can_delete = False
     fields = ['instagram', 'youtube', 'twitter', 'facebook']
 
     def get_readonly_fields(self, request, obj=None):
@@ -147,7 +176,7 @@ class SocialsInline(admin.StackedInline):
         
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    inlines = [SocialsInline]
+    inlines = [SocialsInline,KycInline]
 
     list_display = (
         "name", 'user__email', 'approval_status'
@@ -162,21 +191,22 @@ class OrganizationAdmin(admin.ModelAdmin):
         if obj:  # editing existing object
             fields = (
                 'name', 'website', 'country', 'user',
-                'address', 'description', 'approval_status','reg_no','cac_document',
+                'address', 'description', 'approval_status',
             )
-
-            if obj.approval_status == Organization.APPROVED:
-                return fields + ('approved_by', 'approverd_at')
+            return fields
+            # if obj.approval_status == Organization.APPROVED:
+            #     return fields + ('approved_by', 'approverd_at')
             
-            elif obj.approval_status == Organization.DISAPPROVED:
-                return fields + ('disapproved_by', 'disapproverd_at', 'disapproval_reason')
+            # elif obj.approval_status == Organization.DISAPPROVED:
+            #     return fields + ('disapproved_by', 'disapproverd_at', 'disapproval_reason')
             
-            else:
-                return fields
+            # else:
+            #     return fields
+            
         else:  # adding new object
             return (
                 'user', 'name', 'website', 'country',
-                'address', 'description','reg_no','cac_document',
+                'address', 'description',
             )
 
 
@@ -184,18 +214,18 @@ class OrganizationAdmin(admin.ModelAdmin):
 
         if obj:  # Editing an existing 
             read_only = (
-                'name', 'website', 'country', 'reg_no',
-                'address', 'description', 'approval_status', 'user','cac_document',
+                'name', 'website', 'country',
+                'address', 'description', 'approval_status', 'user',
             )
-
-            if obj.approval_status == Organization.APPROVED:
-                return read_only + ('approved_by', 'approverd_at')
+            return read_only
+            # if obj.approval_status == Organization.APPROVED:
+            #     return read_only + ('approved_by', 'approverd_at')
             
-            elif obj.approval_status == Organization.DISAPPROVED:
-                return read_only + ('disapproved_by', 'disapproverd_at', 'disapproval_reason')
+            # elif obj.approval_status == Organization.DISAPPROVED:
+            #     return read_only + ('disapproved_by', 'disapproverd_at', 'disapproval_reason')
             
-            else:
-                return read_only
+            # else:
+            #     return read_only
         else:  # Adding a new object
             return ()
 
@@ -232,11 +262,13 @@ class OrganizationAdmin(admin.ModelAdmin):
             return redirect(reverse('admin:accounts_organization_change', args=[pk]))
         else:
             organization.approval_status = Organization.APPROVED
-            organization.disapproval_reason = None
-            organization.approverd_at = timezone.now()
-            organization.approved_by = request.user.email
-            organization.disapproved_by = None
+            kyc, created = Kyc.objects.get_or_create(organization=organization)
+            local_now = timezone.localtime(timezone.now())
+            date_str = local_now.strftime("%Y-%m-%d")
+            time_str = local_now.strftime("%H:%M:%S")
+            kyc.approval_details = f'Organization approved by {request.user.email} on {date_str} at {time_str}'
             organization.save()
+            kyc.save()
             
 
             try:
@@ -266,12 +298,14 @@ class OrganizationAdmin(admin.ModelAdmin):
             return redirect(reverse('admin:accounts_organization_change', args=[pk]))
 
         organization.approval_status = Organization.DISAPPROVED
-        organization.disapproval_reason = reason
-        organization.disapproved_by = request.user.email
-        organization.disapproverd_at = timezone.now()
-        organization.approved_by = None
+        kyc, created = Kyc.objects.get_or_create(organization=organization)
+        local_now = timezone.localtime(timezone.now())
+        date_str = local_now.strftime("%Y-%m-%d")
+        time_str = local_now.strftime("%H:%M:%S")
+        kyc.approval_details = f'Organization dissapproved by {request.user.email} on {date_str} at {time_str} for these reasons: \n{reason}'
         organization.save()
-        
+        kyc.save()
+
         try:
             organization_approval_mail(organization, reason, approved=False)
         except Exception as e:

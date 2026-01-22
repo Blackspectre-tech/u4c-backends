@@ -23,7 +23,7 @@ from .serializers import (
     CommentSerializer,
     )
 from accounts.serializers import TransactionSerializer
-from accounts.models import Transaction, Wallet
+from accounts.models import Transaction, Wallet, getkyc_status
 
 # Create your views here.
 
@@ -34,7 +34,7 @@ class ProjectCreateView(generics.GenericAPIView):
 
     def post(self, request):
         org = request.user.organization
-        if org.approval_status != Organization.APPROVED:
+        if not org.is_approved :
             raise ValidationError({'Organization':'Organization is not approved to post projects'})
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

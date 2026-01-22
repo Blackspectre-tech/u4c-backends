@@ -182,43 +182,23 @@ def project_approval_mail(project, reason=None, approved=True):
 
 def organization_approval_mail(organization, reason=None, approved=True):
     if approved:
-        subject = f"“{organization.name}” approval"
+        subject = f"“{organization.name}” KYC Verification Complete"
         message = (
-            f"We are pleased to inform you that Your Organization “{organization.name}” has been approved, you can now create projects  on our platform"
+            f"We are pleased to inform you that Your Organization “{organization.name}” KYC has been Completed, you can now create Campaigns in our platform"
             )
-        title = 'Organization Approved'
+        title = 'Organization KYC Verification Complete'
     else:   
-        subject = f"Your Organization “{organization.name}” was disapproved"
+        subject = f"Your Organization “{organization.name}” KYC verification Failed"
         message = (
-            f"Your organization “{organization.name}” was disapproved for the following reason:"
+            f"the vreification of your Organization “{organization.name}” KYC documents failed, log-in to your NGO account for more details"
             )
-        title = 'Organization Disapproved'
+        title = 'Organization KYC Verification Failed'
     recipient_list = [organization.user.email]
     html_template_path="email/mail_template.html",
     context={'reason': reason,'title':title,'message': message,'year': datetime.now().year}
     send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 
-
-
-# def resize_avatar(image_file):
-#     try:
-#         img = Image.open(image_file)
-#         img.verify()  # Will raise an exception if not a valid image
-#         image_file.seek(0)
-#     except Exception:
-#         raise ValidationError("Uploaded file is not a valid image.")
-#     img = Image.open(image_file)
-#     img = img.convert("RGB")
-#     img = img.resize((600, 600))  # Resize
-
-#     buffer = BytesIO()
-#     img.save(buffer, format='JPEG', quality=85, optimize=True, progressive=True) # setting teh quality to 85%
-#     buffer.seek(0)
-
-#     # result = upload(buffer, folder=f"u4c/avatars")
-#     # return result['secure_url'], result['public_id']
-#     return buffer
 
 def resize_image(image_file, max_size=1024):
     try:

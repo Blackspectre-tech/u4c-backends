@@ -7,7 +7,7 @@
   <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 20px;">
 
     <!-- APPROVE -->
-    <a href="{% url 'admin:approve_organization' original.id %}"
+    <a href="{% url 'admin:approve_mail' original.id %}"
        class="button"
        style="
          background:#28a745;
@@ -21,11 +21,11 @@
          font-size: 14px;
          text-decoration: none;
        ">
-      Approve
+      Approval Mail
     </a>
 
     <!-- DENY -->
-    <a href="{% url 'admin:disapprove_organization' original.id %}"
+    <a href="{% url 'admin:disapprove_mail' original.id %}"
        class="button"
        style="
          background:#dc3545;
@@ -39,7 +39,7 @@
          font-size: 14px;
          text-decoration: none;
        ">
-      Disapprove
+      Disapproval Mail
     </a>
 
   </div>

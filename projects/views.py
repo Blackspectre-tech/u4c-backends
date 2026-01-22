@@ -35,7 +35,7 @@ class ProjectCreateView(generics.GenericAPIView):
     def post(self, request):
         org = request.user.organization
         if not org.is_approved :
-            raise ValidationError({'Organization':'Organization is not approved to post projects'})
+            raise ValidationError({'Organization':'Cant create campaigns, KYC verification still iin progress'})
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # if wallet:

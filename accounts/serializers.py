@@ -141,12 +141,12 @@ class OrganizationSerializer(serializers.ModelSerializer):
         model = Organization
         fields = [
             'id','user','name','country','address','description','socials',
-            'website','approved_projects','onchain_projects','total_projects','approval_status',
+            'website','approved_projects','onchain_projects','total_projects','kyc_status',
         ]
         extra_kwargs = {
         'id': {'read_only': True},
         'approved_projects': {'read_only': True},
-        'approval_status': {'read_only': True},
+        'kyc_status': {'read_only': True},
         }  
 
 

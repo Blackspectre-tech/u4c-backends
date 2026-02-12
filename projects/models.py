@@ -255,7 +255,7 @@ class Update(models.Model):
     
 
 
-class Donation(models.Model):
+class Donation(TimeStamps, models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='donations')
@@ -267,7 +267,7 @@ class Donation(models.Model):
 
     
     class Meta:
-        ordering = ["-amount"]
+        ordering = ["-updated_at"]
 
     def __str__(self):
         return f"{self.wallet} | amount: {self.amount} | project{self.project.title}"

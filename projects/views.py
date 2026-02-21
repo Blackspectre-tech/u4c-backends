@@ -23,7 +23,7 @@ from .serializers import (
     CommentSerializer,
     )
 from accounts.serializers import TransactionSerializer
-from accounts.models import Transaction, Wallet, getkyc_status
+from accounts.models import Transaction, Wallet
 
 # Create your views here.
 
@@ -117,6 +117,9 @@ class RetrieveProjectsView(generics.RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(self.request, instance)
         if instance.approval_status == Project.APPROVED:
             raise PermissionDenied('Approved projects cannot be deleted')
+        elif instance.deployed:
+            raise PermissionDenied('deployed projects cannot be deleted')
+        
         return super().perform_destroy(instance)
 
     def perform_update(self, serializer):
@@ -124,6 +127,8 @@ class RetrieveProjectsView(generics.RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(self.request, instance)
         if instance.approval_status == Project.APPROVED:
             raise PermissionDenied('approved projects cannot be altered')
+        elif instance.deployed:
+            raise PermissionDenied('deployed projects cannot be altered')
         
         return super().perform_update(serializer) 
 

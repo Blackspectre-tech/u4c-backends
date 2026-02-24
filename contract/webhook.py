@@ -312,7 +312,7 @@ def alchemy_webhook(request):
                             backer = event_args['backer']
                             amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
                             project = Project.objects.get(contract_id = campaign_id)
-                            donation = project.donations.filter(wallet__address=backer).first().update(refundable=False,refunded=True)
+                            donation = project.donations.filter(wallet__address=backer).update(refundable=False,refunded=True)
                             Transaction.objects.create(
                                 wallet = donation.wallet,
                                 tx_hash = logs[0]['transaction'].get('hash'),

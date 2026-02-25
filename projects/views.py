@@ -34,8 +34,8 @@ class ProjectCreateView(generics.GenericAPIView):
 
     def post(self, request):
         org = request.user.organization
-        if org.approval_status != Organization.APPROVED:
-            raise ValidationError({'Organization':'Organization is not approved to post projects'})
+        if not org.is_approved :
+            raise ValidationError({'Organization':'Cant create campaigns, KYC verification still iin progress'})
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # if wallet:
@@ -117,6 +117,9 @@ class RetrieveProjectsView(generics.RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(self.request, instance)
         if instance.approval_status == Project.APPROVED:
             raise PermissionDenied('Approved projects cannot be deleted')
+        elif instance.deployed:
+            raise PermissionDenied('deployed projects cannot be deleted')
+        
         return super().perform_destroy(instance)
 
     def perform_update(self, serializer):
@@ -124,6 +127,8 @@ class RetrieveProjectsView(generics.RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(self.request, instance)
         if instance.approval_status == Project.APPROVED:
             raise PermissionDenied('approved projects cannot be altered')
+        elif instance.deployed:
+            raise PermissionDenied('deployed projects cannot be altered')
         
         return super().perform_update(serializer) 
 

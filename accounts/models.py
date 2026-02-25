@@ -10,7 +10,35 @@ from imagekit.processors import ResizeToFit
 import uuid
 from django.utils.html import format_html
 
+
 # Create your models here.
+
+
+class KycDocumentStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    APPROVED = "approved", "Approved"
+    REJECTED = "rejected", "Rejected"
+
+
+def getkyc_status(organization):
+    required = KycRequirement.objects.filter(is_required=True)
+
+    items = OrganizationKycItem.objects.filter(
+        organization=organization,
+        requirement__in=required
+    )
+
+    if items.filter(status=KycDocumentStatus.REJECTED).exists():
+        return "action_required"
+
+    if items.count() < required.count():
+        return "in_progress"
+
+    if items.filter(status=KycDocumentStatus.PENDING).exists():
+        return "in_progress"
+
+    return "verified"
+
 
 
 class Wallet(models.Model):
@@ -139,18 +167,6 @@ class Donor(models.Model):
 
 
 class Organization(models.Model):
-
-
-    PENDING ='PENDING'
-    APPROVED='APPROVED'
-    DISAPPROVED ='DISAPPROVED'
-    
-    approval = [
-    (PENDING,'PENDING'),
-    (APPROVED,'APPROVED'),
-    (DISAPPROVED,'DISAPPROVED')]
-
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='organization')
@@ -159,9 +175,17 @@ class Organization(models.Model):
     address = models.CharField(max_length=200)
     description=models.TextField()
 
-    #kyc
-    approval_status = models.CharField(max_length=20, choices=approval, default=PENDING)
 
+
+    @property
+    def is_approved(self):
+        if getkyc_status(self) == "verified":
+            return True
+        else: return False
+    
+    @property
+    def kyc_status(self):
+        return getkyc_status(self)
 
     @property
     def total_projects(self):
@@ -188,27 +212,6 @@ class Organization(models.Model):
     
 
 
-class Kyc(models.Model):
-    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='kyc')
-    cac_document = models.ImageField(upload_to='cac/',null=True,blank=True)
-    rep_idcard = models.ImageField(upload_to='id/',null=True,blank=True)
-    rep_phone = PhoneNumberField(null=True,blank=True)
-    rep_email = models.EmailField(null=True,blank=True)
-    reg_no = models.CharField(max_length=25, blank = True,null=True)
-    approval_details = models.CharField(max_length=150, blank = True,null=True)   
-
-    def __str__(self):
-        return f"{self.organization.name}"
-    
-    def id_preview(self):
-        if self.rep_idcard:
-            return format_html('<img src="{}" style="max-height: 300px;" />', self.rep_idcard.url)
-        return "No rep_idcard Image"
-    
-    def cac_preview(self):
-        if self.cac_document:
-            return format_html('<img src="{}" style="max-height: 300px;" />', self.cac_document.url)
-        return "No cac_document Image"
 
 
 
@@ -216,17 +219,11 @@ class Kyc(models.Model):
 
 
 
-# class Bank(models.Model):
-#     org = models.ForeignKey(Organization, on_delete=models.CASCADE)
-#     active = models.BooleanField(default=False)
-#     bank_name =
-#     account_number =
 
-# class Crypto(models.Model):
-#     org = models.ForeignKey(Organization, on_delete=models.CASCADE)
-#     active = models.BooleanField(default=False)
-#     currency = models.CharField()
-#     wallet_address = 
+
+
+
+
 
 class Social(models.Model):
     
@@ -291,3 +288,99 @@ class Transaction(models.Model):
         Transaction.objects.filter(wallet=self.wallet,status=Transaction.PENDING).update(status=Transaction.FAILED)
         super().save(*args, **kwargs)
     
+
+
+
+
+
+
+class KycRequirement(models.Model):
+    DOCUMENT = "document"
+    TEXT = "text"
+    EMAIL = "email"
+    PHONE = "phone number"
+
+    FIELD_TYPE_CHOICES = [
+        (DOCUMENT, "Document"),
+        (TEXT, "Text"),
+        (EMAIL, "Email"),
+        (PHONE, "Phone Number"),
+    ]
+
+    name = models.CharField(max_length=100, unique=True)
+    field_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES)
+    is_required = models.BooleanField(default=True)
+
+    help_text = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.field_type})"
+    
+    def save(self, *args, **kwargs):
+        self.name = self.name.lower()
+        super().save(*args, **kwargs)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class OrganizationKycItem(models.Model):
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="kyc_items"
+    )
+
+    requirement = models.ForeignKey(
+        KycRequirement,
+        on_delete=models.CASCADE
+    )
+
+    # For document uploads
+    file = models.FileField(
+        upload_to="organization_kyc/",
+        blank=True,
+        null=True
+    )
+
+    # For non-document fields
+    value = models.TextField(blank=True, null=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=KycDocumentStatus.choices,
+        default=KycDocumentStatus.PENDING
+    )
+
+    rejection_reason = models.TextField(blank=True, null=True)
+
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        unique_together = ("organization", "requirement")
+
+
+    def __str__(self):
+        return f"{self.organization} - {self.requirement.name}"
+    
+
+
+
+

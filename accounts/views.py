@@ -18,12 +18,19 @@ from .serializers import (
     UpdateOrganizationSerializer,
     UploadAvatarSerializer,
     WalletSerializer,
-    OrganizationKYCSerializer,
+    OrganizationKycItemSubmitSerializer,
     TransactionSerializer,
 
     )
 from .utils import validate_otp, generate_otp, send_reset_password_otp,send_mail, send_account_activation_otp,send_html_mail
-from .models import Organization, Donor, Transaction, Kyc
+from .models import (
+    Organization, 
+    Donor,
+    Transaction,
+    KycRequirement,
+    OrganizationKycItem,
+    KycDocumentStatus,
+)
 from .permissions import isOrgOwner, Is_Org,Is_Donor
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -60,19 +67,6 @@ class RegisterOrganizationView(generics.GenericAPIView):
         return Response(
             {"message": "Registration successful. Please check your email for the OTP to verify your account."},
             status= status.HTTP_201_CREATED)
-
-    
-
-class KycRetrieveRetrieveUpdateView(generics.RetrieveUpdateAPIView):
-    serializer_class = OrganizationKYCSerializer
-    permission_classes = [permissions.IsAuthenticated,Is_Org]
-    parser_classes=[parsers.MultiPartParser]
-    
-    def get_object(self):
-        org = get_object_or_404(Organization, user=self.request.user)
-        obj, created = Kyc.objects.get_or_create(organization=org)
-        return obj
-
 
 
 
@@ -238,4 +232,101 @@ class TipTreasuryCreateView(generics.CreateAPIView):
             event=Transaction.TIP
             )
 
-    
+
+
+
+
+
+
+
+
+
+
+
+
+class OrganizationKycView(APIView):
+    permission_classes = [permissions.IsAuthenticated,Is_Org]
+
+    def get(self, request):
+        org = request.user.organization
+
+        requirements = KycRequirement.objects.all()
+        items = {
+            item.requirement_id: item
+            for item in OrganizationKycItem.objects.filter(organization=org)
+        }
+
+        response_requirements = []
+
+        for requirement in requirements:
+            item = items.get(requirement.id)
+
+            if item:
+                response_requirements.append({
+                    "name": requirement.name,
+                    "type": requirement.field_type,
+                    "submitted": True,
+                    "value": None if requirement.field_type == "document" else item.value,
+                    "status": item.status,
+                })
+            else:
+                response_requirements.append({
+                    "name": requirement.name,
+                    "type": requirement.field_type,
+                    "submitted": False,
+                    "status": "not_submitted",
+                })
+
+        return Response({
+            "kyc_status": org.kyc_status,
+            "requirements": response_requirements,
+        })
+
+    def post(self, request):
+        return self._submit(request)
+
+    def patch(self, request):
+        return self._submit(request)
+
+    def _submit(self, request):
+        serializer = OrganizationKycItemSubmitSerializer(
+            data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+
+        organization = request.user.organization
+        requirement = serializer.validated_data["requirement"]
+
+        item, _ = OrganizationKycItem.objects.get_or_create(
+            organization=organization,
+            requirement=requirement
+        )
+
+        # Prevent overwrite of approved items
+        if item.status == KycDocumentStatus.APPROVED:
+            return Response({
+                "detail": "This KYC item has already been approved."
+            }, status=400)
+
+        # Reset review state
+        item.status = KycDocumentStatus.PENDING
+        item.rejection_reason = None
+        item.reviewed_at = None
+        item.reviewed_by = None
+
+        if requirement.field_type == requirement.DOCUMENT:
+            item.file = serializer.validated_data.get("file")
+            item.value = None
+        else:
+            item.value = serializer.validated_data.get("value")
+            item.file = None
+
+        item.save()
+
+        return Response({
+            "message": "KYC item submitted successfully.",
+            "requirement": requirement.name,
+            "status": item.status,
+            "kyc_status": organization.kyc_status
+        })
+

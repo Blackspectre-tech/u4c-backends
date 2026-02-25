@@ -11,7 +11,8 @@ from .utils import (
     send_account_activation_otp,
     validate_password,
 )
-from .models import Organization, Donor, Social, User, Transaction, Wallet, Kyc
+from .models import Organization, Donor, Social, User, Transaction, Wallet,KycRequirement
+from phonenumber_field.serializerfields import PhoneNumberField
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
@@ -140,12 +141,12 @@ class OrganizationSerializer(serializers.ModelSerializer):
         model = Organization
         fields = [
             'id','user','name','country','address','description','socials',
-            'website','approved_projects','onchain_projects','total_projects','approval_status',
+            'website','approved_projects','onchain_projects','total_projects','kyc_status',
         ]
         extra_kwargs = {
         'id': {'read_only': True},
         'approved_projects': {'read_only': True},
-        'approval_status': {'read_only': True},
+        'kyc_status': {'read_only': True},
         }  
 
 
@@ -187,20 +188,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
         return org
 
-
-class OrganizationKYCSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Kyc
-        fields = ['cac_document', 'rep_idcard', 'rep_phone', 'rep_email', 'reg_no', ]
-
-    # def validate(self, attrs):
-    #     cac_doc = attrs['cac_document']
-    #     if not cac_doc.name.endswith('.pdf'):
-    #         raise serializers.ValidationError("Only PDF files are allowed.")
-    #     if cac_doc.size > 2*(1024*1024):
-    #         raise serializers.ValidationError("File size cannot exceed 2MB.")
-    #     return attrs
 
 
 
@@ -572,3 +559,52 @@ class TransactionSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
     
 
+
+class OrganizationKycItemSubmitSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    value = serializers.CharField(required=False, allow_blank=True)
+    file = serializers.FileField(required=False)
+
+    def validate(self, attrs):
+        name = attrs.get("name").lower()
+        value = attrs.get("value")
+        file = attrs.get("file")
+
+        # 1. Check requirement exists
+        try:
+            requirement = KycRequirement.objects.get(name=name)
+        except KycRequirement.DoesNotExist:
+            raise serializers.ValidationError({
+                "name": "Unknown KYC requirement."
+            })
+
+        # 2. Validate based on requirement field type
+        if requirement.field_type == KycRequirement.DOCUMENT:
+            if not file:
+                raise serializers.ValidationError({
+                    "file": "This document is required."
+                })
+
+        elif requirement.field_type == KycRequirement.EMAIL:
+            if not value:
+                raise serializers.ValidationError({
+                    "value": "Email is required."
+                })
+            serializers.EmailField().run_validation(value)
+
+        elif requirement.field_type == KycRequirement.PHONE:
+            if not value:
+                raise serializers.ValidationError({
+                    "value": "Phone number is required."
+                })
+            PhoneNumberField().run_validation(value)
+
+        elif requirement.field_type == KycRequirement.TEXT:
+            if not value:
+                raise serializers.ValidationError({
+                    "value": "This field is required."
+                })
+
+        # Attach requirement for use in view
+        attrs["requirement"] = requirement
+        return attrs

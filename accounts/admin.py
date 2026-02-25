@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from.models import User,Organization,Donor,Social,Kyc
+from.models import User,Organization,Donor,Social,OrganizationKycItem,KycRequirement
 from django.utils.translation import gettext_lazy as _
 from django.contrib import admin, messages
 from django.shortcuts import redirect
@@ -49,6 +49,7 @@ class UserProfileInline(admin.StackedInline):
             )
         else:  # Adding a new object
                 return ()
+                
 
 class OrganizationProfileInline(admin.StackedInline):
     model = Organization
@@ -75,28 +76,6 @@ class OrganizationProfileInline(admin.StackedInline):
 
 
 
-
-class KycInline(admin.StackedInline):
-    model = Kyc
-    can_delete = False
-    verbose_name_plural = 'KYC'
-    # fk_name = 'user'
-
-    def get_fields(self, request, obj=None):
-        if obj:  # editing existing object
-            return (
-                'cac_document','cac_preview','rep_idcard','id_preview','rep_phone','reg_no','approval_details',
-            )
-        else:  # adding new object
-            return ()
-
-    def get_readonly_fields(self, request, obj=None):
-        if obj:  # Editing an existing object
-            return (
-                'cac_document','cac_preview','rep_idcard','id_preview','rep_phone','reg_no','approval_details',
-            )
-        else:  # Adding a new object
-                return ()
 
 
 
@@ -160,6 +139,26 @@ class CustomUserAdmin(UserAdmin):
 #                 raise ValidationError("File size cannot exceed 1MB.")
 #         return file
 
+
+
+class KycInline(admin.StackedInline):
+    model = OrganizationKycItem
+    extra = 0
+    can_delete = False
+    fields = ['requirement','file','value','status','rejection_reason','reviewed_at','reviewed_by',]
+    verbose_name_plural = 'KYC'
+    # fk_name = 'user'
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # Editing an existing object
+            return (
+                'requirement','file','value','reviewed_at','reviewed_by',
+            )
+        else:  # Adding a new object
+                return ()
+
+
+
 class SocialsInline(admin.StackedInline):
     model = Social
     extra = 1
@@ -179,29 +178,19 @@ class OrganizationAdmin(admin.ModelAdmin):
     inlines = [SocialsInline,KycInline]
 
     list_display = (
-        "name", 'user__email', 'approval_status'
+        "name", 'user__email', 'kyc_status'
     )
 
-    list_filter = ('approval_status',)
     search_fields = ('name',)
 
 
 
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
-            fields = (
+            return (
                 'name', 'website', 'country', 'user',
-                'address', 'description', 'approval_status',
+                'address', 'description', 'kyc_status',
             )
-            return fields
-            # if obj.approval_status == Organization.APPROVED:
-            #     return fields + ('approved_by', 'approverd_at')
-            
-            # elif obj.approval_status == Organization.DISAPPROVED:
-            #     return fields + ('disapproved_by', 'disapproverd_at', 'disapproval_reason')
-            
-            # else:
-            #     return fields
             
         else:  # adding new object
             return (
@@ -211,21 +200,12 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 
     def get_readonly_fields(self, request, obj=None):
-
         if obj:  # Editing an existing 
-            read_only = (
+            return (
                 'name', 'website', 'country',
-                'address', 'description', 'approval_status', 'user',
+                'address', 'description', 'kyc_status', 'user',
             )
-            return read_only
-            # if obj.approval_status == Organization.APPROVED:
-            #     return read_only + ('approved_by', 'approverd_at')
             
-            # elif obj.approval_status == Organization.DISAPPROVED:
-            #     return read_only + ('disapproved_by', 'disapproverd_at', 'disapproval_reason')
-            
-            # else:
-            #     return read_only
         else:  # Adding a new object
             return ()
 
@@ -233,7 +213,7 @@ class OrganizationAdmin(admin.ModelAdmin):
 
     def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
         if object_id:
-            # load your custom template for the *edit* page
+            # load custom template for the *edit* page
             self.change_form_template = 'admin/account/organization_changeform.html'
         else:
             self.change_form_template = None
@@ -245,83 +225,63 @@ class OrganizationAdmin(admin.ModelAdmin):
             path(
                 '<uuid:pk>/approve/',
                 self.admin_site.admin_view(self.approve_organization),
-                name='approve_organization'
+                name='approve_mail'
             ),
             path(
                 '<uuid:pk>/disapprove/',
                 self.admin_site.admin_view(self.disapprove_organization),
-                name='disapprove_organization'
+                name='disapprove_mail'
             ),
         ]
         return custom + urls
 
     def approve_organization(self, request, pk):
         organization = get_object_or_404(Organization, pk=pk)
-        if organization.approval_status == Organization.APPROVED:
-            messages.warning(request, "organization already approved.")
-            return redirect(reverse('admin:accounts_organization_change', args=[pk]))
-        else:
-            organization.approval_status = Organization.APPROVED
-            kyc, created = Kyc.objects.get_or_create(organization=organization)
-            local_now = timezone.localtime(timezone.now())
-            date_str = local_now.strftime("%Y-%m-%d")
-            time_str = local_now.strftime("%H:%M:%S")
-            kyc.approval_details = f'Organization approved by {request.user.email} on {date_str} at {time_str}'
-            organization.save()
-            kyc.save()
-            
+        
+        try:
+            organization_approval_mail(organization)
+            messages.success(request, "✅ kyc approval email sent.")
+        except Exception as e:
+            messages.error(request, f"kyc approval email failed to send: {e}")
 
-            try:
-                organization_approval_mail(organization)
-                messages.success(request, "✅ Organization approved and email sent.")
-            except Exception as e:
-                messages.error(request, f"Organization approved but email failed: {e}")
-
-            
-        return redirect(reverse('admin:accounts_organization_changelist'))
+        return redirect(reverse('admin:accounts_organization_change', args=[pk]))
 
     def disapprove_organization(self, request, pk):
         organization = get_object_or_404(Organization, pk=pk)
 
-        if request.method == 'GET':
-            # Show a standalone form
-            return render(request, 'admin/account/disapprove_organization_form.html', {'organization': organization})
-
-        # POST: process the denial
-        reason = request.POST.get('reason', '').strip()
-        if not reason:
-            messages.error(request, "You must provide a reason for disapproval.")
-            return redirect(reverse('admin:disapprove_organization', args=[pk]))
-
-        if organization.approval_status == Organization.DISAPPROVED:
-            messages.warning(request, "Organization already disapproved.")
-            return redirect(reverse('admin:accounts_organization_change', args=[pk]))
-
-        organization.approval_status = Organization.DISAPPROVED
-        kyc, created = Kyc.objects.get_or_create(organization=organization)
-        local_now = timezone.localtime(timezone.now())
-        date_str = local_now.strftime("%Y-%m-%d")
-        time_str = local_now.strftime("%H:%M:%S")
-        kyc.approval_details = f'Organization dissapproved by {request.user.email} on {date_str} at {time_str} for these reasons: \n{reason}'
-        organization.save()
-        kyc.save()
-
         try:
-            organization_approval_mail(organization, reason, approved=False)
+            organization_approval_mail(organization, approved=False)
         except Exception as e:
-            messages.error(request, f"Organization disapproved but email failed: {e}")
+            messages.error(request, f"kyc disapproval email failed to send: {e}")
         else:
-            messages.success(request, "Organization disapproved and email sent.")
+            messages.success(request, "kyc disapproval email sent.")
 
         # go back to change‐list
-        return redirect(reverse('admin:accounts_organization_changelist'))
+        # return redirect(reverse('admin:accounts_organization_changelist'))
+        return redirect(reverse('admin:accounts_organization_change', args=[pk]))
+    
 
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        organization = self.get_object(request, object_id)
 
+        if organization:
+            requirements = KycRequirement.objects.filter(is_required=True)
 
+            for req in requirements:
+                OrganizationKycItem.objects.get_or_create(
+                    organization=organization,
+                    requirement=req
+                )
+
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    
     def save_model(self, request, obj, form, change):
-        user = obj.user
-        user.is_organization = True
-        user.save()
+    # makes the user object an organization if saving a new model instance
+        if not change:
+            user = obj.user
+            user.is_organization = True
+            user.save()
         
         super().save_model(request, obj, form, change)
 
@@ -340,6 +300,11 @@ class UserProfileAdmin(admin.ModelAdmin):
         # adding a new object
         return ()
 
+@admin.register(KycRequirement)
+class KycRequirementAdmin(admin.ModelAdmin):
+    list_display = ('name','field_type', 'is_required',)
+    fields = ['name','field_type', 'is_required',]
+    
 
 
 

@@ -105,7 +105,7 @@ class CustomUserAdmin(UserAdmin):
     )
 
     def get_readonly_fields(self, request, obj=None):
-            readonly = super().get_readonly_fields(request, obj) + ('email','phone_number','last_login','wallets',)
+            readonly = super().get_readonly_fields(request, obj) + ('email','phone_number' ,'wallets','last_login')
             if not request.user.is_superuser:
                 readonly = readonly + ('is_superuser','is_staff','groups', 'user_permissions','groups')
             return readonly

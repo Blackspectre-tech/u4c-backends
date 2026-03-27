@@ -180,13 +180,7 @@ def alchemy_webhook(request):
                         tipAmount = Decimal(event_args['tipAmount'])/ (Decimal(10) ** 6)
                         tip = Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0)
                         pledged_project = Project.objects.get(contract_id=campaign_id)
-                        transaction = Transaction.objects.filter(
-                                wallet__address__iexact = backer,
-                                amount=net_amount,
-                                tip=tip,
-                                project = pledged_project,
-                                status=Transaction.PENDING,
-                            ).first()
+                        
                         
                         if pledged_project:                            
                             active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
@@ -214,10 +208,23 @@ def alchemy_webhook(request):
                                     next_milestone.save(update_fields=['status'])
                                 # else:
                                 #     send_owner_tx(contract.functions.finalize(campaign_id))
-                            
-                            transaction.status = Transaction.SUCCESSFUL
-                            transaction.tx_hash = logs[0]['transaction'].get('hash')
-                            transaction.save(update_fields=['status', 'tx_hash'])
+                            from accounts.models import Wallet
+                            wallet.objects.filter(address=backer).first()
+                            if wallet:
+                                Transaction.objects.create(
+                                    project = pledged_project,
+                                    wallet = wallet,
+                                    amount=net_amount,
+                                    tip=tip,
+                                    project = pledged_project,
+                                    status=Transaction.SUCCESSFUL,
+                                    tx_hash = logs[0]['transaction'].get('hash'),
+                                    event = Transaction.PLEDGE,
+                                    )
+
+                                # transaction.status = Transaction.SUCCESSFUL
+                                # transaction.tx_hash = logs[0]['transaction'].get('hash')
+                                # transaction.save(update_fields=['status', 'tx_hash'])
 
                             user_donations = Donation.objects.filter(
                                 wallet__address__iexact=backer, 
@@ -231,7 +238,7 @@ def alchemy_webhook(request):
                                 Donation.objects.create(
                                     project=pledged_project,
                                     amount=net_amount,
-                                    wallet=transaction.wallet,
+                                    wallet=wallet,
                                 )
                         else: 
                             ErrorLog.objects.create(

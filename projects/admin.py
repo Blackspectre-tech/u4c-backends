@@ -237,7 +237,7 @@ class ProjectAdmin(admin.ModelAdmin):
         if not core:
             try:
                 core = contract.functions.getCampaign(contract_id).call()
-                print(core)
+                # print(core)
                 cache.set(cache_key, core, 30)  # cache for 30s
             except Exception as e:
                 # Friendly error for admin UI

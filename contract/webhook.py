@@ -181,7 +181,6 @@ def alchemy_webhook(request):
                         tip = Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0)
                         pledged_project = Project.objects.get(contract_id=campaign_id)
                         
-                        
                         if pledged_project:                            
                             active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
 
@@ -209,7 +208,7 @@ def alchemy_webhook(request):
                                 # else:
                                 #     send_owner_tx(contract.functions.finalize(campaign_id))
                             
-                            Wallet.objects.filter(address=backer).first()
+                            wallet = Wallet.objects.filter(address=backer).first()
                             if wallet:
                                 Transaction.objects.create(
                                     project = pledged_project,

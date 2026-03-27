@@ -85,7 +85,7 @@ class Project(TimeStamps, models.Model):
     duration_in_days = models.DecimalField(null=True, blank=True,decimal_places=2,max_digits=5)
     wallet_address = models.CharField(max_length=255,null=True, blank=True)
     contract_id = models.IntegerField(null=True, blank=True)
-    progress = models.DecimalField(decimal_places=2,max_digits=5,default=0.00)
+    progress = models.DecimalField(max_digits=7, decimal_places=2, default=0.00)
     deployed = models.BooleanField(default=False)
     deadline = models.DateTimeField(null=True, blank=True)
     deployed_at = models.DateTimeField(null=True, blank=True)

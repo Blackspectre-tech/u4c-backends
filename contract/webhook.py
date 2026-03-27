@@ -208,8 +208,8 @@ def alchemy_webhook(request):
                                     next_milestone.save(update_fields=['status'])
                                 # else:
                                 #     send_owner_tx(contract.functions.finalize(campaign_id))
-                            from accounts.models import Wallet
-                            wallet.objects.filter(address=backer).first()
+                            
+                            Wallet.objects.filter(address=backer).first()
                             if wallet:
                                 Transaction.objects.create(
                                     project = pledged_project,

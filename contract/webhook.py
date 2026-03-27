@@ -216,7 +216,6 @@ def alchemy_webhook(request):
                                     wallet = wallet,
                                     amount=net_amount,
                                     tip=tip,
-                                    project = pledged_project,
                                     status=Transaction.SUCCESSFUL,
                                     tx_hash = logs[0]['transaction'].get('hash'),
                                     event = Transaction.PLEDGE,

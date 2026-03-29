@@ -29,17 +29,17 @@ class MyAdminSite(AdminSite):
             extra_context["vault_balance"] = "alchemy error"
 
         # Contract function calls
-        def safe_call(func, default="alchemy error"):
-            try:
-                return func()
-            except Exception:
-                return default
+        # def safe_call(func, default="alchemy error"):
+        #     try:
+        #         return func()
+        #     except Exception:
+        #         return default
 
         
-        extra_context["platform_wallet"] = safe_call(lambda: contract.functions.platformWallet().call())
-        extra_context["owner"] = safe_call(lambda: contract.functions.owner().call())
-        extra_context["paused"] = safe_call(lambda: contract.functions.paused().call())
-        extra_context["fee_bps"] = safe_call(lambda: contract.functions.feeBps().call())
+        # extra_context["platform_wallet"] = safe_call(lambda: contract.functions.platformWallet().call())
+        # extra_context["owner"] = safe_call(lambda: contract.functions.owner().call())
+        # extra_context["paused"] = safe_call(lambda: contract.functions.paused().call())
+        # extra_context["fee_bps"] = safe_call(lambda: contract.functions.feeBps().call())
 
         return super().index(request, extra_context=extra_context)
 

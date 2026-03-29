@@ -13,22 +13,39 @@ from django.utils import timezone
 
 #Webhook
 
+# EVENT_TOPIC_MAP = {
+# '0x54225ce5de7dc72a6f5cf898ef7283ada08aadfba3372fc87dfd0bf689261e45' : 'CampaignCreated',
+# # '0xc67423104bf96f5ca8826913ae711e8c2254e1b2c04af907b2312853ed4cbed2' : 'MilestoneAdded',
+# '0xf36ffe7645287fddf6deab03a17f4f024a0551da54638685d25cac0dbdf5b6be' : 'Pledged',
+# '0xfcd29b1632c6748a9a4bb9b4cd5c6486c3c84a8550dce2368f83fef3969d9685' : 'Unpledged',
+# '0x7c387a42b7678e1b26d65927d4a0176444d9c6509a72583dee248753b768db41' : 'CampaignStateChanged',
+# '0xffe56bf760f6d13072fce783b476e75aa4fec7f9319bd00fd896ad53bd325848' : 'MilestoneApproved',
+# '0xfdad5626a5dc3ef449341e73d009a9349b676bb5b58cbb8201e7440e77692725' : 'MilestoneWithdrawn',
+# '0x7ca5472b7ea78c2c0141c5a12ee6d170cf4ce8ed06be3d22c8252ddfc7a6a2c4' : 'Refunded',
+# '0x73238e3ae0a71b401b31ae67204506d074de41bd5c084082fba9b64b1c7fa28f' : 'PlatformWalletUpdated',
+# '0x12d0978e09577356906c174508d8758fbe5e9cc762c7d94a64d74817039b937c' : 'FeeUpdated(uint96)',
+# '0x1da521c13439ac6ab125c52e0da7dd7de929f09e58aa0f89ebe3dbb12e63a52b' : 'TokenAllowlistUpdated',
+# '0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258' : 'Paused',
+# '0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa' : 'Unpaused',
+# '0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0' : 'OwnershipTransferred',
+# }
+
+
 EVENT_TOPIC_MAP = {
-'0x54225ce5de7dc72a6f5cf898ef7283ada08aadfba3372fc87dfd0bf689261e45' : 'CampaignCreated',
-# '0xc67423104bf96f5ca8826913ae711e8c2254e1b2c04af907b2312853ed4cbed2' : 'MilestoneAdded',
-'0xf36ffe7645287fddf6deab03a17f4f024a0551da54638685d25cac0dbdf5b6be' : 'Pledged',
-'0xfcd29b1632c6748a9a4bb9b4cd5c6486c3c84a8550dce2368f83fef3969d9685' : 'Unpledged',
-'0x7c387a42b7678e1b26d65927d4a0176444d9c6509a72583dee248753b768db41' : 'CampaignStateChanged',
-'0xffe56bf760f6d13072fce783b476e75aa4fec7f9319bd00fd896ad53bd325848' : 'MilestoneApproved',
-'0xfdad5626a5dc3ef449341e73d009a9349b676bb5b58cbb8201e7440e77692725' : 'MilestoneWithdrawn',
-'0x7ca5472b7ea78c2c0141c5a12ee6d170cf4ce8ed06be3d22c8252ddfc7a6a2c4' : 'Refunded',
-'0x73238e3ae0a71b401b31ae67204506d074de41bd5c084082fba9b64b1c7fa28f' : 'PlatformWalletUpdated',
-'0x12d0978e09577356906c174508d8758fbe5e9cc762c7d94a64d74817039b937c' : 'FeeUpdated(uint96)',
-'0x1da521c13439ac6ab125c52e0da7dd7de929f09e58aa0f89ebe3dbb12e63a52b' : 'TokenAllowlistUpdated',
-'0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258' : 'Paused',
-'0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa' : 'Unpaused',
-'0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0' : 'OwnershipTransferred',
+'0xf6927b61d53c52832973f54bb03898d046415a87f616d486523e1b663315364d' : 'CampaignCreated',
+'0x242b7d43c73f615dfdfa4919702ad9db4880a3b095d19100eb73c3d05e92be15' : 'CampaignFinalized',
+'0x66db9066eef427bc79cc914343b2a5810df710dd78414eeb82edfd7780941cd6' : 'Pledged',
+'0x1b29c0842d854a7d068404ef8054846a234308cb5f9f72281ffe0c5d9901e9df' : 'CampaignHalted',
+'0x939da3b627c123c81fe5aacebf925163337a0d4f8a03724640618078cad24894' : 'MilestoneApproved',
+'0xacd04361f4b63fc14956006d9cdccbcea11dde8e3f5e13dafb34bb10996d7cbf' : 'MilestoneWithdrawn',
+'0xf3f402280ef0a7905e124aa621b65eaeb2725c343e8b36d398ed78c29daf285c' : 'Refunded',
+
 }
+
+
+
+
+
 
 def _to_int_maybe_hex(v):
     """Accept int, decimal string, or hex string like '0x1' and return int or None."""
@@ -118,17 +135,21 @@ def alchemy_webhook(request):
                 if event_name == 'CampaignCreated':
                     try:
                         campaign_id = event_args['id']
+                        offchain_id = event_args['offchainId']
                         creator = event_args['creator']
-                        goal = Decimal(event_args['goal']) / (Decimal(10) ** 6)
+                        # goal = Decimal(event_args['goal']) / (Decimal(10) ** 6)
                         # aware_datetime = datetime.fromtimestamp(timestamp, tz=timezone.utc)
                         raw_deadline = event_args.get('deadline')
                         # dt_utc = datetime.datetime.fromtimestamp(int(raw_deadline), tz=timezone.utc)
                         dt_utc = datetime.datetime.fromtimestamp(int(raw_deadline), tz=datetime.timezone.utc)
+                        # project = Project.objects.filter(
+                        #     approval_status=Project.APPROVED,
+                        #     deployed=False,
+                        #     wallet_address__iexact=creator,
+                        #     goal=goal.quantize(Decimal('0.01'))
+                        # ).first()
                         project = Project.objects.filter(
-                            approval_status=Project.APPROVED,
-                            deployed=False,
-                            wallet_address__iexact=creator,
-                            goal=goal.quantize(Decimal('0.01'))
+                            id = offchain_id 
                         ).first()
                         project.contract_id = campaign_id
                         project.deployed = True
@@ -153,18 +174,12 @@ def alchemy_webhook(request):
                 elif event_name == 'Pledged':
                     try:
                         campaign_id = event_args['id']
-                        backer = event_args['backer']
+                        backer = event_args['donor']
                         net_amount = Decimal(event_args['netAmount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                        # fee_amount = Decimal(event_args['feeAmount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))                        
                         tipAmount = Decimal(event_args['tipAmount'])/ (Decimal(10) ** 6)
                         tip = Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0)
                         pledged_project = Project.objects.get(contract_id=campaign_id)
-                        transaction = Transaction.objects.filter(
-                                wallet__address__iexact = backer,
-                                amount=net_amount,
-                                tip=tip,
-                                project = pledged_project,
-                                status=Transaction.PENDING,
-                            ).first()
                         
                         if pledged_project:                            
                             active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
@@ -193,9 +208,21 @@ def alchemy_webhook(request):
                                 # else:
                                 #     send_owner_tx(contract.functions.finalize(campaign_id))
                             
-                            transaction.status = Transaction.SUCCESSFUL
-                            transaction.tx_hash = logs[0]['transaction'].get('hash')
-                            transaction.save(update_fields=['status', 'tx_hash'])
+                            wallet = Wallet.objects.filter(address=backer).first()
+                            if wallet:
+                                Transaction.objects.create(
+                                    project = pledged_project,
+                                    wallet = wallet,
+                                    amount=net_amount,
+                                    tip=tip,
+                                    status=Transaction.SUCCESSFUL,
+                                    tx_hash = logs[0]['transaction'].get('hash'),
+                                    event = Transaction.PLEDGE,
+                                    )
+
+                                # transaction.status = Transaction.SUCCESSFUL
+                                # transaction.tx_hash = logs[0]['transaction'].get('hash')
+                                # transaction.save(update_fields=['status', 'tx_hash'])
 
                             user_donations = Donation.objects.filter(
                                 wallet__address__iexact=backer, 
@@ -209,7 +236,7 @@ def alchemy_webhook(request):
                                 Donation.objects.create(
                                     project=pledged_project,
                                     amount=net_amount,
-                                    wallet=transaction.wallet,
+                                    wallet=wallet,
                                 )
                         else: 
                             ErrorLog.objects.create(
@@ -242,7 +269,7 @@ def alchemy_webhook(request):
                 #                 notes=traceback.format_exc()
                 #             ) 
 
-                elif event_name == 'CampaignStateChanged':
+                elif event_name == 'CampaignFinalized':
                         try:
                             campaign_id = event_args['id']
                             state = event_args['newState']
@@ -262,14 +289,32 @@ def alchemy_webhook(request):
                                 error=str(e),
                                 notes=traceback.format_exc()
                             )  
+                
+
+                elif event_name == 'CampaignHalted':
+                        try:
+                            campaign_id = event_args['id']
+                            project = Project.objects.get(contract_id = campaign_id)
+                            project.status = Project.Cancelled
+                            project.donations.update(refundable=True)
+                            project.save(update_fields=['status'])
+                
+                        except Exception as e:
+                            #print(f"{e} traceback: {traceback.format_exc()}")
+                            ErrorLog.objects.create(
+                                data=data,
+                                error=str(e),
+                                notes=traceback.format_exc()
+                            )  
+
 
                 elif event_name == 'MilestoneApproved':
                         try :
                             campaign_id = event_args['id']
                             #index = event_args['index']
-                            amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                            milestone_index = event_args['milestoneIndex'] + 1
                             project = Project.objects.get(contract_id = campaign_id)
-                            milestone = project.milestones.get(goal=amount)
+                            milestone = project.milestones.get(milestone_no=milestone_index)
                             milestone.approved= True
                             milestone.save(update_fields=['approved'])
                         except:
@@ -283,10 +328,10 @@ def alchemy_webhook(request):
                 elif event_name == 'MilestoneWithdrawn':
                         try :
                             campaign_id = event_args['id']
-                            #index = event_args['index']
-                            amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                            index = event_args['milestoneIndex'] + 1
+                            # amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
                             project = Project.objects.get(contract_id = campaign_id)
-                            milestone = project.milestones.get(goal=amount)
+                            milestone = project.milestones.get(milestone_no=index)
                             milestone.withdrawn= True
                             milestone.save(update_fields=['withdrawn'])
                             wallet = Wallet.objects.get(address__iexact=logs[0]['transaction']['from'].get('address'))
@@ -309,8 +354,8 @@ def alchemy_webhook(request):
                 elif event_name == 'Refunded':
                         try :
                             campaign_id = event_args['id']
-                            backer = event_args['backer']
-                            amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                            backer = event_args['donor']
+                            # amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
                             project = Project.objects.get(contract_id = campaign_id)
                             donation = project.donations.filter(wallet__address=backer)
                             donation.update(refundable=False,refunded=True)

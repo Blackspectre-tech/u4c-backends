@@ -183,9 +183,9 @@ class ProjectAdmin(admin.ModelAdmin):
     # -------------------------
     def get_readonly_fields(self, request, obj=None):
         readonly = (
-            'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
+            'organization','categories', 'title', 'goal', 'country', 'formatted_description','contract_id', 'milestones', 'image',
             'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage',
-            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','contract_id','status','deployed_at',
+            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','status','deployed_at',
         )
 
         # Make sure onchain_info is readonly when displayed
@@ -236,7 +236,8 @@ class ProjectAdmin(admin.ModelAdmin):
 
         if not core:
             try:
-                core = contract.functions.getCampaignCore(contract_id).call()
+                core = contract.functions.getCampaign(contract_id).call()
+                # print(core)
                 cache.set(cache_key, core, 30)  # cache for 30s
             except Exception as e:
                 # Friendly error for admin UI
@@ -248,7 +249,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
         try:
             # Unpack core tuple
-            creator, currencyType, token, goal, pledged, deadline, state, milestoneCount = core
+            creator, currencyType, token, goal, totalRaised, totalWithdrawn, deadline, state, contextData, offchainId, milestoneCount, milestonesReleased, totalBpsReleased = core
 
             # Build a small HTML table
             rows = [
@@ -257,10 +258,16 @@ class ProjectAdmin(admin.ModelAdmin):
                 ("CurrencyType (ETH,ERC20)", curreny_dict[int(currencyType)]),
                 ("Token", token if token and token != "0x0000000000000000000000000000000000000000" else "ETH"),
                 ("Goal ($)",str(Decimal(goal) / (Decimal(10) ** 6))),   #Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0) #str(goal)),
-                ("Pledged ($)", str(Decimal(pledged) / (Decimal(10) ** 6))), #str(pledged)),
+                ("Total Raised", str(Decimal(totalRaised) / (Decimal(10) ** 6))),
+                ("Total Withdrawn", str(Decimal(totalWithdrawn) / (Decimal(10) ** 6)) ),
+                # ("Pledged ($)", str(Decimal(pledged) / (Decimal(10) ** 6))), #str(pledged)),
                 ("Deadline", str(self._timestamp_to_dt(deadline))),
                 ("State", status_dict[int(state)]),
+                ("Context Data", contextData),
+                ("Off-Chain ID", offchainId),
                 ("Milestone count", int(milestoneCount)),
+                ("Milestone Released", milestonesReleased),
+                ("Percentage Released", totalBpsReleased/100),
             ]
 
             html = "<table style='border-collapse:collapse;'>"

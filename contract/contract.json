@@ -1,24 +1,35 @@
 [
     {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
         "inputs": [
             {
-                "internalType": "address payable",
-                "name": "_platformWallet",
-                "type": "address"
-            },
-            {
                 "internalType": "address",
-                "name": "_usdt",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "_usdc",
+                "name": "target",
                 "type": "address"
             }
         ],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
+        "name": "AddressEmptyCode",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "implementation",
+                "type": "address"
+            }
+        ],
+        "name": "ERC1967InvalidImplementation",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ERC1967NonPayable",
+        "type": "error"
     },
     {
         "inputs": [],
@@ -28,6 +39,235 @@
     {
         "inputs": [],
         "name": "ExpectedPause",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "FailedCall",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidInitialization",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__CampaignAlreadyComplete",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__CampaignAlreadyFunded",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__CampaignNotActive",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__CampaignNotRefundable",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__CampaignNotSucceeded",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__CurrencyMismatch",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__DeadlineNotPassed",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__DeadlinePassed",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__DurationTooLong",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__EmptyOffchainId",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__FeeTooHigh",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__InvalidAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__InvalidCampaign",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__InvalidMilestoneIndex",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__InvalidOffchainId",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__InvalidTip",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__MilestoneAlreadyReleased",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__MilestoneArrayMismatch",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__MilestoneBpsInvalid",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__MilestoneNotApproved",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__NoContribution",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__NotCreator",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__OffchainIdAlreadyUsed",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__PlatformWalletOnly",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__TokenNotAllowed",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__TooManyMilestones",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__TransferFailed",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__Unauthorized",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__ValueMismatch",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__ZeroAmount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__ZeroDuration",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MilestoneCrowdfund__ZeroGoal",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "NotInitializing",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnableInvalidOwner",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "OwnableUnauthorizedAccount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ReentrancyGuardReentrantCall",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            }
+        ],
+        "name": "SafeERC20FailedOperation",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "UUPSUnauthorizedCallContext",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "slot",
+                "type": "bytes32"
+            }
+        ],
+        "name": "UUPSUnsupportedProxiableUUID",
         "type": "error"
     },
     {
@@ -47,7 +287,7 @@
             },
             {
                 "indexed": false,
-                "internalType": "enum MilestoneCrowdfund.CurrencyType",
+                "internalType": "enum MilestoneCrowdfundUpgradeable.CurrencyType",
                 "name": "currencyType",
                 "type": "uint8"
             },
@@ -68,6 +308,12 @@
                 "internalType": "uint256",
                 "name": "deadline",
                 "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "offchainId",
+                "type": "string"
             }
         ],
         "name": "CampaignCreated",
@@ -84,12 +330,43 @@
             },
             {
                 "indexed": false,
-                "internalType": "enum MilestoneCrowdfund.State",
+                "internalType": "enum MilestoneCrowdfundUpgradeable.State",
                 "name": "newState",
                 "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "totalRaised",
+                "type": "uint256"
             }
         ],
-        "name": "CampaignStateChanged",
+        "name": "CampaignFinalized",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "id",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "totalWithdrawn",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "refundableBps",
+                "type": "uint256"
+            }
+        ],
+        "name": "CampaignHalted",
         "type": "event"
     },
     {
@@ -98,7 +375,13 @@
             {
                 "indexed": false,
                 "internalType": "uint96",
-                "name": "feeBps",
+                "name": "oldFee",
+                "type": "uint96"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint96",
+                "name": "newFee",
                 "type": "uint96"
             }
         ],
@@ -116,14 +399,8 @@
             },
             {
                 "indexed": false,
-                "internalType": "uint256",
-                "name": "index",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
                 "internalType": "string",
-                "name": "name",
+                "name": "fiatTxId",
                 "type": "string"
             },
             {
@@ -133,7 +410,20 @@
                 "type": "uint256"
             }
         ],
-        "name": "MilestoneAdded",
+        "name": "FiatPledged",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint64",
+                "name": "version",
+                "type": "uint64"
+            }
+        ],
+        "name": "Initialized",
         "type": "event"
     },
     {
@@ -146,21 +436,9 @@
                 "type": "uint256"
             },
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint256",
-                "name": "index",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "amount",
+                "name": "milestoneIndex",
                 "type": "uint256"
             }
         ],
@@ -177,15 +455,21 @@
                 "type": "uint256"
             },
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "uint256",
-                "name": "index",
+                "name": "milestoneIndex",
                 "type": "uint256"
             },
             {
                 "indexed": false,
                 "internalType": "uint256",
                 "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "totalWithdrawn",
                 "type": "uint256"
             }
         ],
@@ -230,6 +514,12 @@
             {
                 "indexed": true,
                 "internalType": "address",
+                "name": "oldWallet",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
                 "name": "newWallet",
                 "type": "address"
             }
@@ -249,13 +539,13 @@
             {
                 "indexed": true,
                 "internalType": "address",
-                "name": "backer",
+                "name": "donor",
                 "type": "address"
             },
             {
                 "indexed": false,
                 "internalType": "uint256",
-                "name": "grossAmount",
+                "name": "netAmount",
                 "type": "uint256"
             },
             {
@@ -267,20 +557,8 @@
             {
                 "indexed": false,
                 "internalType": "uint256",
-                "name": "netAmount",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
                 "name": "tipAmount",
                 "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "enum MilestoneCrowdfund.CurrencyType",
-                "name": "currency",
-                "type": "uint8"
             }
         ],
         "name": "Pledged",
@@ -298,7 +576,7 @@
             {
                 "indexed": true,
                 "internalType": "address",
-                "name": "backer",
+                "name": "donor",
                 "type": "address"
             },
             {
@@ -308,14 +586,14 @@
                 "type": "uint256"
             }
         ],
-        "name": "Refunded",
+        "name": "RefundClaimed",
         "type": "event"
     },
     {
         "anonymous": false,
         "inputs": [
             {
-                "indexed": false,
+                "indexed": true,
                 "internalType": "address",
                 "name": "token",
                 "type": "address"
@@ -323,11 +601,30 @@
             {
                 "indexed": false,
                 "internalType": "bool",
-                "name": "allowed",
+                "name": "isAllowed",
                 "type": "bool"
             }
         ],
         "name": "TokenAllowlistUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "oldWallet",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newWallet",
+                "type": "address"
+            }
+        ],
+        "name": "TreasuryWalletUpdated",
         "type": "event"
     },
     {
@@ -348,29 +645,26 @@
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-            },
-            {
-                "indexed": true,
                 "internalType": "address",
-                "name": "backer",
+                "name": "implementation",
                 "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
             }
         ],
-        "name": "Unpledged",
+        "name": "Upgraded",
         "type": "event"
     },
     {
-        "stateMutability": "payable",
-        "type": "fallback"
+        "inputs": [],
+        "name": "BPS_DENOMINATOR",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
     },
     {
         "inputs": [],
@@ -380,6 +674,19 @@
                 "internalType": "uint96",
                 "name": "",
                 "type": "uint96"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "UPGRADE_INTERFACE_VERSION",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
             }
         ],
         "stateMutability": "view",
@@ -408,12 +715,12 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "id",
+                "name": "_id",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
-                "name": "index",
+                "name": "_milestoneIndex",
                 "type": "uint256"
             }
         ],
@@ -439,11 +746,11 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "id",
+                "name": "_id",
                 "type": "uint256"
             }
         ],
-        "name": "cancel",
+        "name": "cancelCampaign",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -452,57 +759,63 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-            },
-            {
-                "internalType": "address",
-                "name": "backer",
-                "type": "address"
-            }
-        ],
-        "name": "contributionOf",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "netAmount",
+                "name": "_id",
                 "type": "uint256"
             }
         ],
-        "stateMutability": "view",
+        "name": "claimRefund",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
         "inputs": [
             {
-                "internalType": "uint8",
-                "name": "currencyType",
-                "type": "uint8"
-            },
-            {
-                "internalType": "address",
-                "name": "token",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_goal",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_durationInDays",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string[]",
-                "name": "milestoneNames",
-                "type": "string[]"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "milestoneAmounts",
-                "type": "uint256[]"
+                "components": [
+                    {
+                        "internalType": "enum MilestoneCrowdfundUpgradeable.CurrencyType",
+                        "name": "currencyType",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "goal",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "durationDays",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string[]",
+                        "name": "milestoneNames",
+                        "type": "string[]"
+                    },
+                    {
+                        "internalType": "uint256[]",
+                        "name": "milestoneBps",
+                        "type": "uint256[]"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "contextData",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "offchainId",
+                        "type": "string"
+                    }
+                ],
+                "internalType": "struct MilestoneCrowdfundUpgradeable.CreateCampaignParams",
+                "name": "params",
+                "type": "tuple"
             }
         ],
         "name": "createCampaign",
@@ -518,7 +831,7 @@
     },
     {
         "inputs": [],
-        "name": "feeBps",
+        "name": "defaultFeeBps",
         "outputs": [
             {
                 "internalType": "uint96",
@@ -533,7 +846,7 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "id",
+                "name": "_id",
                 "type": "uint256"
             }
         ],
@@ -546,50 +859,238 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "id",
+                "name": "_id",
                 "type": "uint256"
             }
         ],
-        "name": "getCampaignCore",
+        "name": "getCampaign",
         "outputs": [
             {
+                "components": [
+                    {
+                        "internalType": "address payable",
+                        "name": "creator",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "enum MilestoneCrowdfundUpgradeable.CurrencyType",
+                        "name": "currencyType",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "goal",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "totalRaised",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "totalWithdrawn",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "deadline",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "enum MilestoneCrowdfundUpgradeable.State",
+                        "name": "state",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "contextData",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "offchainId",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "milestoneCount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "milestonesReleased",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "totalBpsReleased",
+                        "type": "uint256"
+                    }
+                ],
+                "internalType": "struct MilestoneCrowdfundUpgradeable.Campaign",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_offchainId",
+                "type": "string"
+            }
+        ],
+        "name": "getCampaignByOffchainId",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "address payable",
+                        "name": "creator",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "enum MilestoneCrowdfundUpgradeable.CurrencyType",
+                        "name": "currencyType",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "goal",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "totalRaised",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "totalWithdrawn",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "deadline",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "enum MilestoneCrowdfundUpgradeable.State",
+                        "name": "state",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "contextData",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "offchainId",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "milestoneCount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "milestonesReleased",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "totalBpsReleased",
+                        "type": "uint256"
+                    }
+                ],
+                "internalType": "struct MilestoneCrowdfundUpgradeable.Campaign",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_id",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_milestoneIndex",
+                "type": "uint256"
+            }
+        ],
+        "name": "getMilestone",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "string",
+                        "name": "name",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "percentageBps",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "approved",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "released",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct MilestoneCrowdfundUpgradeable.Milestone",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_id",
+                "type": "uint256"
+            },
+            {
                 "internalType": "address",
-                "name": "creator",
+                "name": "_donor",
                 "type": "address"
-            },
-            {
-                "internalType": "uint8",
-                "name": "currencyType",
-                "type": "uint8"
-            },
-            {
-                "internalType": "address",
-                "name": "token",
-                "type": "address"
-            },
+            }
+        ],
+        "name": "getPledge",
+        "outputs": [
             {
                 "internalType": "uint256",
-                "name": "goal",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "pledged",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "deadline",
-                "type": "uint256"
-            },
-            {
-                "internalType": "enum MilestoneCrowdfund.State",
-                "name": "state",
-                "type": "uint8"
-            },
-            {
-                "internalType": "uint256",
-                "name": "milestoneCount",
+                "name": "",
                 "type": "uint256"
             }
         ],
@@ -600,39 +1101,36 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "index",
+                "name": "_id",
                 "type": "uint256"
             }
         ],
-        "name": "getMilestone",
-        "outputs": [
+        "name": "haltCampaign",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
             {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
+                "internalType": "address",
+                "name": "_platformWallet",
+                "type": "address"
             },
             {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
+                "internalType": "address",
+                "name": "_treasuryWallet",
+                "type": "address"
             },
             {
-                "internalType": "bool",
-                "name": "approved",
-                "type": "bool"
-            },
-            {
-                "internalType": "bool",
-                "name": "released",
-                "type": "bool"
+                "internalType": "address[]",
+                "name": "_initialTokens",
+                "type": "address[]"
             }
         ],
-        "stateMutability": "view",
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -650,7 +1148,7 @@
     },
     {
         "inputs": [],
-        "name": "pause",
+        "name": "pauseProtocol",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -685,17 +1183,12 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "id",
+                "name": "_id",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
-                "name": "grossAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "tipAmount",
+                "name": "_tipAmount",
                 "type": "uint256"
             }
         ],
@@ -708,17 +1201,40 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "id",
+                "name": "_id",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
-                "name": "grossAmount",
+                "name": "_amount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "string",
+                "name": "_fiatTxId",
+                "type": "string"
+            }
+        ],
+        "name": "pledgeFiatOnBehalf",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_id",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
-                "name": "tipAmount",
+                "name": "_grossAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_tipAmount",
                 "type": "uint256"
             }
         ],
@@ -728,16 +1244,16 @@
         "type": "function"
     },
     {
-        "inputs": [
+        "inputs": [],
+        "name": "proxiableUUID",
+        "outputs": [
             {
-                "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
             }
         ],
-        "name": "refund",
-        "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -763,8 +1279,8 @@
     {
         "inputs": [
             {
-                "internalType": "address payable",
-                "name": "_wallet",
+                "internalType": "address",
+                "name": "_newWallet",
                 "type": "address"
             }
         ],
@@ -777,16 +1293,29 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "token",
+                "name": "_token",
                 "type": "address"
             },
             {
                 "internalType": "bool",
-                "name": "allowed",
+                "name": "_isAllowed",
                 "type": "bool"
             }
         ],
         "name": "setTokenAllowed",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_newWallet",
+                "type": "address"
+            }
+        ],
+        "name": "setTreasuryWallet",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -806,25 +1335,20 @@
     },
     {
         "inputs": [],
-        "name": "unpause",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
+        "name": "treasuryWallet",
+        "outputs": [
             {
-                "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "netAmount",
-                "type": "uint256"
+                "internalType": "address payable",
+                "name": "",
+                "type": "address"
             }
         ],
-        "name": "unpledgeETH",
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "unpauseProtocol",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -832,13 +1356,31 @@
     {
         "inputs": [
             {
+                "internalType": "address",
+                "name": "newImplementation",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+            }
+        ],
+        "name": "upgradeToAndCall",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint256",
-                "name": "id",
+                "name": "_id",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
-                "name": "index",
+                "name": "_milestoneIndex",
                 "type": "uint256"
             }
         ],
@@ -846,9 +1388,5 @@
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
-        "stateMutability": "payable",
-        "type": "receive"
     }
 ]

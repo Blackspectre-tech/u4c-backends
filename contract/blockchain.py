@@ -106,8 +106,11 @@ erc20_abi = [
         "type": "function",
     },
 ]
+if config("TEST", cast=bool):
+    usdc_token_address = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582'
+else:
+    usdc_token_address = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
 
-usdc_token_address = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
 usdc_contract = w3.eth.contract(address=usdc_token_address, abi =erc20_abi)
 
 
@@ -125,7 +128,7 @@ def vault_bal():
 
 def platform_wallet_bal():
     # # get balance in Wei
-    wallet = config("SAFE_WALLET_ADDRESS")
+    wallet = config("TREASURY_WALLET_ADDRESS")
     # balance_wei = w3.eth.get_balance(wallet)
     # pol = w3.from_wei(balance_wei, 'ether')
 

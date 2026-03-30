@@ -183,7 +183,7 @@ class ProjectAdmin(admin.ModelAdmin):
     # -------------------------
     def get_readonly_fields(self, request, obj=None):
         readonly = (
-            'organization','categories', 'title', 'goal', 'country', 'formatted_description','contract_id', 'milestones', 'image',
+            'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
             'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage',
             'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','status','deployed_at',
         )
@@ -356,6 +356,11 @@ class ProjectAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.approve_milestone_onchain),
                 name='approve_milestone_url'
             ),
+            path(
+                '<uuid:pk>/halt_campaign/',
+                self.admin_site.admin_view(self.halt_campaign_onchain),
+                name='halt_campaign_url'
+            ),
         ]
         return custom + urls
 
@@ -474,6 +479,36 @@ class ProjectAdmin(admin.ModelAdmin):
         else:
             messages.warning(request, f"project not on-chain")
             return redirect(reverse('admin:projects_project_change', args=[pk]))
+
+
+    
+    def halt_campaign_onchain(self, request, pk):
+        project = get_object_or_404(Project, pk=pk)
+        if project.deployed:
+            if project.milestones.filter(approved=True).exists():
+                try:
+                    campaign_id = project.contract_id
+                    tx_hash = send_owner_tx(contract.functions.haltCampaign(campaign_id))
+                    
+                    messages.success(request, f"Campaign Halted, tx_hash: {tx_hash}")
+                    return redirect(reverse('admin:projects_project_change', args=[pk]))
+                
+                except Exception as e:
+                    # ContractLog.objects.create(
+                    #     data=traceback.format_exc(),
+                    #     error=str(e),
+                    # )  
+                    messages.warning(request, f"Error: {e}")
+                    return redirect(reverse('admin:projects_project_change', args=[pk]))
+
+            else:
+                messages.warning(request, f"project has no aproved milestone")
+                return redirect(reverse('admin:projects_project_change', args=[pk]))
+                
+        else:
+            messages.warning(request, f"project not on-chain")
+            return redirect(reverse('admin:projects_project_change', args=[pk]))
+
 
 
 class MilestoneImagesInline(admin.StackedInline):

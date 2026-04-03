@@ -13,7 +13,7 @@ __pycache__/
 # SQLite DB
 *.sqlite3
 db.sqlite3
-
+django_errors.log
 # Media files
 /media/
 /venv/

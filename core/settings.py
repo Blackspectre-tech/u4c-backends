@@ -152,6 +152,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = "/media/"
 
 STATIC_URL = '/static/'
+
+ERROR_LOGS_PATH = config('ERROR_LOGS_PATH')
+
 if DEBUG:
     STATICFILES_DIRS = [
         os.path.join(BASE_DIR, 'static'),
@@ -160,6 +163,27 @@ else:
     STATIC_ROOT = BASE_DIR / 'static'
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+        
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'file': {
+                'level': 'ERROR',
+                'class': 'logging.FileHandler',
+                # Replace 'youruser' and 'yourpath' with the actual path in cPanel
+                'filename': f'{ERROR_LOGS_PATH}/django_errors.log',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['file'],
+                'level': 'ERROR',
+                'propagate': True,
+            },
+        },
+    }
+
 # DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # CLOUDINARY_STORAGE = {
@@ -167,7 +191,6 @@ else:
 #     'API_KEY': config('CLOUDINARY_API_KEY'),
 #     'API_SECRET': config('CLOUDINARY_API_SECRET')
 # }
-
 
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "website.exceptions.custom_exception_handler",

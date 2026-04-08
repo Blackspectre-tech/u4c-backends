@@ -170,7 +170,7 @@ class Milestone(TimeStamps, models.Model):
         return self.title
     
     class Meta:
-        ordering = ["-updated_at"]
+        ordering = ["milestone_no"]
     
 
     @property

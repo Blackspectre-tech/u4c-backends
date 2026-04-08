@@ -94,8 +94,10 @@ class MilestoneFormSet(BaseInlineFormSet):
 
 class MilestoneInline(admin.StackedInline):
     model = Milestone
-    extra = 1
+    extra = 0
+    can_delete = False
     formset = MilestoneFormSet
+    show_change_link = True
 
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
@@ -119,6 +121,9 @@ class MilestoneInline(admin.StackedInline):
     def formatted_details(self, obj):
             return render_markdown_safe(content=obj.details)
     formatted_details.short_description = "Details"
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 
@@ -184,7 +189,7 @@ class ProjectAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         readonly = (
             'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
-            'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage',
+            'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage', 'contract_id',
             'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','status','deployed_at',
         )
 
@@ -457,6 +462,9 @@ class ProjectAdmin(admin.ModelAdmin):
     def approve_milestone_onchain(self, request, pk):
         project = get_object_or_404(Project, pk=pk)
         if project.deployed:
+            if project.milestones.filter(approved=True, withdrawn=False).exists():
+                messages.warning(request, f"previously approved milestone not withdrawn")
+                return redirect(reverse('admin:projects_project_change', args=[pk]))
             try:
                 active_milestone = project.milestones.filter(status=Milestone.COMPLETED,approved=False).first()
                 if active_milestone:
@@ -513,23 +521,13 @@ class ProjectAdmin(admin.ModelAdmin):
 
 class MilestoneImagesInline(admin.StackedInline):
     model = MilestoneImage
-    extra = 1
-
-    def get_fields(self, request, obj=None):
-        if obj:  # editing existing object
-            return (
-                'image',
-            )
-        else:  # adding new object
-            return ('image',)
-
-    def get_readonly_fields(self, request, obj=None):
-        if obj:  # Editing an existing object
-            return (
-                'image',
-            )
-        else:  # Adding a new object
-                return ()
+    extra = 0
+    can_delete = False
+    fields = ['image_preview', 'image',]
+    readonly_fields = ('image_preview',)
+    
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Milestone)

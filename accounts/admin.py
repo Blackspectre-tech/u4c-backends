@@ -39,9 +39,11 @@ class LogEntryAdmin(admin.ModelAdmin):
 
 class UserProfileInline(admin.StackedInline):
     model = Donor
+    extra = 0
     can_delete = False
     verbose_name_plural = 'User Profile'
     fk_name = 'user'
+    show_change_link = True
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
@@ -49,11 +51,16 @@ class UserProfileInline(admin.StackedInline):
             )
         else:  # Adding a new object
                 return ()
+    
+    def has_add_permission(self, request, obj=None):
+        return False
                 
 
 class OrganizationProfileInline(admin.StackedInline):
     model = Organization
+    extra = 0
     can_delete = False
+    show_change_link = True
     verbose_name_plural = 'Organization Profile'
     # fk_name = 'user'
 
@@ -72,6 +79,9 @@ class OrganizationProfileInline(admin.StackedInline):
             )
         else:  # Adding a new object
                 return ()
+    
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 
@@ -156,12 +166,15 @@ class KycInline(admin.StackedInline):
             )
         else:  # Adding a new object
                 return ()
+    
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 
 class SocialsInline(admin.StackedInline):
     model = Social
-    extra = 1
+    extra = 0
     can_delete = False
     fields = ['instagram', 'youtube', 'twitter', 'facebook']
 
@@ -172,6 +185,9 @@ class SocialsInline(admin.StackedInline):
             )
         else:  # Adding a new object
                 return ()
+    
+    def has_add_permission(self, request, obj=None):
+        return False
         
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):

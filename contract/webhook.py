@@ -38,7 +38,7 @@ EVENT_TOPIC_MAP = {
 '0x1b29c0842d854a7d068404ef8054846a234308cb5f9f72281ffe0c5d9901e9df' : 'CampaignHalted',
 '0x939da3b627c123c81fe5aacebf925163337a0d4f8a03724640618078cad24894' : 'MilestoneApproved',
 '0xacd04361f4b63fc14956006d9cdccbcea11dde8e3f5e13dafb34bb10996d7cbf' : 'MilestoneWithdrawn',
-'0xf3f402280ef0a7905e124aa621b65eaeb2725c343e8b36d398ed78c29daf285c' : 'Refunded',
+'0xf3f402280ef0a7905e124aa621b65eaeb2725c343e8b36d398ed78c29daf285c' : 'RefundClaimed',
 
 }
 

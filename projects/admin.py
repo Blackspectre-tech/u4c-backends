@@ -102,7 +102,7 @@ class MilestoneInline(admin.StackedInline):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'milestone_no', 'title', 'formatted_details', 'goal', 'status',
+                'milestone_no', 'title', 'formatted_details', 'goal', 'status','approved'
             )
         else:  # adding new object
             return (
@@ -113,7 +113,7 @@ class MilestoneInline(admin.StackedInline):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'milestone_no', 'goal', 'title', 'details', 'formatted_details','status',
+                'milestone_no', 'goal', 'title', 'details', 'formatted_details','status','approved'
             )
         else:  # Adding a new object
                 return ()

@@ -201,7 +201,7 @@ class MilestoneImage(models.Model):
     )
 
     def __str__(self):
-        return self.image
+        return self.milestone.title
     
 
     def image_preview(self):

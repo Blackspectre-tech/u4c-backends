@@ -10,6 +10,7 @@ from accounts.models import Wallet
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 import uuid
+from django.utils.text import slugify
 # Create your models here.
 
 
@@ -183,8 +184,17 @@ class Milestone(TimeStamps, models.Model):
 
 
 def milestone_image_path(instance, filename):
-    milestone =instance.milestone
-    return f'milestone images/{milestone.project.title}/{milestone.milestone_no}'
+    milestone = instance.milestone
+    project_slug = slugify(milestone.project.title)
+    
+    # Generate a random UUID (e.g., 'f47ac10b-58cc-4372-a567-0e02b2c3d479')
+    random_name = uuid.uuid4()
+    
+    # Since ProcessedImageField forces JPEG, use .jpg
+    extension = "jpg"
+    
+    # Result: milestone-images/back-to-school/1/f47ac10b...jpg
+    return f'milestone-images/{project_slug}/{milestone.milestone_no}/{random_name}.{extension}'
 
 
 class MilestoneImage(models.Model):
@@ -206,7 +216,7 @@ class MilestoneImage(models.Model):
 
     def image_preview(self):
         if self.image:
-            return format_html('<img src="{}" style="max-height: 200px;" />', self.image)
+            return format_html('<img src="{}" style="max-height: 200px;" />', self.image.url)
         return "No Image"
 
     image_preview.short_description = "Image Preview"

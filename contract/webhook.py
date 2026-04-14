@@ -10,6 +10,7 @@ from accounts.models import Transaction,Wallet
 import datetime
 import traceback
 from django.utils import timezone
+from django.db.models import F
 
 #Webhook
 
@@ -181,33 +182,54 @@ def alchemy_webhook(request):
                         tip = Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0)
                         pledged_project = Project.objects.get(contract_id=campaign_id)
                         
-                        if pledged_project:                            
-                            active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
+                        if pledged_project:
+                            # 1. Update project funds atomically
+                            pledged_project.total_funds = F('total_funds') + net_amount
+                            pledged_project.save(update_fields=['total_funds'])
+                            pledged_project.refresh_from_db()
 
-                            # Update the project's total funds.
-                            pledged_project.total_funds += net_amount
-                            pledged_project.progress = round((pledged_project.total_funds / pledged_project.goal)*100, 2)
-                            pledged_project.save(update_fields=['total_funds','progress'])
-        
-                            # Check if there is an active milestone and if the goal is met.
-                            if active_milestone and pledged_project.total_funds >= active_milestone.goal:
-                                # Mark the current active milestone as completed.
-                                active_milestone.status = Milestone.COMPLETED
-                                active_milestone.save(update_fields=['status'])
+                            # 2. Update progress
+                            pledged_project.progress = round((pledged_project.total_funds / pledged_project.goal) * 100, 2)
+                            pledged_project.save(update_fields=['progress'])
 
-                                # Determine the number of the next milestone.
-                                next_milestone_no = active_milestone.milestone_no + 1
+                            # 3. Recursive Milestone Ripple
+                            # We use a loop because one donation might clear multiple milestones
+                            while True:
+                                active_milestone = pledged_project.milestones.filter(status=Milestone.ACTIVE).first()
+                                
+                                # Fallback: If no milestone is active, find the first pending one to start the chain
+                                if not active_milestone:
+                                    active_milestone = pledged_project.milestones.filter(status=Milestone.NOT_STARTED).order_by('milestone_no').first()
+                                    if active_milestone:
+                                        active_milestone.status = Milestone.ACTIVE
+                                        active_milestone.save(update_fields=['status'])
+                                    else:
+                                        # No more milestones exist at all
+                                        break
 
-                                # Find the next milestone.
-                                next_milestone = pledged_project.milestones.filter(milestone_no=next_milestone_no).first()
+                                # Check if the CURRENT active milestone's cumulative goal is met
+                                if pledged_project.total_funds >= active_milestone.goal:
+                                    active_milestone.status = Milestone.COMPLETED
+                                    active_milestone.save(update_fields=['status'])
 
-                                # If the next milestone exists, activate it.
-                                if next_milestone:
-                                    next_milestone.status = Milestone.ACTIVE
-                                    next_milestone.save(update_fields=['status'])
-                                # else:
-                                #     send_owner_tx(contract.functions.finalize(campaign_id))
-                            
+                                    # Look for the next one
+                                    next_milestone = pledged_project.milestones.filter(
+                                        milestone_no=active_milestone.milestone_no + 1
+                                    ).first()
+
+                                    if next_milestone:
+                                        next_milestone.status = Milestone.ACTIVE
+                                        next_milestone.save(update_fields=['status'])
+                                        # Continue the loop to see if the NEW active milestone is also met
+                                        continue 
+                                    else:
+                                        # Goal met and no more milestones to activate
+                                        break
+                                else:
+                                    # Current milestone goal not yet met, stop rippling
+                                    break
+
+                                
                             wallet = Wallet.objects.filter(address=backer).first()
                             if wallet:
                                 Transaction.objects.create(

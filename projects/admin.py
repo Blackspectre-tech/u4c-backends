@@ -247,7 +247,7 @@ class ProjectAdmin(admin.ModelAdmin):
             except Exception as e:
                 # Friendly error for admin UI
                 return format_html(
-                    "<div style='color:#b33;'>Could not fetch on-chain info (contract_id: {}). Error: {}</div>",
+                    "<div style='color:#b33;'>Could not fetch on-chain info (contract_id: {0}). Error: {1}</div>",
                     contract_id,
                     str(e)
                 )

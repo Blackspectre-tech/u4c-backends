@@ -11,25 +11,9 @@ import datetime
 import traceback
 from django.utils import timezone
 from django.db.models import F
+from accounts.utils import send_html_mail
 
 #Webhook
-
-# EVENT_TOPIC_MAP = {
-# '0x54225ce5de7dc72a6f5cf898ef7283ada08aadfba3372fc87dfd0bf689261e45' : 'CampaignCreated',
-# # '0xc67423104bf96f5ca8826913ae711e8c2254e1b2c04af907b2312853ed4cbed2' : 'MilestoneAdded',
-# '0xf36ffe7645287fddf6deab03a17f4f024a0551da54638685d25cac0dbdf5b6be' : 'Pledged',
-# '0xfcd29b1632c6748a9a4bb9b4cd5c6486c3c84a8550dce2368f83fef3969d9685' : 'Unpledged',
-# '0x7c387a42b7678e1b26d65927d4a0176444d9c6509a72583dee248753b768db41' : 'CampaignStateChanged',
-# '0xffe56bf760f6d13072fce783b476e75aa4fec7f9319bd00fd896ad53bd325848' : 'MilestoneApproved',
-# '0xfdad5626a5dc3ef449341e73d009a9349b676bb5b58cbb8201e7440e77692725' : 'MilestoneWithdrawn',
-# '0x7ca5472b7ea78c2c0141c5a12ee6d170cf4ce8ed06be3d22c8252ddfc7a6a2c4' : 'Refunded',
-# '0x73238e3ae0a71b401b31ae67204506d074de41bd5c084082fba9b64b1c7fa28f' : 'PlatformWalletUpdated',
-# '0x12d0978e09577356906c174508d8758fbe5e9cc762c7d94a64d74817039b937c' : 'FeeUpdated(uint96)',
-# '0x1da521c13439ac6ab125c52e0da7dd7de929f09e58aa0f89ebe3dbb12e63a52b' : 'TokenAllowlistUpdated',
-# '0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258' : 'Paused',
-# '0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa' : 'Unpaused',
-# '0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0' : 'OwnershipTransferred',
-# }
 
 
 EVENT_TOPIC_MAP = {
@@ -42,9 +26,6 @@ EVENT_TOPIC_MAP = {
 '0xf3f402280ef0a7905e124aa621b65eaeb2725c343e8b36d398ed78c29daf285c' : 'RefundClaimed',
 
 }
-
-
-
 
 
 
@@ -182,6 +163,7 @@ def alchemy_webhook(request):
                         tip = Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0)
                         pledged_project = Project.objects.get(contract_id=campaign_id)
                         
+
                         if pledged_project:
                             # 1. Update project funds atomically
                             pledged_project.total_funds = F('total_funds') + net_amount
@@ -211,6 +193,14 @@ def alchemy_webhook(request):
                                 if pledged_project.total_funds >= active_milestone.goal:
                                     active_milestone.status = Milestone.COMPLETED
                                     active_milestone.save(update_fields=['status'])
+
+
+
+                                    email = pledged_project.organization.user.email
+                                    subject=f"Campaign Milestone Reached"
+                                    message=f"Milestone {active_milestone.milestone_no} of your campaign '{pledged_project.title}' has been completed"
+                                    send_html_mail(email,subject,message)
+
 
                                     # Look for the next one
                                     next_milestone = pledged_project.milestones.filter(
@@ -260,6 +250,13 @@ def alchemy_webhook(request):
                                     amount=net_amount,
                                     wallet=wallet,
                                 )
+                            
+                            email = wallet.users.first().email
+                            subject=f"Donation Successful"
+                            message=f"Your donation of {net_amount} USDC to the campaign '{pledged_project.title}' was successful"
+                            send_html_mail(email,subject,message)
+
+
                         else: 
                             ErrorLog.objects.create(
                                 data=data,

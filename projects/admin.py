@@ -189,7 +189,7 @@ class ProjectAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         readonly = (
             'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
-            'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage', 'contract_id',
+            'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage', #'contract_id',
             'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','status','deployed_at',
         )
 
@@ -242,7 +242,7 @@ class ProjectAdmin(admin.ModelAdmin):
         if not core:
             try:
                 core = contract.functions.getCampaign(contract_id).call()
-                # print(core)
+                print(core)
                 cache.set(cache_key, core, 30)  # cache for 30s
             except Exception as e:
                 # Friendly error for admin UI
@@ -314,7 +314,7 @@ class ProjectAdmin(admin.ModelAdmin):
             return format_html(html)
 
         except Exception as exc:
-            return format_html("<div style='color:#b33;'>Error formatting on-chain info: {}</div>", str(exc))
+            return format_html("<div style='color:#b33;'>Error formatting on-chain info: {0}</div>", str(exc))
 
     onchain_info.short_description = "On-chain Campaign (getCampaignCore + milestones preview)"
 

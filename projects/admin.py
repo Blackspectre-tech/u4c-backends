@@ -13,6 +13,7 @@ from django.forms.models import BaseInlineFormSet
 from django.utils.html import format_html
 from django.core.cache import cache
 from contract.blockchain import contract, send_owner_tx
+from django.utils.safestring import mark_safe
 
 
 # class ProjectAdminForm(forms.ModelForm):
@@ -245,12 +246,9 @@ class ProjectAdmin(admin.ModelAdmin):
                 print(core)
                 cache.set(cache_key, core, 30)  # cache for 30s
             except Exception as e:
-                # Friendly error for admin UI
-                return format_html(
-                    "<div style='color:#b33;'>Could not fetch on-chain info (contract_id: {0}). Error: {1}</div>",
-                    contract_id,
-                    str(e)
-                )
+                # Use a simple f-string and mark_safe
+                return mark_safe(f"<div style='color:#b33;'>Could not fetch on-chain info (ID: {contract_id}). Error: {str(e)}</div>")
+
 
         try:
             # Unpack core tuple
@@ -314,7 +312,8 @@ class ProjectAdmin(admin.ModelAdmin):
             return format_html(html)
 
         except Exception as exc:
-            return format_html("<div style='color:#b33;'>Error formatting on-chain info: {0}</div>", str(exc))
+            # Use a simple f-string and mark_safe
+            return mark_safe(f"<div style='color:#b33;'>Error formatting on-chain info: {str(exc)}</div>")
 
     onchain_info.short_description = "On-chain Campaign (getCampaignCore + milestones preview)"
 

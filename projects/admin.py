@@ -309,7 +309,7 @@ class ProjectAdmin(admin.ModelAdmin):
                         )
                 html += "</table>"
 
-            return format_html(html)
+            return mark_safe(html)
 
         except Exception as exc:
             # Use a simple f-string and mark_safe

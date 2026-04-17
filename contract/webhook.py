@@ -336,6 +336,12 @@ def alchemy_webhook(request):
                             milestone = project.milestones.get(milestone_no=milestone_index)
                             milestone.approved= True
                             milestone.save(update_fields=['approved'])
+
+                            email = project.organization.user.email
+                            subject=f"Milestone Approved"
+                            message=f"Milestone {milestone_index} of your campaign '{project.title}' has been approved for withdrawal. login to your account to withdraw the milestone"
+                            send_html_mail(email,subject,message)
+
                         except:
                             #print(f"{e} traceback: {traceback.format_exc()}")
                             ErrorLog.objects.create(

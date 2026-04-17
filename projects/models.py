@@ -232,12 +232,31 @@ class Expense(models.Model):
     description = models.TextField()
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
-    proof_pdf = models.FileField(upload_to='expenses/',blank=False, null=False) 
-
+    # document = models.FileField(upload_to='expenses/',blank=False, null=False) 
+    # type = models.CharField(max_length=25, choices=type, null=True, blank=True)
 
     def __str__(self):
         return self.milestone.title
 
+
+
+class ExpenseDocument(models.Model):
+    INVOICE = 'Invoice'
+    RECEIPT = 'Receipt' # Corrected spelling from 'Reciept'
+    
+    TYPE_CHOICES = [
+        (INVOICE, 'Invoice'),
+        (RECEIPT, 'Receipt'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, related_name='documents')
+    document = models.FileField(upload_to='expenses_docs/')
+    document_type = models.CharField(max_length=25, choices=TYPE_CHOICES, null=True, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.document_type} for {self.expense.id}"
 
 
 class Update(models.Model):

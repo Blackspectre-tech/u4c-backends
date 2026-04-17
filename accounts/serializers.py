@@ -315,10 +315,12 @@ class UploadAvatarSerializer(serializers.Serializer):
 
 class AccountActivationSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6, min_length=6,required=True)
+    email = serializers.EmailField()
 
     def validate(self, attrs):
         otp = attrs['otp']
-        user = validate_otp(otp)
+        email = attrs['email']
+        user = validate_otp(otp, email)
         attrs['user'] = user
         
         return attrs

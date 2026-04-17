@@ -9,6 +9,7 @@ from .views import (
     MilestoneImagesRetrieveUpdateDestroyAPIView,
     MilestoneRetrieveView,
     ExpensesCreateView,
+    ExpenseRetrieveUpdateDestroyAPIView,
     CommentCreateView,
     CommentRetrieveUpdateDestroyView,
     listCommentsByProjectsView,
@@ -31,6 +32,7 @@ urlpatterns = [
     path('milestones/<uuid:pk>/', MilestoneRetrieveView.as_view()),
     path('milestones/<uuid:pk>/post-images/', PostMilestoneImages.as_view()),
     path('milestones/<uuid:pk>/add-expenses/', ExpensesCreateView.as_view()),
+    path('expenses/<uuid:pk>/', ExpenseRetrieveUpdateDestroyAPIView.as_view()),
     path('milestones/images/<uuid:pk>/', MilestoneImagesRetrieveUpdateDestroyAPIView.as_view()),
     path('<uuid:pk>/donate/', MakeDonationsAPIView.as_view()),
 ]

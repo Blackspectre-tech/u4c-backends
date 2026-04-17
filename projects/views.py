@@ -15,7 +15,7 @@ from .serializers import (
     PostUpdateSerializer,
     MilestoneImagesSerializer,
     MilestoneSerializer,
-    ExpensesSerializer,
+    ExpenseSerializer,
     CommentSerializer,
     ProjectListSerializer,
     DonationTransactionSerializer,
@@ -177,15 +177,28 @@ class MilestoneRetrieveView(generics.RetrieveAPIView):
 
 
 class ExpensesCreateView(generics.CreateAPIView):
-    parser_classes=[NestedMultipartAndFileParser]
-    permission_classes = [permissions.IsAuthenticated,Is_Org,isOrgObjOwner]
-    serializer_class = ExpensesSerializer
+    parser_classes = [NestedMultipartAndFileParser] 
+    permission_classes = [permissions.IsAuthenticated, Is_Org, isOrgObjOwner]
+    serializer_class = ExpenseSerializer
     
     def perform_create(self, serializer):
         milestone = get_object_or_404(Milestone, id=self.kwargs['pk'])
-        org = milestone.project 
-        self.check_object_permissions(self.request, org)
+        project = milestone.project 
+        # Verify user owns the project before linking an expense to its milestone
+        self.check_object_permissions(self.request, project)
         serializer.save(milestone=milestone) 
+
+
+class ExpenseRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ExpenseSerializer
+    parser_classes = [NestedMultipartAndFileParser] 
+    permission_classes = [permissions.IsAuthenticated, Is_Org]
+
+    def get_queryset(self):
+        org = self.request.user.organization
+        return Expense.objects.filter(
+            milestone__project__organization=org
+        ).select_related('milestone__project')
 
 
 

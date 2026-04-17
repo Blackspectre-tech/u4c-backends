@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from decimal import Decimal
 from django.forms import ValidationError as FormValidationError
 from accounts.utils import project_approval_mail
-from .models import Project, Milestone, MilestoneImage, Donation
+from .models import Project, Milestone, MilestoneImage, Donation, Expense, ExpenseDocument
 from django import forms
 from django.forms.models import BaseInlineFormSet
 from django.utils.html import format_html
@@ -190,7 +190,7 @@ class ProjectAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         readonly = (
             'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
-            'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage', #'contract_id',
+            'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage', 'contract_id',
             'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','status','deployed_at',
         )
 
@@ -223,7 +223,7 @@ class ProjectAdmin(admin.ModelAdmin):
         Cached for 30 seconds.
         """
         if obj is None or not getattr(obj, "deployed", False) or obj.contract_id is None:
-            return format_html("<i>Not deployed on-chain</i>")
+            return mark_safe("<i>Not deployed on-chain</i>")
 
         contract_id = obj.contract_id
         cache_key = f"onchain_campaign_{contract_id}"
@@ -529,9 +529,30 @@ class MilestoneImagesInline(admin.StackedInline):
         return False
 
 
+class ExpensesInline(admin.StackedInline):
+    model = Expense
+    extra = 0
+    can_delete = False
+    fields = ['display_documents', 'description', 'date', 'created_at', ]
+    readonly_fields = ('milestone', 'description', 'date', 'created_at', 'display_documents')
+
+
+    def display_documents(self, instance):
+        if not instance.pk:
+            return ""
+        docs = instance.documents.all() # using your related_name='documents'
+        html = "<ul>"
+        for doc in docs:
+            html += f"<li>{doc.document_type}: <a href='{doc.document.url}' target='_blank'>View File</a></li>"
+        html += "</ul>"
+        return mark_safe(html)
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Milestone)
 class MilestoneAdmin(admin.ModelAdmin):
-    inlines = [MilestoneImagesInline]
+    inlines = [MilestoneImagesInline, ExpensesInline]
     list_display = (
         "project__title", 'project__organization__name','milestone_no', 'goal', 'progress',
     )

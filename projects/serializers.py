@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Project, Category, Milestone, 
     MilestoneImage, Expense, Update,
-    Comment,Donation,
+    Comment,Donation, ExpenseDocument,
     )
 from accounts.models import Transaction, Wallet
 from accounts.utils import resize_image
@@ -59,28 +59,125 @@ class MilestoneImagesSerializer(serializers.ModelSerializer):
 
 
 
-class ExpensesSerializer(serializers.ModelSerializer):
+# class ExpensesSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = Expense
+#         fields = ['amount_spent','description','date','document', 'type']
+#         extra_kwargs = { 
+#         'type': {'required': True},
+#         }  
+
+#     def validate_proof_pdf(self, value):
+#         if not value.name.endswith('.pdf'):
+#             raise serializers.ValidationError({"proof_pdf":"Only PDF files are allowed."})
+#         if value.size > 1024 * 1024:
+#             raise serializers.ValidationError({"proof_pdf":"File size cannot exceed 1MB."})
+#         return value
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ExpenseDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExpenseDocument
+        fields = ['id', 'document', 'document_type', 'uploaded_at']
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    # Field for viewing existing documents
+    documents = ExpenseDocumentSerializer(many=True, read_only=True)
+    
+    # Virtual fields for uploading via this endpoint
+    document = serializers.FileField(write_only=True, required=False)
+    document_type = serializers.ChoiceField(
+        choices=ExpenseDocument.TYPE_CHOICES, 
+        write_only=True, 
+        required=False
+    )
 
     class Meta:
         model = Expense
-        fields = ['amount_spent','description','date','proof_pdf',]
-        extra_kwargs = {
-        'proof_pdf_url': {'read_only': True},
-        }  
+        fields = [
+            'id', 'amount_spent', 'milestone', 'description', 
+            'date', 'document', 'document_type', 'documents'
+        ]
+        read_only_fields = ['milestone', 'id']
 
-    def validate_proof_pdf(self, value):
-        if not value.name.endswith('.pdf'):
-            raise serializers.ValidationError({"proof_pdf":"Only PDF files are allowed."})
-        if value.size > 1024 * 1024:
-            raise serializers.ValidationError({"proof_pdf":"File size cannot exceed 1MB."})
-        return value
+    def create(self, validated_data):
+        doc_file = validated_data.pop('document', None)
+        doc_type = validated_data.pop('document_type', None)
+        
+        expense = Expense.objects.create(**validated_data)
+        
+        if doc_file:
+            ExpenseDocument.objects.create(
+                expense=expense, 
+                document=doc_file, 
+                document_type=doc_type
+            )
+        return expense
+
+    def update(self, instance, validated_data):
+        doc_file = validated_data.pop('document', None)
+        doc_type = validated_data.pop('document_type', None)
+
+        # 1. Update the main Expense fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # 2. Handle Document Overwriting
+        if doc_file:
+            # We look for a document linked to THIS expense with THIS type
+            # defaults= values are what get updated if a match is found
+            ExpenseDocument.objects.update_or_create(
+                expense=instance, 
+                document_type=doc_type,
+                defaults={'document': doc_file}
+            )
+            
+        return instance
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 class MilestoneSerializer(serializers.ModelSerializer):
     images = MilestoneImagesSerializer(read_only=True, many=True)
-    expenses = ExpensesSerializer(read_only=True, many=True)
+    expenses = ExpenseSerializer(read_only=True, many=True)
     percentage = serializers.IntegerField()
     goal = serializers.DecimalField(required=False,decimal_places=2,max_digits=14)
     milestone_no = serializers.IntegerField(required=False)

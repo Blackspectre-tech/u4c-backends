@@ -132,17 +132,15 @@ def validate_otp(otp, email, minutes=5):
 
 def send_account_activation_otp(email, otp):
     subject = "Your OTP for your account Activation"
-    message = f"Your OTP is: {otp}.  It is valid for 5 minutes."
     recipient_list = [email]
-    context={'title':'Account Activation','message': message,'year': datetime.now().year}
+    context={'title':'Account Activation','otp': otp,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
     send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 def send_reset_password_otp(email, otp):
     subject = "Your OTP for Password Reset"
-    message = f"Your OTP is: {otp}. It is valid for 5 minutes"
     recipient_list = [email]
-    context={'title':'Password Reset','message': message,'year': datetime.now().year}
+    context={'title':'Password Reset','otp': otp,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
     send_email_in_thread(subject,context,html_template_path,recipient_list)
 
@@ -160,15 +158,15 @@ def project_approval_mail(project, reason=None, approved=True):
 
         message = f"""
             {project.organization.name},
-            Your campaign “{project.title}” has been approved. """
+            Your campaign “{project.title}” has been approved. Click the button below to make it live and start receiving donations"""
         link = f"https://united-4-change.org/initialize-campaign?id={project.id}"
         title = 'Campaign Approved'
         context={'title':title,'message': message,'link': link ,'year': datetime.now().year}
     else:   
         subject = f"Your campaign “{project.title}” was disapproved"
         message = f"""
-            {project.organization.name},"
-            Your campaign “{project.title}” was disapproved for this reason:"
+            {project.organization.name},
+            Your campaign “{project.title}” was disapproved for the following reasons:"
 
             {reason}"""
         title = 'Campaign Disapproved'

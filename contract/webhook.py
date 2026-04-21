@@ -271,22 +271,6 @@ def alchemy_webhook(request):
                                 notes=traceback.format_exc()
                             ) 
 
-                # elif event_name == 'MilestoneAdded':
-                #     try:
-                #         campaign_id = event_args['id']
-                #         milestone_index = event_args['index']
-                #         amount = Decimal(event_args['amount']) / (Decimal(10) ** 6)
-                #         project = Project.objects.get(contract_id = campaign_id)
-                #         milestone = project.milestones.get(goal=amount.quantize(Decimal('0.01')))
-                #         milestone.contract_index=milestone_index
-                #         milestone.save(update_fields=['contract_index'])
-                #     except Exception as e:
-                #             #print(f"{e} traceback: {traceback.format_exc()}")
-                #             ContractLog.objects.create(
-                #                 data=data,
-                #                 error=str(e),
-                #                 notes=traceback.format_exc()
-                #             ) 
 
                 elif event_name == 'CampaignFinalized':
                         try:

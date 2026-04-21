@@ -8,10 +8,11 @@ from rest_framework.response import Response
 from drf_nested_multipart.parser import NestedMultipartAndFileParser
 
 from accounts.permissions import Is_Org, Is_Donor,isOrgObjOwner,isDonorObjOwner
-from .models import Project, Update,Expense, Milestone,Organization,Comment, MilestoneImage, Donation
+from .models import Project, Update,Expense, Milestone,Organization,Comment, MilestoneImage, ProjectImage
 from .paginations import StandardResultsSetPagination
 from .serializers import (
     ProjectSerializer,
+    ProjectImagesSerializer,
     PostUpdateSerializer,
     MilestoneImagesSerializer,
     MilestoneSerializer,
@@ -150,26 +151,6 @@ class PostUpdateView(generics.CreateAPIView):
         serializer.save(project=project)
 
 
-class PostMilestoneImages(generics.GenericAPIView):
-    parser_classes=[parsers.MultiPartParser]
-    permission_classes = [
-        permissions.IsAuthenticated,
-        Is_Org]
-    serializer_class = MilestoneImagesSerializer
-    
-    def post(self, request, **kwargs):
-        print (request.data)
-        milestone = get_object_or_404(Milestone, pk=kwargs['pk'])
-        if milestone.project.organization != request.user.organization:
-            raise PermissionDenied('only project creators can update images')
-        serializer = self.get_serializer(data = request.data, context={'milestone':milestone})
-        serializer.is_valid(raise_exception=True)
-        saved_milestone = serializer.save()  # this will be the milestone instance
-        out = MilestoneSerializer(saved_milestone)
-        return Response(out.data, status=status.HTTP_201_CREATED)
-        #return Response(serializer.data,status=status.HTTP_201_CREATED)
-
-        
 class MilestoneRetrieveView(generics.RetrieveAPIView):
     queryset = Milestone.objects.all()
     serializer_class =MilestoneSerializer
@@ -240,6 +221,84 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+class PostProjectImages(generics.GenericAPIView):
+    parser_classes=[parsers.MultiPartParser]
+    permission_classes = [
+        permissions.IsAuthenticated,
+        Is_Org]
+    serializer_class = ProjectImagesSerializer
+    
+    def post(self, request, **kwargs):
+        # print (request.data)
+        project = get_object_or_404(Project, pk=kwargs['pk'])
+        if project.organization != request.user.organization:
+            raise PermissionDenied('only project creators can update images')
+        serializer = self.get_serializer(data = request.data, context={'project':project})
+        serializer.is_valid(raise_exception=True)
+        saved_project = serializer.save()  # this will be the projecct instance
+        out = ProjectSerializer(saved_project)
+        return Response(out.data, status=status.HTTP_201_CREATED)
+        #return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+        
+
+
+
+
+class projectImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ProjectImage.objects.all()
+    serializer_class = ProjectImagesSerializer
+    permission_classes = [permissions.IsAuthenticated,Is_Org]
+    parser_classes = [parsers.MultiPartParser]
+    lookup_field = 'pk'
+    
+    def perform_destroy(self, instance):
+        if instance.project.organization != self.request.user.organization:
+            raise PermissionDenied('you are not permited to delete this item')
+        return super().perform_destroy(instance)
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        if instance.project.organization != self.request.user.organization:
+            raise PermissionDenied('you are not permited to update this item')
+        
+        return super().perform_update(serializer)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class PostMilestoneImages(generics.GenericAPIView):
+    parser_classes=[parsers.MultiPartParser]
+    permission_classes = [
+        permissions.IsAuthenticated,
+        Is_Org]
+    serializer_class = MilestoneImagesSerializer
+    
+    def post(self, request, **kwargs):
+        # print (request.data)
+        milestone = get_object_or_404(Milestone, pk=kwargs['pk'])
+        if milestone.project.organization != request.user.organization:
+            raise PermissionDenied('only project creators can update images')
+        serializer = self.get_serializer(data = request.data, context={'milestone':milestone})
+        serializer.is_valid(raise_exception=True)
+        saved_milestone = serializer.save()  # this will be the milestone instance
+        out = MilestoneSerializer(saved_milestone)
+        return Response(out.data, status=status.HTTP_201_CREATED)
+        #return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+    
 
 class MilestoneImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MilestoneImage.objects.all()

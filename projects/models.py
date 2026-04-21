@@ -136,6 +136,40 @@ class Project(TimeStamps, models.Model):
 
 
 
+class ProjectImage(TimeStamps, models.Model):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name= 'images')
+    image = ProcessedImageField(
+        upload_to='projects/',
+        processors=[ResizeToFit(1024, 1024)],
+        format='JPEG',
+        options={'quality': 70},
+        blank=False, null=False
+    )
+
+    def __str__(self):
+        return self.project.title
+    
+
+    def image_preview(self):
+        if self.image:
+            return format_html('<img src="{}" style="max-height: 200px;" />', self.image.url)
+        return "No Image"
+
+    image_preview.short_description = "Image Preview"
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+
+
+
+
+
+
+
 class Milestone(TimeStamps, models.Model):
 
     ACTIVE = 'Active'
@@ -197,7 +231,7 @@ def milestone_image_path(instance, filename):
     return f'milestone-images/{project_slug}/{milestone.milestone_no}/{random_name}.{extension}'
 
 
-class MilestoneImage(models.Model):
+class MilestoneImage(TimeStamps, models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, related_name= 'images')
@@ -213,6 +247,9 @@ class MilestoneImage(models.Model):
     def __str__(self):
         return self.milestone.title
     
+    class Meta:
+        ordering = ["-created_at"]
+
 
     def image_preview(self):
         if self.image:
@@ -237,6 +274,9 @@ class Expense(models.Model):
 
     def __str__(self):
         return self.milestone.title
+    
+    class Meta:
+        ordering = ["-date"]
 
 
 
@@ -257,6 +297,11 @@ class ExpenseDocument(models.Model):
 
     def __str__(self):
         return f"{self.document_type} for {self.expense.id}"
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+
+
 
 
 class Update(models.Model):
@@ -319,6 +364,9 @@ class Donation(TimeStamps, models.Model):
             return None
         return self.wallet.address
 
+    
+
+
 
 
 class Comment(TimeStamps,models.Model):
@@ -329,7 +377,7 @@ class Comment(TimeStamps,models.Model):
     details = models.TextField()
 
     class Meta:
-        ordering = ["-updated_at"]
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.donor.username

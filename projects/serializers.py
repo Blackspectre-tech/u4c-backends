@@ -3,6 +3,7 @@ from .models import (
     Project, Category, Milestone, 
     MilestoneImage, Expense, Update,
     Comment,Donation, ExpenseDocument,
+    ProjectImage,
     )
 from accounts.models import Transaction, Wallet
 from accounts.utils import resize_image
@@ -24,7 +25,7 @@ class MilestoneImagesSerializer(serializers.ModelSerializer):
         model = MilestoneImage
         fields = ['id','image', 'images']
         extra_kwargs = {
-            'image': {'read_only': True},
+            'image': {'required': False},
             'id': {'read_only': True},
         }
 
@@ -55,47 +56,6 @@ class MilestoneImagesSerializer(serializers.ModelSerializer):
 
         return milestone
     
-
-
-
-
-# class ExpensesSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Expense
-#         fields = ['amount_spent','description','date','document', 'type']
-#         extra_kwargs = { 
-#         'type': {'required': True},
-#         }  
-
-#     def validate_proof_pdf(self, value):
-#         if not value.name.endswith('.pdf'):
-#             raise serializers.ValidationError({"proof_pdf":"Only PDF files are allowed."})
-#         if value.size > 1024 * 1024:
-#             raise serializers.ValidationError({"proof_pdf":"File size cannot exceed 1MB."})
-#         return value
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -158,19 +118,6 @@ class ExpenseSerializer(serializers.ModelSerializer):
             )
             
         return instance
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -250,6 +197,69 @@ class DonationSerializer(serializers.ModelSerializer):
 
 
 
+
+
+
+
+
+
+
+
+
+
+class ProjectImagesSerializer(serializers.ModelSerializer):
+    images = serializers.ListField(
+        child=serializers.ImageField(max_length=1000000,allow_empty_file=False),
+        required=True, write_only=True,allow_empty=False,max_length=5,)
+        
+    class Meta:
+        model = ProjectImage
+        fields = ['id','image', 'images']
+        extra_kwargs = {
+            'image': {'required': False},
+            'id': {'read_only': True},
+        }
+
+    def create(self, validated_data):
+        images = validated_data.pop('images', [])
+        project = self.context.get('project')
+        instances = []
+        existing_images = project.images.all()
+        if images:
+            with transaction.atomic():
+            
+                if existing_images:
+                    existing_images.delete()
+
+                for img in images:
+
+                    # try:
+                    #     image = resize_image(img)
+                    # except ValidationError as e:
+                    #     raise serializers.ValidationError({'image': e.message})
+
+                    instances.append(ProjectImage(
+                        project=project,
+                        image=img,
+                    ))
+                
+                ProjectImage.objects.bulk_create(instances)
+
+        return project
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class ProjectSerializer(serializers.ModelSerializer):
 
     categories = serializers.ListField(
@@ -258,13 +268,13 @@ class ProjectSerializer(serializers.ModelSerializer):
     )
     categories_display = serializers.SerializerMethodField(read_only=True)
     milestones = MilestoneSerializer(many=True, required=True)
-    # donations = serializers.SerializerMethodField()
-    # comments = CommentSerializer(many=True,read_only=True)
+    extra_images = ProjectImagesSerializer(source='images', read_only=True, many=True)
+    
     class Meta:
         model = Project
         fields = [
             'id', 'organization_id','contract_id','title', 'categories_display', 'goal', 'country', 'address',
-            'description', 'categories', 'image', 'summary', 'duration_in_days','wallet_address',
+            'description', 'categories', 'image', 'extra_images', 'summary', 'duration_in_days','wallet_address',
             'milestones','progress','approval_status','status','created_at','deployed_at','deployed','deadline',
         ]
         extra_kwargs = {
@@ -355,23 +365,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         return [cat.name for cat in obj.categories.all()]
     
 
-    # #to get donations per wallet, and ensure only donation instances with wallet address get passed
-    # @extend_schema_field(serializers.ListField(child=DonationSerializer()))
-    # def get_donations(self, obj):
-    #     # donations__wallet__users__is_organization=False
-    #     #donations = obj.donations.filter(refunded=False, wallet__isnull=False,wallet__users__is_organization=False)
-    #     donations = obj.donations.filter(
-    #         refunded=False,
-    #         wallet__isnull=False,
-    #         wallet__users__is_organization=False
-    #     ).distinct()
-    #     if donations:
-    #         return DonationSerializer(donations, many=True).data
-    #     else:
-    #         return []
-
-
-
     def create(self, validated_data, **kwargs):
         try:
             categories_data = validated_data.pop('categories', None)
@@ -393,13 +386,6 @@ class ProjectSerializer(serializers.ModelSerializer):
                         "milestones": f"Invalid milestone data: {str(e)}"
                     })
 
-                # if image:
-                #     try:
-                #         image = resize_image(image)
-                #         project.image = image
-                #     except ValidationError as e:
-                #         raise serializers.ValidationError({'image': e.message})
-
                 project.save()
             return project
         
@@ -417,12 +403,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         # new_image = validated_data.get('image')
         milestones_data = validated_data.pop('milestones', None)
         categories = validated_data.pop('categories', [])
-
-        # if new_image:
-        #     try:
-        #         validated_data['image'] = resize_image(new_image)
-        #     except ValidationError as e:
-        #         raise serializers.ValidationError({'image': e.message})
 
         with transaction.atomic():
             if milestones_data is not None:

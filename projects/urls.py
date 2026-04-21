@@ -16,6 +16,8 @@ from .views import (
     MyProjectListView,
     MakeDonationsAPIView,
     ListDonationsView,
+    projectImagesRetrieveUpdateDestroyAPIView,
+    PostProjectImages,
 )
 
 urlpatterns = [
@@ -34,5 +36,7 @@ urlpatterns = [
     path('milestones/<uuid:pk>/add-expenses/', ExpensesCreateView.as_view()),
     path('expenses/<uuid:pk>/', ExpenseRetrieveUpdateDestroyAPIView.as_view()),
     path('milestones/images/<uuid:pk>/', MilestoneImagesRetrieveUpdateDestroyAPIView.as_view()),
+    path('images/<uuid:pk>/', projectImagesRetrieveUpdateDestroyAPIView.as_view()),
+    path('<uuid:pk>/images/add', PostProjectImages.as_view()),
     path('<uuid:pk>/donate/', MakeDonationsAPIView.as_view()),
 ]

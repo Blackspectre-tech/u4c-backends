@@ -37,6 +37,6 @@ urlpatterns = [
     path('expenses/<uuid:pk>/', ExpenseRetrieveUpdateDestroyAPIView.as_view()),
     path('milestones/images/<uuid:pk>/', MilestoneImagesRetrieveUpdateDestroyAPIView.as_view()),
     path('images/<uuid:pk>/', projectImagesRetrieveUpdateDestroyAPIView.as_view()),
-    path('<uuid:pk>/images/add', PostProjectImages.as_view()),
+    path('<uuid:pk>/images/add/', PostProjectImages.as_view()),
     path('<uuid:pk>/donate/', MakeDonationsAPIView.as_view()),
 ]

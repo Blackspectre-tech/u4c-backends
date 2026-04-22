@@ -73,7 +73,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
     document_type = serializers.ChoiceField(
         choices=ExpenseDocument.TYPE_CHOICES, 
         write_only=True, 
-        required=False
+        required=True
     )
 
     class Meta:

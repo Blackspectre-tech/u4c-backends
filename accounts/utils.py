@@ -184,13 +184,13 @@ def organization_approval_mail(organization, reason=None, approved=True):
         message = (
             f"We are pleased to inform you that Your Organization “{organization.name}” KYC has been Completed, you can now create Campaigns in our platform"
             )
-        title = 'Organization KYC Verification Complete'
+        title = 'KYC Verification Complete'
     else:   
         subject = f"Your Organization “{organization.name}” KYC verification Failed"
         message = (
             f"the vreification of your Organization “{organization.name}” KYC documents failed, log-in to your NGO account for more details"
             )
-        title = 'Organization KYC Verification Failed'
+        title = 'KYC Verification Failed'
     recipient_list = [organization.user.email]
     html_template_path="email/mail_template.html",
     context={'reason': reason,'title':title,'message': message,'year': datetime.now().year}

@@ -285,3 +285,6 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
     "UPDATE_LAST_LOGIN": True,
 }
+
+
+FREE_TX_LIMIT = 10

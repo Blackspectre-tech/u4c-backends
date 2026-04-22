@@ -206,9 +206,13 @@ class DonorSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "anonymous",
+            "gas_free_tx",
+
         ]
         extra_kwargs = {
             'id': {'read_only': True},
+            'gas_free_tx': {'read_only': True},
+
         }
 
     

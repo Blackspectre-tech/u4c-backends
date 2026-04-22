@@ -9,6 +9,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 import uuid
 from django.utils.html import format_html
+from core.settings import FREE_TX_LIMIT
 
 
 # Create your models here.
@@ -120,7 +121,7 @@ class User(AbstractUser):
     is_organization = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     wallets = models.ManyToManyField(Wallet,related_name='users', blank=True)
-
+    updated_at = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -135,6 +136,8 @@ class User(AbstractUser):
     def all_wallets(self):
         return [w.address for w in self.wallets.all()]
     
+    class Meta:
+        ordering = ['-updated_at']
 
 
 
@@ -149,6 +152,7 @@ class Donor(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     anonymous = models.BooleanField(default=False)
+    tx_count = models.PositiveIntegerField(default=0)
     
     @property
     def fullname(self):
@@ -164,7 +168,10 @@ class Donor(models.Model):
     def __str__(self):
         return f"{self.username}"
 
-
+    @property
+    def gas_free_tx(self):
+        return self.tx_count - FREE_TX_LIMIT if self.tx_count <= FREE_TX_LIMIT else 0
+    
 
 class Organization(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

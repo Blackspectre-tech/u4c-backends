@@ -145,8 +145,9 @@ class PostUpdateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Update
-        fields = ['title', 'details','image','created_at']
+        fields = ['id', 'title', 'details','image','created_at']
         extra_kwargs = {
+            'id': {'read_only': True},
             'created_at': {'read_only': True},
             'image': {'required': True},
         }

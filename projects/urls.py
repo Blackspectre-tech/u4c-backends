@@ -18,6 +18,8 @@ from .views import (
     ListDonationsView,
     projectImagesRetrieveUpdateDestroyAPIView,
     PostProjectImages,
+    ListUpdateView,
+    UpdatesEditAPIView
 )
 
 urlpatterns = [
@@ -30,6 +32,8 @@ urlpatterns = [
     path('<uuid:pk>/comments/', listCommentsByProjectsView.as_view()),
     path('<uuid:pk>/comments/add/', CommentCreateView.as_view()),
     path('<uuid:pk>/post-update/', PostUpdateView.as_view()),
+    path('<uuid:pk>/updates/', ListUpdateView.as_view()),
+    path('updates/<uuid:pk>/', UpdatesEditAPIView.as_view()),
     path('comments/<uuid:pk>/', CommentRetrieveUpdateDestroyView.as_view()),
     path('milestones/<uuid:pk>/', MilestoneRetrieveView.as_view()),
     path('milestones/<uuid:pk>/post-images/', PostMilestoneImages.as_view()),

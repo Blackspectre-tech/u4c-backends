@@ -151,6 +151,33 @@ class PostUpdateView(generics.CreateAPIView):
         serializer.save(project=project)
 
 
+class ListUpdateView(generics.ListAPIView):
+    pagination_class = StandardResultsSetPagination
+    serializer_class = PostUpdateSerializer
+    
+    def get_queryset(self):
+        project = get_object_or_404(Project,pk=self.kwargs['pk'])
+        updates = project.updates.all()
+        return updates
+    
+
+class UpdatesEditAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PostUpdateSerializer
+    parser_classes = [NestedMultipartAndFileParser] 
+    permission_classes = [permissions.IsAuthenticated, Is_Org]
+    lookup_field = 'pk'
+
+    def get_queryset(self):
+        org = self.request.user.organization
+        return Update.objects.filter(
+            project__organization=org
+        ).select_related('project')
+    
+    
+
+
+
+
 class MilestoneRetrieveView(generics.RetrieveAPIView):
     queryset = Milestone.objects.all()
     serializer_class =MilestoneSerializer

@@ -232,7 +232,10 @@ def alchemy_webhook(request):
                                     event = Transaction.PLEDGE,
                                     )
                                 
-                                wallet.users.first().update(tx_count=F('tx_count') + 1)
+                                user = wallet.users.first()
+                                user.tx_count = F('tx_count') + 1
+                                user.save(update_fields=['tx_count'])
+
 
                                 # transaction.status = Transaction.SUCCESSFUL
                                 # transaction.tx_hash = logs[0]['transaction'].get('hash')

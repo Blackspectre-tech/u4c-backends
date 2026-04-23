@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from projects.models import Project,Milestone,Donation
 from decimal import Decimal
 from website.models import ErrorLog
-from accounts.models import Transaction,Wallet
+from accounts.models import Transaction,Wallet, Donor
 import datetime
 import traceback
 from django.utils import timezone
@@ -232,9 +232,8 @@ def alchemy_webhook(request):
                                     event = Transaction.PLEDGE,
                                     )
                                 
-                                user = wallet.users.first()
-                                user.tx_count = F('tx_count') + 1
-                                user.save(update_fields=['tx_count'])
+                                donor_id = wallet.users.first().donor.id
+                                Donor.objects.filter(id=donor_id).update(tx_count=F('tx_count') + 1)
 
 
                                 # transaction.status = Transaction.SUCCESSFUL

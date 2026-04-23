@@ -81,7 +81,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     password2 = serializers.CharField(write_only=True, required=True)
 
-    # wallets = serializers.SerializerMethodField(read_only=True)
+    # all_wallets = serializers.SlugRelatedField(
+    #     many=True,
+    #     read_only=True,
+    #     slug_field='address',
+    #     source='wallets' # Points to the ManyToMany field
+    # )
 
     class Meta:
         model = User

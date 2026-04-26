@@ -5,10 +5,10 @@
 
   {% if flag %}
     <div style="max-width:600px; margin:2rem auto;">
-    <h1 style="color:#dc3545;">❌ Flag Project: {{ project.title }}</h1>
-    <p>Please tell us why you intend to flag this project. This will be emailed to <strong>{{ project.organization.user.email }}</strong>.</p>
+    <h1 style="color:#dc3545;">❌ Halt Campaign: {{ project.title }}</h1>
+    <p>Please tell us why you intend to halt this campaign. This will be emailed to <strong>{{ project.organization.user.email }}</strong>. Keep in mind this action cannot be reversed</p>
 
-    <form method="post" action="{% url 'admin:flag_project_url' project.id %}">
+    <form method="post" action="{% url 'admin:halt_campaign_url' project.id %}">
       {% csrf_token %}
       <textarea name="reason"
                 rows="6"
@@ -26,8 +26,8 @@
   </div>
   {% else %}
     <div style="max-width:600px; margin:2rem auto;">
-    <h1 style="color:#dc3545;">❌ Disapprove Project: {{ project.title }}</h1>
-    <p>Please tell us why you intend to disapprove this project. This will be sent to the NGO'S mail: <strong>{{ project.organization.user.email }}</strong>.</p>
+    <h1 style="color:#dc3545;">❌ Disapprove Campaign: {{ project.title }}</h1>
+    <p>Please tell us why you intend to disapprove this campaign. This will be sent to the NGO'S mail: <strong>{{ project.organization.user.email }}</strong>.</p>
 
     <form method="post" action="{% url 'admin:projects_project_deny' project.id %}">
       {% csrf_token %}

@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from decimal import Decimal
 from django.forms import ValidationError as FormValidationError
-from accounts.utils import project_approval_mail
+from accounts.utils import project_approval_mail, send_html_mail
 from .models import Project, Milestone, MilestoneImage, Donation, Expense, ExpenseDocument
 from django import forms
 from django.forms.models import BaseInlineFormSet
@@ -489,15 +489,47 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
     
-    def halt_campaign_onchain(self, request, pk):
+    def halt_campaign_onchain(self, request, pk, flag = True):
         project = get_object_or_404(Project, pk=pk)
+
         if project.deployed:
+
+            if project.status == Project.Cancelled:
+                messages.warning(request, "Campaign already halted.")
+                return redirect(reverse('admin:projects_project_change', args=[pk]))
+
+            if request.method == 'GET':
+                # Show a standalone form
+                return render(request, 'admin/project/deny_project_form.html', {'project': project, 'flag':flag})
+
+            # POST: process to halt campaign
+            reason = request.POST.get('reason', '').strip()
+            if not reason:
+                messages.error(request, "You must provide a reason in order to halt this campaign.")
+                return redirect(reverse('admin:projects_project_deny', args=[pk]))
+
+
+        
             if project.milestones.filter(approved=True).exists():
                 try:
                     campaign_id = project.contract_id
                     tx_hash = send_owner_tx(contract.functions.haltCampaign(campaign_id))
                     
-                    messages.success(request, f"Campaign Halted, tx_hash: {tx_hash}")
+
+                    try:
+                        
+                        email = project.organization.user.email
+                        subject=f"Campaign Update Notification"
+                        title = "Campaign Halted"
+                        message=f"""Your campaign “{project.title}”  has been halted due to the following reasons:
+                                {reason}
+                                """
+                        send_html_mail(email,subject,message,title)
+
+                    except Exception as e:
+                        messages.error(request, f"Campaign Halted but email failed: {e}")
+                    
+                    messages.success(request, f"Campaign Halted and email sent, tx_hash: {tx_hash}")
                     return redirect(reverse('admin:projects_project_change', args=[pk]))
                 
                 except Exception as e:

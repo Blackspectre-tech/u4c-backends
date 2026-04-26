@@ -197,8 +197,10 @@ def alchemy_webhook(request):
 
 
                                     email = pledged_project.organization.user.email
-                                    subject=f"Campaign Milestone Reached"
-                                    message=f"Milestone {active_milestone.milestone_no} of your campaign '{pledged_project.title}' has been completed"
+                                    subject=f"A Milestone Has Been Achieved"
+                                    message=f"""Milestone {active_milestone.milestone_no} of your campaign “{pledged_project.title}” has been  successfully completed and verified.
+                                                You can view the update on your dashboard.
+                                            """
                                     send_html_mail(email,subject,message)
 
 
@@ -256,8 +258,10 @@ def alchemy_webhook(request):
                                 )
                             
                             email = wallet.users.first().email
-                            subject=f"Donation Successful"
-                            message=f"Your donation of {net_amount} USDC to the campaign '{pledged_project.title}' was successful"
+                            subject=f"Your Donation Was Successful"
+                            message=f"""
+                            Your donation of {net_amount} USDC to the campaign “{pledged_project.title}” has been successfully processed. 
+                            Thank you for your contribution"""
                             send_html_mail(email,subject,message)
 
 
@@ -327,8 +331,11 @@ def alchemy_webhook(request):
 
                             email = project.organization.user.email
                             subject=f"Milestone Approved"
-                            message=f"Milestone {milestone_index} of your campaign '{project.title}' has been approved for withdrawal. login to your account to withdraw the milestone"
-                            send_html_mail(email,subject,message)
+                            title = "Progress Verified"
+                            message=f"""Milestone {milestone_index} for your campaign '{project.title}'  has been successfully reviewed and approved.
+                                        Funds tied to this stage have now been released.You can continue tracking updates and upcoming milestones on your dashboard.
+                                    """
+                            send_html_mail(email,subject,message,title)
 
                         except:
                             #print(f"{e} traceback: {traceback.format_exc()}")

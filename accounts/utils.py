@@ -131,9 +131,14 @@ def validate_otp(otp, email, minutes=5):
 
 
 def send_account_activation_otp(email, otp):
-    subject = "Your OTP for your account Activation"
+    subject = "Activate Your U4C Account"
     recipient_list = [email]
-    context={'title':'Account Activation','otp': otp,'year': datetime.now().year}
+    message = f"""
+            Thank you for joining United4Change. You’re one step away from accessing a new era of
+            transparent, blockchain-powered giving.
+            Use the OTP below to activate your account and begin your journey"""
+
+    context={'title':'Welcome to U4C , Let’s Get Started','otp': otp, message : message,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
     send_email_in_thread(subject,context,html_template_path,recipient_list)
 
@@ -145,9 +150,11 @@ def send_reset_password_otp(email, otp):
     send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 #general mail function
-def send_html_mail(email,subject,message, support=True):
+def send_html_mail(email,subject,message, title=None, support=True):
+    if title is None:
+        title = subject
     recipient_list = [email]
-    context={'title':subject,'message': message,'year': datetime.now().year}
+    context={'title':title,'message': message,'year': datetime.now().year}
     html_template_path="email/mail_template.html",
     send_email_in_thread(subject,context,html_template_path,recipient_list,support)
 
@@ -163,13 +170,13 @@ def project_approval_mail(project, reason=None, approved=True):
         title = 'Campaign Approved'
         context={'title':title,'message': message,'link': link ,'year': datetime.now().year}
     else:   
-        subject = f"Your campaign “{project.title}” was disapproved"
+        subject = f"Update on Your Campaign Submission"
         message = f"""
-            {project.organization.name},
-            Your campaign “{project.title}” was disapproved for the following reasons:"
+            Thank you for submitting your campaign, “{project.title}”. Unfortunately, it was not approved at this time.
+            Please review the details below, make necessary updates, and feel free to resubmit.
 
             {reason}"""
-        title = 'Campaign Disapproved'
+        title = 'Campaign Not Approved'
         context={'title':title,'message': message,'year': datetime.now().year}
     recipient_list = [project.organization.user.email]
     
@@ -180,20 +187,26 @@ def project_approval_mail(project, reason=None, approved=True):
 
 def organization_approval_mail(organization, reason=None, approved=True):
     if approved:
-        subject = f"“{organization.name}” KYC Verification Complete"
-        message = (
-            f"We are pleased to inform you that Your Organization “{organization.name}” KYC has been Completed, you can now create Campaigns in our platform"
-            )
-        title = 'KYC Verification Complete'
+        subject = f"Your Organization Has Been Approved"
+        message = f""" 
+            Great news! or Congratulations! Your organization “{organization.name}” has been successfully verified on U4C.
+            You can now create campaigns, receive donations, and engage with donors transparently
+            on the platform.
+            """
+            
+        title = 'You’re Now Verified on U4C'
     else:   
-        subject = f"Your Organization “{organization.name}” KYC verification Failed"
-        message = (
-            f"the vreification of your Organization “{organization.name}” KYC documents failed, log-in to your NGO account for more details"
-            )
-        title = 'KYC Verification Failed'
+        subject = f"Update on Your Organization Application"
+        message = f"""
+        Thank you for your application. At this time, we’re unable to approve your organization “{organization.name}”.
+        This may be due to incomplete or unverifiable information. You’re welcome to review your
+        submission and reapply.  
+        """
+            
+        title = ' Additional Information Required'
     recipient_list = [organization.user.email]
     html_template_path="email/mail_template.html",
-    context={'reason': reason,'title':title,'message': message,'year': datetime.now().year}
+    context={'title':title,'message': message,'year': datetime.now().year}
     send_email_in_thread(subject,context,html_template_path,recipient_list)
 
 

@@ -234,7 +234,7 @@ def alchemy_webhook(request):
                                     event = Transaction.PLEDGE,
                                     )
                                 
-                                donor_id = wallet.users.first().donor.id
+                                donor_id = wallet.users.filter(is_organization=False).first().donor.id
                                 Donor.objects.filter(id=donor_id).update(tx_count=F('tx_count') + 1)
 
 

@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum
 from accounts.models import Organization, Donor
 from tinymce.models import HTMLField
 from accounts.utils import html_cleaner
@@ -11,6 +12,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 import uuid
 from django.utils.text import slugify
+from decimal import Decimal
 # Create your models here.
 
 
@@ -207,11 +209,30 @@ class Milestone(TimeStamps, models.Model):
     class Meta:
         ordering = ["milestone_no"]
     
+    @property
+    def withdrawable_percentage(self):
+        if self.milestone_no == 1:
+            return f"{self.percentage}%"
+        
+        # Calculate the sum directly in the database
+        cumulative = self.project.milestones.filter(
+            milestone_no__lt=self.milestone_no
+        ).aggregate(total=Sum('percentage'))['total'] or 0
+        
+        return f"{self.percentage - cumulative}%"
+
+        # return f'{(self.project.total_funds / self.percentage) * 100:.2f}%'
+    
 
     @property
-    def progress(self):
-        return f'{(self.funds / self.goal) * 100:.2f}%'
-    
+    def withdrawable_amount(self):
+        # Remove the '%' sign and convert back to a float or integer
+        percentage_str = self.withdrawable_percentage.replace('%', '')
+        decimal_percentage = Decimal(percentage_str) / 100
+        
+        return (self.project.total_funds or 0) * decimal_percentage
+
+
     @property
     def contract_id(self):
         return self.project.contract_id

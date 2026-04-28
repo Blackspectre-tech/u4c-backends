@@ -103,7 +103,7 @@ class MilestoneInline(admin.StackedInline):
     def get_fields(self, request, obj=None):
         if obj:  # editing existing object
             return (
-                'milestone_no', 'title', 'formatted_details', 'goal', 'status','approved'
+                'milestone_no', 'title', 'formatted_details', 'withdrawable_percentage', 'withdrawable_amount', 'status','approved'
             )
         else:  # adding new object
             return (
@@ -114,7 +114,7 @@ class MilestoneInline(admin.StackedInline):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return (
-                'milestone_no', 'goal', 'title', 'details', 'formatted_details','status','approved'
+                'milestone_no', 'withdrawable_amount', 'title', 'details', 'formatted_details','status','approved', 'withdrawable_percentage',
             )
         else:  # Adding a new object
                 return ()
@@ -586,7 +586,7 @@ class ExpensesInline(admin.StackedInline):
 class MilestoneAdmin(admin.ModelAdmin):
     inlines = [MilestoneImagesInline, ExpensesInline]
     list_display = (
-        "project__title", 'project__organization__name','milestone_no', 'goal', 'progress',
+        "project__title", 'project__organization__name','milestone_no', 'goal',
     )
     search_fields = ('project__title',)
 

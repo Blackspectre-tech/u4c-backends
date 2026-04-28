@@ -195,16 +195,6 @@ def alchemy_webhook(request):
                                     active_milestone.status = Milestone.COMPLETED
                                     active_milestone.save(update_fields=['status'])
 
-
-
-                                    email = pledged_project.organization.user.email
-                                    subject=f"A Milestone Has Been Achieved"
-                                    message=f"""Milestone {active_milestone.milestone_no} of your campaign “{pledged_project.title}” has been  successfully completed and verified.
-                                                You can view the update on your dashboard.
-                                            """
-                                    send_html_mail(email,subject,message)
-
-
                                     # Look for the next one
                                     next_milestone = pledged_project.milestones.filter(
                                         milestone_no=active_milestone.milestone_no + 1
@@ -217,6 +207,15 @@ def alchemy_webhook(request):
                                         continue 
                                     else:
                                         # Goal met and no more milestones to activate
+                                        email = pledged_project.organization.user.email
+                                        subject=f"Your Goal Has Been Reached"
+                                        title = "Goal achieved, Progress in Motion"
+                                        message=f"""The goal for your campaign “{pledged_project.title}” , has been successfully reached. 
+                                        To complete the next steps, kindly visit your dashboard and finalize your campaign. 
+                                        Once confirmed, the withdrawal processes will begin, 
+                                        """
+                                        send_html_mail(email,subject,message, title)
+
                                         break
                                 else:
                                     # Current milestone goal not yet met, stop rippling

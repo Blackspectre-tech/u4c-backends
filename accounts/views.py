@@ -123,7 +123,8 @@ class UserConfirmPasswordResetView(generics.GenericAPIView):
         if serializer.is_valid(raise_exception=True):
             otp = serializer.validated_data.get("otp")
             new_password = serializer.validated_data.get("new_password")
-            user = validate_otp(otp)
+            email = serializer.validated_data.get("email")
+            user = validate_otp(otp, email)
             user.set_password(new_password)
             user.save()
             subject=f"Password Reset Successful",

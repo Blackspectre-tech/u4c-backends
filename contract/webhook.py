@@ -158,7 +158,7 @@ def alchemy_webhook(request):
                     try:
                         campaign_id = event_args['id']
                         backer = event_args['donor']
-                        net_amount = Decimal(event_args['netAmount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
+                        net_amount = (Decimal(event_args['netAmount']) / (Decimal(10) ** 6)).quantize(Decimal('0.01'))
                         # fee_amount = Decimal(event_args['feeAmount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))                        
                         tipAmount = Decimal(event_args['tipAmount'])/ (Decimal(10) ** 6)
                         tip = Decimal(str(tipAmount)) if tipAmount != 0 else Decimal(0)

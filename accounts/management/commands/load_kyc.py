@@ -7,20 +7,20 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         requirements = [
             {
-                "name": "cac document",
+                "name": "CAC Document",
                 "field_type": "document",
             },  
             {
-                "name": "representative idcard",
+                "name": "Representative ID card",
                 "field_type": "document",
             },
             {
-                "name": "representative phone number",
+                "name": "Representative Phone Number",
                 "field_type": "phone number",
                 "is_required": False,
             },
             {
-                "name": "registeration number",
+                "name": "Registeration Number",
                 "field_type": "text",
             },
         ]

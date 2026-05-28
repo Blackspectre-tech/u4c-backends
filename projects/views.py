@@ -296,16 +296,6 @@ class projectImagesRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAP
 
 
 
-
-
-
-
-
-
-
-
-
-
 class PostMilestoneImages(generics.GenericAPIView):
     parser_classes=[parsers.MultiPartParser]
     permission_classes = [
@@ -377,3 +367,5 @@ class ListDonationsView(generics.ListAPIView):
 #     def get_queryset(self):
 #         project = get_object_or_404(Project,pk=self.kwargs['pk'])
 #         return project.comments
+
+

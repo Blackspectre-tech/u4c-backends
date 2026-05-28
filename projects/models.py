@@ -366,7 +366,14 @@ class Donation(TimeStamps, models.Model):
 
     def __str__(self):
         return f"{self.wallet} | amount: {self.amount} | project{self.project.title}"
-    
+
+
+    @classmethod
+    def total(cls):
+        """Returns the sum of every single donation in the database."""
+        return cls.objects.aggregate(Sum('amount'))['amount__sum'] or 0
+
+
     @property
     @extend_schema_field(str)
     def username(self):

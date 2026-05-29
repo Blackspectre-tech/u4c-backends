@@ -266,7 +266,7 @@ class OrganizationKycView(APIView):
                 response_requirements.append({
                     "name": requirement.name,
                     "type": requirement.field_type,
-                    "submitted": True,
+                    "submitted": True if item.file or  item.value else False,
                     "value": None if requirement.field_type == "document" else item.value,
                     "status": item.status,
                 })

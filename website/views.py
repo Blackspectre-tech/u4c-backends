@@ -38,13 +38,14 @@ class PlatformStatsView(APIView):
         total_donation = Donation.total() 
         
         total_members = User.objects.count()
-        total_campaigns = Project.objects.filter(deployed=True).count()
-        
+        # total_campaigns = Project.objects.filter(deployed=True).count()
+        completed_campaigns = Project.objects.filter(status=Project.Completed).count()
         # 2. Build the payload dict
         data = {
             "total_donations": total_donation,
             "total_members": total_members,
-            "total_campaigns": total_campaigns
+            # "total_campaigns": total_campaigns
+            "completed_campaigns" : completed_campaigns
         }
         
         # 3. Return response

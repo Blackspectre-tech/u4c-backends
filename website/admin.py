@@ -1,7 +1,10 @@
 from django.contrib import admin
-from website.models import ErrorLog, Faq
+from .models import ErrorLog, Faq, SiteConfiguration
+from solo.admin import SingletonModelAdmin
 # Register your models here.
 
+
+admin.site.register(SiteConfiguration, SingletonModelAdmin)
 
 @admin.register(ErrorLog)
 class ContractLogAdmin(admin.ModelAdmin):

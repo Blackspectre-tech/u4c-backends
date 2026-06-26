@@ -3,6 +3,8 @@ from rest_framework import generics,status
 from rest_framework.response import Response
 from .models import Faq
 from projects.models import Donation,Project
+from accounts.models import Organization
+from website.models import SiteConfiguration
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
@@ -38,14 +40,20 @@ class PlatformStatsView(APIView):
         total_donation = Donation.total() 
         
         total_members = User.objects.count()
-        # total_campaigns = Project.objects.filter(deployed=True).count()
+        total_ngos = Organization.objects.count()
+        live_campaigns = Project.objects.filter(deployed=True).count()
         completed_campaigns = Project.objects.filter(status=Project.Completed).count()
+        beneficiaries = SiteConfiguration.get_solo().beneficiaries_reached
         # 2. Build the payload dict
+        # NGOs_registered
+        # Live Campaigns
+        # Beneficiaries Reached
         data = {
             "total_donations": total_donation,
             "total_members": total_members,
-            # "total_campaigns": total_campaigns
-            "completed_campaigns" : completed_campaigns
+            "live_campaigns": live_campaigns,
+            "completed_campaigns" : completed_campaigns,
+            "Beneficiaries Reached" : beneficiaries,
         }
         
         # 3. Return response

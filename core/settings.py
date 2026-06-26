@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig',
     'drf_spectacular',
     'imagekit',
+    'solo',
 ]
 
 MIDDLEWARE = [

@@ -1,5 +1,5 @@
 from django.db import models
-
+from solo.models import SingletonModel
 # Create your models here.
 
 class Faq(models.Model):
@@ -22,3 +22,12 @@ class ErrorLog(models.Model):
     
     class Meta:
         ordering = ['-time']
+
+
+
+class SiteConfiguration(SingletonModel):
+    
+    beneficiaries_reached = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "Site Configuration"

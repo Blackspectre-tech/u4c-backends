@@ -33,12 +33,12 @@ class MilestoneImagesSerializer(serializers.ModelSerializer):
         images = validated_data.pop('images', [])
         milestone = self.context.get('milestone')
         instances = []
-        existing_images = milestone.images.all()
+        # existing_images = milestone.images.all()
         if images:
             with transaction.atomic():
             
-                if existing_images:
-                    existing_images.delete()
+                # if existing_images:
+                #     existing_images.delete()
 
                 for img in images:
 
@@ -211,7 +211,7 @@ class DonationSerializer(serializers.ModelSerializer):
 class ProjectImagesSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
         child=serializers.ImageField(max_length=1000000,allow_empty_file=False),
-        required=True, write_only=True,allow_empty=False,max_length=5,)
+        required=True, write_only=True,allow_empty=False,max_length=6,)
         
     class Meta:
         model = ProjectImage
@@ -225,12 +225,12 @@ class ProjectImagesSerializer(serializers.ModelSerializer):
         images = validated_data.pop('images', [])
         project = self.context.get('project')
         instances = []
-        existing_images = project.images.all()
+        # existing_images = project.images.all()
         if images:
             with transaction.atomic():
             
-                if existing_images:
-                    existing_images.delete()
+                # if existing_images:
+                #     existing_images.delete()
 
                 for img in images:
 

@@ -49,7 +49,7 @@ class listApprovedProjectsView(generics.ListAPIView):
     queryset = Project.objects.filter(deployed=True)
     serializer_class = ProjectListSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['categories__name','status']
+    filterset_fields = ['categories__name','status', 'sadaqah']
     search_fields = ['title']
     pagination_class = StandardResultsSetPagination
 

@@ -92,7 +92,7 @@ class Project(TimeStamps, models.Model):
     deployed = models.BooleanField(default=False)
     deadline = models.DateTimeField(null=True, blank=True)
     deployed_at = models.DateTimeField(null=True, blank=True)
-    
+    sadaqah = models.BooleanField(default=False)
 #before deploying check if the user has an active fiat/crypto account 
     #payout = models.CharField(max_length=20, choices=payout_options, default=CRYPTO)
     

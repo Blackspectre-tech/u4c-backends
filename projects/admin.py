@@ -152,7 +152,8 @@ class ProjectAdmin(admin.ModelAdmin):
         base_fields = [
             'organization', 'categories', 'title', 'goal', 'total_funds', 'progress_percenage',
             'country', 'approval_status', 'formatted_description', 'image', 'created_at', 'updated_at',
-            'formatted_summary', 'deployed', 'wallet_address', 'duration_in_days', 'deadline','contract_id','status','deployed_at',
+            'formatted_summary', 'deployed', 'wallet_address', 'duration_in_days', 'deadline','contract_id',
+            'status','deployed_at', 'sadaqah',
         ]
 
         # If adding a new project, show a simpler layout
@@ -191,7 +192,7 @@ class ProjectAdmin(admin.ModelAdmin):
         readonly = (
             'organization','categories', 'title', 'goal', 'country', 'formatted_description', 'milestones', 'image',
             'approval_status', 'formatted_summary', 'created_at', 'updated_at', 'progress_percenage', 'contract_id',
-            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','status','deployed_at',
+            'deployed', 'wallet_address',  'duration_in_days', 'deadline', 'total_funds','status','deployed_at', 'sadaqah',
         )
 
         # Make sure onchain_info is readonly when displayed

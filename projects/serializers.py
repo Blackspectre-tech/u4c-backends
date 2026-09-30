@@ -19,7 +19,7 @@ import traceback
 class MilestoneImagesSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
         child=serializers.ImageField(max_length=1000000,allow_empty_file=False),
-        required=True, write_only=True,allow_empty=False,max_length=6,)
+        required=True, write_only=True,allow_empty=False,max_length=10,)
         
     class Meta:
         model = MilestoneImage
@@ -145,11 +145,10 @@ class PostUpdateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Update
-        fields = ['id', 'title', 'details','image','created_at']
+        fields = ['id', 'title', 'details','created_at']
         extra_kwargs = {
             'id': {'read_only': True},
             'created_at': {'read_only': True},
-            'image': {'required': True},
         }
 
     # def create(self, validated_data):
@@ -211,7 +210,7 @@ class DonationSerializer(serializers.ModelSerializer):
 class ProjectImagesSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
         child=serializers.ImageField(max_length=1000000,allow_empty_file=False),
-        required=True, write_only=True,allow_empty=False,max_length=6,)
+        required=True, write_only=True,allow_empty=False,max_length=10,)
         
     class Meta:
         model = ProjectImage

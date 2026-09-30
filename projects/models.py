@@ -332,13 +332,13 @@ class Update(models.Model):
     title = models.CharField(max_length=255)
     details = models.TextField()
     # image = models.ImageField(upload_to='updates/',blank=False, null=False)
-    image = ProcessedImageField(
-        upload_to='updates/',
-        processors=[ResizeToFit(1024, 1024)],
-        format='JPEG',
-        options={'quality': 75},
-        blank=True,null=True
-    )
+    # image = ProcessedImageField(
+    #     upload_to='updates/',
+    #     processors=[ResizeToFit(1024, 1024)],
+    #     format='JPEG',
+    #     options={'quality': 75},
+    #     blank=True,null=True
+    # )
     created_at = models.DateTimeField(auto_now_add=True)
    
 

@@ -37,6 +37,7 @@ urlpatterns = [
     path('projects/', include('projects.urls')),
     path('website/', include('website.urls')),
     path('tinymce/', include('tinymce.urls')),
+    # path('link/', include('link.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

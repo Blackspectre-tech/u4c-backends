@@ -98,6 +98,7 @@ def alchemy_webhook(request):
                 continue
 
             event_topic = topics[0]
+            # print(event_topic)
 
             try:
                 # Use the event topic to get the event object from the contract ABI.
@@ -112,7 +113,7 @@ def alchemy_webhook(request):
                 # PASS THE NORMALIZED web3_log TO process_log
                 event_data = event_object().process_log(web3_log)
                 event_args = event_data['args']
-                print(event_args)
+                print(f'{event_name}=>{event_args}')
                 # --- Events ---
                 if event_name == 'CampaignCreated':
                     try:
@@ -371,7 +372,7 @@ def alchemy_webhook(request):
 
 
 
-                elif event_name == 'Refunded':
+                elif event_name == 'RefundClaimed':
                         try :
                             campaign_id = event_args['id']
                             backer = event_args['donor']

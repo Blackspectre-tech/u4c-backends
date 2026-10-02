@@ -113,7 +113,7 @@ def alchemy_webhook(request):
                 # PASS THE NORMALIZED web3_log TO process_log
                 event_data = event_object().process_log(web3_log)
                 event_args = event_data['args']
-                print(f'{event_name}=>{event_args}')
+                # print(f'{event_name}=>{event_args}')
                 # --- Events ---
                 if event_name == 'CampaignCreated':
                     try:
@@ -378,7 +378,7 @@ def alchemy_webhook(request):
                             backer = event_args['donor']
                             # amount = Decimal(event_args['amount']) / (Decimal(10) ** 6).quantize(Decimal('0.01'))
                             project = Project.objects.get(contract_id = campaign_id)
-                            donation = project.donations.filter(wallet__address=backer)
+                            donation = project.donations.filter(wallet__address__iexact=backer)
                             donation.update(refundable=False,refunded=True)
                             donation_obj = donation.first()
                             Transaction.objects.create(
@@ -387,8 +387,9 @@ def alchemy_webhook(request):
                                 event = Transaction.REFUND,
                                 status = Transaction.SUCCESSFUL,
                             )
+
                         except Exception as e:
-                            #print(f"{e} traceback: {traceback.format_exc()}")
+                            # print(f"{e} traceback: {traceback.format_exc()}")
                             ErrorLog.objects.create(
                                 data=data,
                                 error=str(e),

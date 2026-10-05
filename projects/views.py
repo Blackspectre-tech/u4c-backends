@@ -355,7 +355,7 @@ class ListDonationsView(generics.ListAPIView):
     def get_queryset(self):
         project = get_object_or_404(Project,pk=self.kwargs['pk'])
         donations = project.donations.filter(
-            refunded=False,
+            # refunded=False,
             wallet__isnull=False,
             wallet__users__is_organization=False
         ).distinct()

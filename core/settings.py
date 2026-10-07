@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'projects',
     'contract',
     'website',
+    'link',
 
     #others
     'rest_framework',
@@ -289,3 +290,5 @@ SIMPLE_JWT = {
 
 
 FREE_TX_LIMIT = 10
+
+LINKIO_SECRET_KEY = config("LINKIO_SECRET_KEY_TEST")

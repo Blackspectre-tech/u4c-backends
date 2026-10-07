@@ -1,10 +1,29 @@
-# from rest_framework import serializers
+from rest_framework import serializers
 
+class RateQuerySerializer(serializers.Serializer):
+    trx_type = serializers.ChoiceField(choices=[('onramp', 'Onramp'), ('offramp', 'Offramp')])
 
-# TRX_TYPES = (
-#     ('onramp', 'onramp'),
-#     ('offramp', 'offramp'),
-# )
+class OnrampSerializer(serializers.Serializer):
+    currency = serializers.CharField(default="NGN", max_length=10)
+    amount = serializers.CharField()
+    vendor_bank = serializers.CharField()
+    vendor_number = serializers.CharField()
+    vendor_name = serializers.CharField()
+    wallet_address = serializers.CharField()
+    bank_name = serializers.CharField()
+    account_number = serializers.CharField()
+    network = serializers.CharField(default="polygon")
+    stables = serializers.CharField(default="USDC")
 
-# class RetailRatesserializer(serializers.Serializer):
-#     trx_type = serializers.ChoiceField(required=True)
+class OfframpSerializer(serializers.Serializer):
+    currency = serializers.CharField(default="NGN", max_length=10)
+    amount = serializers.CharField()
+    wallet_address = serializers.CharField()
+    bank_name = serializers.CharField()
+    account_number = serializers.CharField()
+    account_name = serializers.CharField()
+    network = serializers.CharField(default="polygon")
+    stables = serializers.CharField(default="USDC")
+
+class TransactionStatusSerializer(serializers.Serializer):
+    trx_ref = serializers.CharField(help_text="The transaction reference from Linkio")

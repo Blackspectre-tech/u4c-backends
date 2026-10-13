@@ -43,13 +43,15 @@ def initiate_offramp(payload):
     payload['chargeFeeOnRequest'] = payload.get('chargeFeeOnRequest', True)
     return _handle_request("POST", url, json=payload)
 
-# NEW: Crucial for checking if a transaction succeeded
-def get_transaction_status(trx_ref):
-    url = f"{LINK_API}/transactions/v2/status"
+# Fetch full transaction details (Onramp or Offramp)
+def fetch_transaction(trx_ref):
+    url = f"{LINK_API}/transactions/v2/fetch_transaction"
     return _handle_request("GET", url, params={'trx_ref': trx_ref})
 
-
-
+# Fetch the specific payout settlement status (Offramp only)
+def get_payout_status(trx_ref):
+    url = f"{LINK_API}/transactions/v2/direct_ramp/payout/status"
+    return _handle_request("GET", url, params={'trx_ref': trx_ref})
 
 
 

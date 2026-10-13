@@ -7,5 +7,6 @@ urlpatterns = [
     path('rates/', views.RetailRateView.as_view(), name='linkio-rates'),
     path('onramp/', views.InitiateOnrampView.as_view(), name='linkio-onramp'),
     path('offramp/', views.InitiateOfframpView.as_view(), name='linkio-offramp'),
-    path('status/', views.TransactionStatusView.as_view(), name='linkio-status'),
-]
+    path('linkio/transaction/', views.FetchTransactionView.as_view(), name='linkio-fetch-trx'),
+    path('linkio/payout-status/', views.PayoutStatusView.as_view(), name='linkio-payout-status'),
+    ]

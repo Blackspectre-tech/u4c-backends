@@ -46,13 +46,25 @@ class InitiateOfframpView(generics.GenericAPIView):
         data, status_code = utils.initiate_offramp(serializer.validated_data)
         return Response(data, status=status_code)
 
-class TransactionStatusView(generics.GenericAPIView):
-    serializer_class = serializers.TransactionStatusSerializer
+class FetchTransactionView(generics.GenericAPIView):
+    serializer_class = serializers.TransactionQuerySerializer
     
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         
         trx_ref = serializer.validated_data['trx_ref']
-        data, status_code = utils.get_transaction_status(trx_ref)
+        data, status_code = utils.fetch_transaction(trx_ref)
         return Response(data, status=status_code)
+
+class PayoutStatusView(generics.GenericAPIView):
+    serializer_class = serializers.TransactionQuerySerializer
+    
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        
+        trx_ref = serializer.validated_data['trx_ref']
+        data, status_code = utils.get_payout_status(trx_ref)
+        return Response(data, status=status_code)
+    

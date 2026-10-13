@@ -25,5 +25,7 @@ class OfframpSerializer(serializers.Serializer):
     network = serializers.CharField(default="polygon")
     stables = serializers.CharField(default="USDC")
 
-class TransactionStatusSerializer(serializers.Serializer):
-    trx_ref = serializers.CharField(help_text="The transaction reference from Linkio")
+class TransactionQuerySerializer(serializers.Serializer):
+    trx_ref = serializers.CharField(
+        help_text="The transaction reference or ID returned by Linkio upon initiation"
+    )

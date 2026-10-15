@@ -65,12 +65,14 @@ class InitiateOnrampView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+        data = serializer.validated_data
+        account_number = data.get('account_number')
+        bank_name = data.get('bank_name')
         # Call Linkio (utils.py)
-        response_data, status_code = utils.initiate_onramp(serializer.validated_data)
+        response_data, status_code = utils.initiate_onramp(data)
         
         # Linkio's success code is "TXN_SUCCESSFUL" and status is "Success"
-        if status_code == 200 and response_data.get("code") == "TXN_SUCCESSFUL":
+        if status_code == 201 and response_data.get("code") == "TXN_SUCCESSFUL":
             trx_data = response_data.get("transaction", {})
             
             LinkioTransaction.objects.create(
@@ -86,6 +88,8 @@ class InitiateOnrampView(generics.GenericAPIView):
                 link_account_name=trx_data.get("link_account_name"),
                 link_account_number=trx_data.get("link_account_number"),
                 link_bank_name=trx_data.get("link_bank_name"),
+                user_bank_name = bank_name,
+                user_account_number = account_number,
             )
             
         return Response(response_data, status=status_code)
@@ -98,12 +102,12 @@ class InitiateOfframpView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+        data = serializer.validated_data
         # Call Linkio (utils.py)
-        response_data, status_code = utils.initiate_offramp(serializer.validated_data)
-        
+        response_data, status_code = utils.initiate_offramp(data)
+        wallet = data.get('wallet_address')
         # Check for success
-        if status_code == 200 and response_data.get("code") == "TXN_SUCCESSFUL":
+        if status_code == 201 and response_data.get("code") == "TXN_SUCCESSFUL":
             trx_data = response_data.get("transaction", {})
             
             LinkioTransaction.objects.create(
@@ -117,6 +121,7 @@ class InitiateOfframpView(generics.GenericAPIView):
                 # Save user's receiving bank details
                 user_account_number=trx_data.get("account_number"),
                 user_bank_name=trx_data.get("bank_name"),
+                wallet_address=wallet,
             )
             
         return Response(response_data, status=status_code)
@@ -188,7 +193,7 @@ class FetchTransactionView(generics.GenericAPIView):
     serializer_class = serializers.TransactionQuerySerializer
     
     def get(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         
         trx_ref = serializer.validated_data['trx_ref']
@@ -199,7 +204,7 @@ class PayoutStatusView(generics.GenericAPIView):
     serializer_class = serializers.TransactionQuerySerializer
     
     def get(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         
         trx_ref = serializer.validated_data['trx_ref']

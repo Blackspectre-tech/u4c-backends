@@ -1,6 +1,41 @@
 import requests
 from django.conf import settings
 
+
+
+
+
+
+import hmac
+import hashlib
+
+# Get this from your Linkio dashboard settings
+LINK_WEBHOOK_SECRET = getattr(settings, 'LINKIO_WEBHOOK_SECRET', 'your_webhook_secret')
+
+def verify_webhook_signature(payload_body, signature_header):
+    """
+    Verifies the HMAC SHA256 signature of the incoming webhook.
+    payload_body: The raw bytes of the request body (request.body)
+    """
+    if not signature_header:
+        return False
+        
+    expected_signature = hmac.new(
+        key=LINK_WEBHOOK_SECRET.encode('utf-8'),
+        msg=payload_body,
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    
+    # Timing-safe comparison to prevent timing attacks
+    return hmac.compare_digest(expected_signature, signature_header)
+
+
+
+
+
+
+
+
 # Fetch from settings, fallback to provided keys for development
 LINK_SK = getattr(settings, 'LINKIO_SECRET_KEY', 'ngnc_s_tk_575c47a65aa3f258138b80c1a2bad35bab129a19c0956aabf25e1880fe159561')
 LINK_API = "https://api.linkio.world"

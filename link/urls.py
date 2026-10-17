@@ -9,4 +9,6 @@ urlpatterns = [
     path('offramp/', views.InitiateOfframpView.as_view(), name='linkio-offramp'),
     path('transaction/', views.FetchTransactionView.as_view(), name='linkio-fetch-trx'),
     path('payout-status/', views.PayoutStatusView.as_view(), name='linkio-payout-status'),
+    path('transaction-history/', views.LinkTransactionListView.as_view(), name='linkio-transactions'),
+    
     ]

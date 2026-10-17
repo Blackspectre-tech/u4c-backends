@@ -1,6 +1,7 @@
 # Create your models here.
 from django.db import models
 from django.contrib.auth import get_user_model
+from accounts.models import Wallet
 
 User = get_user_model()
 
@@ -28,7 +29,7 @@ class LinkioTransaction(models.Model):
     rate = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
     
     # The user's destination (Wallet for Onramp, Bank for Offramp)
-    wallet_address = models.CharField(max_length=255, null=True, blank=True)
+    wallet = models.ForeignKey(Wallet,related_name='link_transactions', blank=True,null=True, on_delete=models.CASCADE)
     user_bank_name = models.CharField(max_length=100, null=True, blank=True)
     user_account_number = models.CharField(max_length=50, null=True, blank=True)
     

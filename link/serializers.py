@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from .models import LinkioTransaction
 
 class RateQuerySerializer(serializers.Serializer):
     trx_type = serializers.ChoiceField(choices=[('onramp', 'Onramp'), ('offramp', 'Offramp')])
@@ -29,6 +30,17 @@ class TransactionQuerySerializer(serializers.Serializer):
     trx_ref = serializers.CharField(
         help_text="The transaction reference or ID returned by Linkio upon initiation"
     )
+
+
+
+class LinkTransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = LinkioTransaction
+        fields = "__all__"
+
+        
+
 
 
 

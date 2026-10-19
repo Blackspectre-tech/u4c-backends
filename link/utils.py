@@ -1,17 +1,11 @@
 import requests
 from django.conf import settings
 
-
-
-
-
-
 import hmac
 import hashlib
 
 # Get this from your Linkio dashboard settings
-LINK_WEBHOOK_SECRET = getattr(settings, 'LINKIO_WEBHOOK_SECRET', 'your_webhook_secret')
-
+LINK_WEBHOOK_SECRET = LINK_SK = getattr(settings, 'LINKIO_SECRET_KEY')
 def verify_webhook_signature(payload_body, signature_header):
     """
     Verifies the HMAC SHA256 signature of the incoming webhook.
@@ -37,7 +31,8 @@ def verify_webhook_signature(payload_body, signature_header):
 
 
 # Fetch from settings, fallback to provided keys for development
-LINK_SK = getattr(settings, 'LINKIO_SECRET_KEY', 'ngnc_s_tk_575c47a65aa3f258138b80c1a2bad35bab129a19c0956aabf25e1880fe159561')
+LINK_SK = getattr(settings, 'LINKIO_SECRET_KEY')
+# LINK_SK = "ngnc_s_lk_83a36b7503b9801d47c8f449d818c3ee2b1787f7122dbb134843c2075b42a292"
 LINK_API = "https://api.linkio.world"
 
 def _get_headers():
@@ -87,8 +82,6 @@ def fetch_transaction(trx_ref):
 def get_payout_status(trx_ref):
     url = f"{LINK_API}/transactions/v2/direct_ramp/payout/status"
     return _handle_request("GET", url, params={'trx_reference': trx_ref})
-
-
 
 
 

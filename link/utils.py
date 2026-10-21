@@ -5,25 +5,29 @@ import hmac
 import hashlib
 
 # Get this from your Linkio dashboard settings
-LINK_WEBHOOK_SECRET = LINK_SK = getattr(settings, 'LINKIO_SECRET_KEY')
-def verify_webhook_signature(payload_body, signature_header):
+LINKIO_WEBHOOK_SECRET = getattr(settings, 'LINKIO_WEBHOOK_KEY')
+
+def verify_linkio_webhook(request):
     """
-    Verifies the HMAC SHA256 signature of the incoming webhook.
-    payload_body: The raw bytes of the request body (request.body)
+    Verifies that the incoming webhook is genuinely from Linkio by checking 
+    the 'bridge-webhook-secret' header against your configured Webhook Secret.
     """
-    if not signature_header:
+    # Django's request.headers dictionary automatically handles case-insensitivity,
+    # so 'bridge-webhook-secret' will match 'Bridge-Webhook-Secret' or 'BRIDGE-WEBHOOK-SECRET'.
+    incoming_secret = request.headers.get('bridge-webhook-secret')
+    
+    if not incoming_secret:
+        print("Webhook Error: No bridge-webhook-secret header provided")
         return False
         
-    expected_signature = hmac.new(
-        key=LINK_WEBHOOK_SECRET.encode('utf-8'),
-        msg=payload_body,
-        digestmod=hashlib.sha256
-    ).hexdigest()
+    # We use hmac.compare_digest instead of `==` for string comparison.
+    # This prevents "timing attacks" where hackers guess tokens based on response times.
+    is_valid = hmac.compare_digest(incoming_secret, LINKIO_WEBHOOK_SECRET)
     
-    # Timing-safe comparison to prevent timing attacks
-    return hmac.compare_digest(expected_signature, signature_header)
-
-
+    if not is_valid:
+        print("Webhook Error: Secret token mismatch")
+        
+    return is_valid
 
 
 
@@ -84,220 +88,18 @@ def get_payout_status(trx_ref):
     return _handle_request("GET", url, params={'trx_reference': trx_ref})
 
 
+def verify_account_number(account_number, bank_code):
+    # verify user account number
+    url = f"{LINK_API}/accounts/v2/verify_account_number"
+    return _handle_request("GET", url, params={'account_number': account_number, 'bank_code': bank_code})
 
 
+def get_deposit_wallets():
+    url = f"{LINK_API}/static/v2/payment_wallets"
+    return _handle_request("GET", url,)
 
 
 
+# data, status = get_deposit_wallets()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# import requests
-
-# link_sk = ''
-# link_sk_live = ''
-# link_tag = 'Blackspectre'
-# Bid = '161791100802714'
-# link_api = "https://api.linkio.world"
-
-
-
-
-# ###########################################################
-# # get link supported banks
-# def get_supported_banks():
-
-#     url = f"{link_api}/static/v2/payment_banks?currency=NGN"
-
-#     headers = {"ngnc-sec-key": link_sk}
-
-#     response = requests.get(url, headers=headers)
-
-#     if response.status_code == 200:
-#         print(response.json())
-#         return response.json()
-#     else:
-#         print(f"Error {response.status_code}: {response.text}")
-
-
-
-
-# # # ###############################################################################################################################
-# # #get vendor bank details
-
-# def get_vendors_list(currency = "NGN"):
-#     url = f"{link_api}/static/v2/payment_vendors?currency={currency}"
-
-
-#     headers = {
-#         "ngnc-sec-key": link_sk,
-#     }
-
-#     # Add params=params to the request
-#     response = requests.get(url, headers=headers)
-
-#     if response.status_code == 200:
-#         print(response.json())
-#         return response.json()
-#     else:
-#         print(f"Error {response.status_code}: {response.text}")
-
-
-# ############################################################################################################
-
-
-# # Retail Rates Onramp
-# def get_retail_rates(trx_type):
-#     url = f"{link_api}/transactions/v2/retail_rate"
-
-#     headers = {"ngnc-sec-key": link_sk,}
-#     params = {
-#         'trx_type' : trx_type
-#     }
-#     response = requests.get(url, params=params, headers=headers)
-
-#     if response.status_code == 200:
-#         print(response.json())
-#         return response.json()
-#     else:
-#         print(f"Error {response.status_code}: {response.text}")
-
-
-# ######################################################
-
-
-# # Retail Rates Offramp
-
-#     # url = f"{link_api}/transactions/v2/retail_rate"
-
-#     # headers = {"ngnc-sec-key": link_sk,}
-#     # params = {
-#     #     'trx_type' : trx_type
-#     # }
-#     # response = requests.get(url, params=params, headers=headers)
-
-
-#     # if response.status_code == 200:
-#     #     print(response.json())
-#     #     return response.json()
-#     # else:
-#     #     print(f"Error {response.status_code}: {response.text}")
-
-
-# ########################################################
-
-
-# # #initiate Onramp
-# def initiate_onramp(currency,amount,vendor_bank,vendor_number,vendor_name,wallet_address,bank_name,account_number):
-#     url = f"{link_api}/transactions/v2/onramp"
-
-#     # payload = {
-#     #     "currency": "NGN",
-#     #     "amount": "15000",
-#     #     "vendor_bank": "Prov Bank",
-#     #     "vendor_number": "*****54964",
-#     #     "vendor_name": "divine",
-#     #     "wallet_address": "0x38d8E9aa8b3699BA4e6bf812933011928eCEefB7",
-#     #     "network": "polygon",
-#     #     "bank_name": "Access Bank",
-#     #     "account_number": "1802677543",
-#     #     "stables":"USDC"
-#     #     # "routing_number": "<string>",
-#     #     # "bank_address": "<string>"
-#     # }
-
-#     payload = {
-#             "currency": currency,
-#             "amount": amount,
-#             "vendor_bank": vendor_bank,
-#             "vendor_number": vendor_number,
-#             "vendor_name": vendor_name,
-#             "wallet_address": wallet_address,
-#             "network": "polygon",
-#             "bank_name": bank_name,
-#             "account_number": account_number,
-#             "stables":"USDC"
-#             # "routing_number": "<string>",
-#             # "bank_address": "<string>"
-#         }
-
-
-#     headers = {
-#         "ngnc-sec-key": link_sk,
-#         "Content-Type": "application/json"
-#     }
-
-#     response = requests.post(url, json=payload, headers=headers)
-
-#     if response.status_code == 200:
-#         print(response.json())
-#         return response.json()
-#     else:
-#         print(f"Error {response.status_code}: {response.text}")
-
-
-# #######################################################################################
-
-# # #offramp
-# def initiate_offramp(currency,amount,wallet_address,bank_name,account_number,account_name):
-#     url = f"{link_api}/transactions/v2/offramp"
-
-#     # payload = {
-#     #     "type": "bank",
-#     #     "amount": "5000",
-#     #     "currency": "NGN",
-#     #     "bank_name": "Access Bank", #must be a payout bank supported by link
-#     #     "account_number": "1802677543",
-#     #     "account_name": "John Doe",
-#     #     "wallet_address": "0x38d8E9aa8b3699BA4e6bf812933011928eCEefB7",
-#     #     "network": "polygon",
-#     #     "stables":"USDC",
-#     #     # "routing_number": "<string>",
-#     #     # "account_type": "checkings",
-#     #     "chargeFeeOnRequest": True
-#     # }
-
-
-#     payload = {
-#         "type": "bank",
-#         "amount": amount,
-#         "currency": currency,
-#         "bank_name": bank_name, #must be a payout bank supported by link
-#         "account_number": account_number,
-#         "account_name": account_name,
-#         "wallet_address": wallet_address,
-#         "network": "polygon",
-#         "stables":"USDC",
-#         # "routing_number": "<string>",
-#         # "account_type": "checkings",
-#         "chargeFeeOnRequest": True
-#     }
-
-
-
-#     headers = {
-#         "ngnc-sec-key": link_sk,
-#         "Content-Type": "application/json"
-#     }
-
-#     response = requests.post(url, json=payload, headers=headers)
-
-#     if response.status_code == 200:
-#         print(response.json())
-#         return response.json()
-#     else:
-#         print(f"Error {response.status_code}: {response.text}")
+# print(f"data: {data}")

@@ -4,6 +4,11 @@ from .models import LinkioTransaction
 class RateQuerySerializer(serializers.Serializer):
     trx_type = serializers.ChoiceField(choices=[('onramp', 'Onramp'), ('offramp', 'Offramp')])
 
+class VerifyAccountNumberSerializer(serializers.Serializer):
+    account_number = serializers.CharField(max_length=10)
+    bank_code = serializers.CharField(max_length=6)
+
+
 class OnrampSerializer(serializers.Serializer):
     currency = serializers.CharField(default="NGN", max_length=10)
     amount = serializers.CharField()

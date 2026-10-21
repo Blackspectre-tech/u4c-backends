@@ -5,6 +5,8 @@ from accounts.models import Wallet
 
 User = get_user_model()
 
+
+
 class LinkioTransaction(models.Model):
     class TransactionType(models.TextChoices):
         ONRAMP = 'ONRAMP', 'Onramp (Buy)'
@@ -12,6 +14,7 @@ class LinkioTransaction(models.Model):
 
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Pending'
+        PROCESSING = 'PROCESSING', 'Processing' # Added this
         SUCCESSFUL = 'SUCCESSFUL', 'Successful'
         FAILED = 'FAILED', 'Failed'
 

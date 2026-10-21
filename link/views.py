@@ -8,6 +8,8 @@ from rest_framework import permissions
 from accounts.models import Wallet
 from projects.paginations import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
+
 
 class SupportedBanksView(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
@@ -21,6 +23,14 @@ class VendorListView(generics.GenericAPIView):
         data, status_code = utils.get_vendors_list(currency)
         return Response(data, status=status_code)
 
+
+class GetDepositWalletView(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        data, status_code = utils.get_deposit_wallets()
+        return Response(data, status=status_code)
+
+
+
 class RetailRateView(generics.GenericAPIView):
     serializer_class = serializers.RateQuerySerializer
     
@@ -32,30 +42,21 @@ class RetailRateView(generics.GenericAPIView):
         data, status_code = utils.get_retail_rates(trx_type)
         return Response(data, status=status_code)
 
-# class InitiateOnrampView(generics.GenericAPIView):
-#     serializer_class = serializers.OnrampSerializer
 
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
+
+
+
+class VerifyAccountNumberView(generics.GenericAPIView):
+    serializer_class = serializers.VerifyAccountNumberSerializer
+    
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
         
-#         data, status_code = utils.initiate_onramp(serializer.validated_data)
-#         return Response(data, status=status_code)
-
-# class InitiateOfframpView(generics.GenericAPIView):
-#     serializer_class = serializers.OfframpSerializer
-
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-        
-#         data, status_code = utils.initiate_offramp(serializer.validated_data)
-#         return Response(data, status=status_code)
-
-
-
-
-
+        account_number = serializer.validated_data['account_number']
+        bank_code = serializer.validated_data['bank_code']
+        data, status_code = utils.verify_account_number(account_number, bank_code)
+        return Response(data, status=status_code)
 
 
 
@@ -144,6 +145,7 @@ class InitiateOfframpView(generics.GenericAPIView):
             
         return Response(response_data, status=status_code)
 
+
 # --- WEBHOOK (Linkio tells us when it's done) ---
 class LinkioWebhookView(generics.GenericAPIView):
     authentication_classes = [] 
@@ -151,51 +153,57 @@ class LinkioWebhookView(generics.GenericAPIView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        # 1. Verify webhook signature (from utils.py)
+        # 1. Verify webhook signature (Comment out for local testing without valid signature)
         if not utils.verify_linkio_webhook(request):
             return Response({"error": "Invalid signature"}, status=status.HTTP_401_UNAUTHORIZED)
         
-        payload = request.data
+        # Linkio payload structure
+        webhook_body = request.data
+        print(webhook_body)
         
-        # Based on typical Linkio webhook payloads, data is inside a 'data' key
-        trx_data = payload.get('data', payload) 
+        # Extract the inner 'payload' dict based on your provided JSON
+        trx_payload = webhook_body.get('payload', {}) 
         
-        # Linkio might send webhook updates using either reference or transaction_id
-        t_id = trx_data.get("transaction_id")
-        ref = trx_data.get("reference")
+        t_id = trx_payload.get("transaction_id")
+        ref = trx_payload.get("reference")
         
-        # Their response uses "transaction_status", so webhook likely does too
-        new_status = trx_data.get("transaction_status", "").upper() 
+        # Get the exact status string from Linkio (Pending, Processing, Completed)
+        incoming_status = trx_payload.get("transaction_status", "").upper()
 
         if not t_id and not ref:
-            return Response({"error": "Missing identifiers"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Missing transaction identifiers"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # 2. Look up the transaction using EITHER reference or transaction_id
-            if t_id:
-                trx = LinkioTransaction.objects.select_for_update().get(transaction_id=t_id)
-            else:
-                trx = LinkioTransaction.objects.select_for_update().get(reference=ref)
+            # 2. Look up the transaction using EITHER transaction_id OR reference
+            # Using Q objects allows us to match whichever one is available safely
+            trx = LinkioTransaction.objects.select_for_update().get(
+                Q(transaction_id=t_id) | Q(reference=ref)
+            )
             
-            # 3. Map Linkio's status to our database status
-            # Linkio often uses "Success", "Failed", "Pending", "Processing"
-            if new_status in ["SUCCESS", "SUCCESSFUL"]:
+            # 3. Explicitly map Linkio's status to our database status choices
+            if incoming_status == "COMPLETED":
                 trx.status = LinkioTransaction.Status.SUCCESSFUL
-            elif new_status in ["FAILED", "REJECTED", "CANCELLED"]:
-                trx.status = LinkioTransaction.Status.FAILED
-            elif new_status in ["PENDING", "PROCESSING"]:
+                
+            elif incoming_status == "PROCESSING":
+                trx.status = LinkioTransaction.Status.PROCESSING
+                
+            elif incoming_status == "PENDING":
                 trx.status = LinkioTransaction.Status.PENDING
+                
+            # Fallbacks just in case Linkio ever sends a failure event
+            elif incoming_status in ["FAILED", "REJECTED", "CANCELLED"]:
+                trx.status = LinkioTransaction.Status.FAILED
             
-            # Save the full webhook payload for future auditing
-            trx.webhook_data = payload 
+            # Save the full webhook payload into the JSONField for debugging/auditing
+            trx.webhook_data = webhook_body
             trx.save()
             
-            return Response({"message": "Webhook processed"}, status=status.HTTP_200_OK)
+            return Response({"message": "Webhook processed successfully"}, status=status.HTTP_200_OK)
             
         except LinkioTransaction.DoesNotExist:
-            return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
+            # If the webhook reaches us before the initial API creation resolves (rare, but happens),
+            # returning 404 is standard. 
+            return Response({"error": "Transaction not found in database"}, status=status.HTTP_404_NOT_FOUND)
 
 
 

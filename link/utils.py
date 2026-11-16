@@ -1,6 +1,6 @@
 import requests
 from django.conf import settings
-
+from django.core.exceptions import ImproperlyConfigured
 import hmac
 import hashlib
 
@@ -35,13 +35,23 @@ def verify_linkio_webhook(request):
 
 
 # Fetch from settings, fallback to provided keys for development
-LINK_SK = getattr(settings, 'LINKIO_SECRET_KEY')
+# LINK_SK = getattr(settings, 'LINKIO_SECRET_KEY')
+# if not LINK_SK:
+#     raise ImproperlyConfigured("LINKIO_SECRET_KEY is missing or empty in settings.")
+
+def get_link_secret_key():
+    link_sk = getattr(settings, 'LINKIO_SECRET_KEY')
+    if not link_sk:
+        raise ImproperlyConfigured("LINKIO_SECRET_KEY is missing or empty in settings.")
+    return link_sk
+
+
 # LINK_SK = "ngnc_s_lk_83a36b7503b9801d47c8f449d818c3ee2b1787f7122dbb134843c2075b42a292"
 LINK_API = "https://api.linkio.world"
 
 def _get_headers():
     return {
-        "ngnc-sec-key": LINK_SK,
+        "ngnc-sec-key": get_link_secret_key(),
         "Content-Type": "application/json"
     }
 

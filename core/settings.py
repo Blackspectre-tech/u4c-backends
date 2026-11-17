@@ -201,6 +201,15 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES':[('rest_framework.renderers.JSONRenderer'),],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/day',    # Limits unauthenticated users by IP address
+        'user': '100/day',   # Limits authenticated users by user ID
+    }
 }
 DRF_STANDARDIZED_ERRORS = {"ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS": True}
 
@@ -291,7 +300,7 @@ SIMPLE_JWT = {
 
 FREE_TX_LIMIT = 10
 
-# LINKIO_SECRET_KEY = config("LINKIO_SECRET_KEY")
-# LINKIO_WEBHOOK_KEY = config("LINKIO_WEBHOOK_KEY")
-LINKIO_SECRET_KEY = None
-LINKIO_WEBHOOK_KEY = None
+LINKIO_SECRET_KEY = config("LINKIO_SECRET_KEY")
+LINKIO_WEBHOOK_KEY = config("LINKIO_WEBHOOK_KEY")
+# LINKIO_SECRET_KEY = None
+# LINKIO_WEBHOOK_KEY = None
